@@ -198,7 +198,6 @@ public final class LoaderMBeanImpl implements LoaderMBean
 		return new Double(getMetrics.getTotalTimeNS() / TIME_SCALE_NS_MS);
 	}
 
-	@Override
 	@TabularKey
 	public String getMapName() 
 	{

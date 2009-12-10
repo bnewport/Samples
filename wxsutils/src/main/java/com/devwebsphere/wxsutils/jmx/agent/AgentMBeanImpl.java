@@ -29,20 +29,17 @@ public class AgentMBeanImpl implements AgentMBean
 	String className;
 	MinMaxAvgMetric partitionMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric keysMetric = new MinMaxAvgMetric();
-	@Override
 	@TabularKey
 	public String getClassName() 
 	{
 		return className;
 	}
-	@Override
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
 	public Integer getKeysExceptionCount() 
 	{
 		return new Integer(keysMetric.getExceptionCount());
 	}
 	
-	@Override
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
 	public String getKeysLastExceptionString() 
 	{
@@ -55,37 +52,31 @@ public class AgentMBeanImpl implements AgentMBean
 			return "<>";
 	}
 	
-	@Override
 	@TabularAttribute
 	public Double getKeysTimeAvgMS() 
 	{
 		return new Double(keysMetric.getAvgTimeNS() / TIME_SCALE_NS_MS);
 	}
 	
-	@Override
 	@TabularAttribute
 	public Double getKeysTimeMaxMS() 
 	{
 		return new Double(keysMetric.getMaxTimeNS() / TIME_SCALE_NS_MS);
 	}
-	@Override
 	@TabularAttribute
 	public Double getKeysTimeMinMS() {
 		return new Double(keysMetric.getMinTimeNS() / TIME_SCALE_NS_MS);
 	}
-	@Override
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
 	public Double getKeysTotalTimeMS() {
 		return new Double(keysMetric.getTotalTimeNS() / TIME_SCALE_NS_MS);
 	}
 	
-	@Override
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
 	public Integer getPartitionExceptionCount() 
 	{
 		return new Integer(partitionMetric.getExceptionCount());
 	}
-	@Override
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
 	public String getPartitionLastExceptionString() 
 	{
@@ -97,22 +88,18 @@ public class AgentMBeanImpl implements AgentMBean
 		else
 			return "<>";
 	}
-	@Override
 	@TabularAttribute
 	public Double getPartitionTimeAvgMS() {
 		return new Double(partitionMetric.getAvgTimeNS() / TIME_SCALE_NS_MS);
 	}
-	@Override
 	@TabularAttribute
 	public Double getPartitionTimeMaxMS() {
 		return new Double(partitionMetric.getMaxTimeNS() / TIME_SCALE_NS_MS);
 	}
-	@Override
 	@TabularAttribute
 	public Double getPartitionTimeMinMS() {
 		return new Double(partitionMetric.getMinTimeNS() / TIME_SCALE_NS_MS);
 	}
-	@Override
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
 	public Double getPartitionTotalTimeMS() {
 		return new Double(partitionMetric.getTotalTimeNS() / TIME_SCALE_NS_MS);
@@ -123,13 +110,11 @@ public class AgentMBeanImpl implements AgentMBean
 	{
 		return new Long(System.currentTimeMillis());
 	}
-	@Override
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
 	public Integer getKeysCount() 
 	{
 		return new Integer(keysMetric.getCount());
 	}
-	@Override
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
 	public Integer getPartitionCount() 
 	{

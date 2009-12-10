@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite failures="0" time="0.041" errors="0" skipped="0" tests="1" name="com.devwebsphere.wxsutils.AppTest">
+<testsuite failures="0" time="0.056" errors="0" skipped="0" tests="1" name="com.devwebsphere.wxsutils.AppTest">
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
     <property name="sun.boot.library.path" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Libraries"/>
@@ -22,7 +22,7 @@
     <property name="basedir" value="/Users/ibm/Documents/Development/Samples/wxsutils"/>
     <property name="java.endorsed.dirs" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Home/lib/endorsed"/>
     <property name="os.arch" value="x86_64"/>
-    <property name="surefire.real.class.path" value="/var/folders/xP/xP719TA0GYOqgk3Ud1U4yk+++TI/-Tmp-/surefirebooter4433863577335973425.jar"/>
+    <property name="surefire.real.class.path" value="/var/folders/xP/xP719TA0GYOqgk3Ud1U4yk+++TI/-Tmp-/surefirebooter2557554572755480212.jar"/>
     <property name="java.io.tmpdir" value="/var/folders/xP/xP719TA0GYOqgk3Ud1U4yk+++TI/-Tmp-/"/>
     <property name="line.separator" value="
 "/>
@@ -64,5 +64,5 @@
     <property name="ftp.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="sun.cpu.isalist" value=""/>
   </properties>
-  <testcase time="0.011" classname="com.devwebsphere.wxsutils.AppTest" name="testApp"/>
+  <testcase time="0.026" classname="com.devwebsphere.wxsutils.AppTest" name="testApp"/>
 </testsuite>
