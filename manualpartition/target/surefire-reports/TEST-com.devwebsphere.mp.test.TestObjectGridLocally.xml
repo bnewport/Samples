@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite failures="1" time="1.941" errors="0" skipped="0" tests="1" name="com.devwebsphere.mp.test.TestObjectGridLocally">
+  <properties>
+    <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
+    <property name="sun.boot.library.path" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Libraries"/>
+    <property name="java.vm.version" value="14.3-b01-101"/>
+    <property name="awt.nativeDoubleBuffering" value="true"/>
+    <property name="gopherProxySet" value="false"/>
+    <property name="com.ibm.CORBA.RasManager" value="com.ibm.websphere.ras.WsOrbRasManager"/>
+    <property name="mrj.build" value="10M3025"/>
+    <property name="java.vm.vendor" value="Apple Inc."/>
+    <property name="java.vendor.url" value="http://www.apple.com/"/>
+    <property name="path.separator" value=":"/>
+    <property name="java.vm.name" value="Java HotSpot(TM) 64-Bit Server VM"/>
+    <property name="file.encoding.pkg" value="sun.io"/>
+    <property name="user.country" value="US"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="sun.os.patch.level" value="unknown"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="user.dir" value="/Users/ibm/Documents/Development/Samples/manualpartition"/>
+    <property name="java.runtime.version" value="1.6.0_17-b04-248-10M3025"/>
+    <property name="java.awt.graphicsenv" value="apple.awt.CGraphicsEnvironment"/>
+    <property name="basedir" value="/Users/ibm/Documents/Development/Samples/manualpartition"/>
+    <property name="java.endorsed.dirs" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Home/lib/endorsed"/>
+    <property name="os.arch" value="x86_64"/>
+    <property name="surefire.real.class.path" value="/var/folders/xP/xP719TA0GYOqgk3Ud1U4yk+++TI/-Tmp-/surefirebooter5032553638752361668.jar"/>
+    <property name="java.io.tmpdir" value="/var/folders/xP/xP719TA0GYOqgk3Ud1U4yk+++TI/-Tmp-/"/>
+    <property name="line.separator" value="
+"/>
+    <property name="java.vm.specification.vendor" value="Sun Microsystems Inc."/>
+    <property name="os.name" value="Mac OS X"/>
+    <property name="sun.jnu.encoding" value="MacRoman"/>
+    <property name="com.ibm.websphere.zos.forcedist" value="true"/>
+    <property name="java.library.path" value=".:/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java"/>
+    <property name="surefire.test.class.path" value="/Users/ibm/Documents/Development/Samples/manualpartition/target/test-classes:/Users/ibm/Documents/Development/Samples/manualpartition/target/classes:/Users/ibm/.m2/repository/org/apache/openjpa/openjpa/1.2.1/openjpa-1.2.1.jar:/Users/ibm/.m2/repository/net/sourceforge/serp/serp/1.13.1/serp-1.13.1.jar:/Users/ibm/.m2/repository/junit/junit/4.7/junit-4.7.jar:/Users/ibm/.m2/repository/commons-logging/commons-logging/1.0.4/commons-logging-1.0.4.jar:/Users/ibm/.m2/repository/commons-lang/commons-lang/2.1/commons-lang-2.1.jar:/Users/ibm/.m2/repository/commons-collections/commons-collections/3.2/commons-collections-3.2.jar:/Users/ibm/.m2/repository/commons-pool/commons-pool/1.3/commons-pool-1.3.jar:/Users/ibm/.m2/repository/org/apache/geronimo/specs/geronimo-jms_1.1_spec/1.0.1/geronimo-jms_1.1_spec-1.0.1.jar:/Users/ibm/.m2/repository/org/apache/geronimo/specs/geronimo-jta_1.1_spec/1.1/geronimo-jta_1.1_spec-1.1.jar:/Users/ibm/.m2/repository/org/apache/geronimo/specs/geronimo-jpa_3.0_spec/1.0/geronimo-jpa_3.0_spec-1.0.jar:/Users/ibm/.m2/repository/mysql/mysql-connector-java/5.1.10/mysql-connector-java-5.1.10.jar:/Users/ibm/.m2/repository/com/ibm/websphere/objectgrid/objectgrid-server/7.0.0.1/objectgrid-server-7.0.0.1.jar:"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="java.class.version" value="50.0"/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Server Compiler"/>
+    <property name="os.version" value="10.6.2"/>
+    <property name="http.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
+    <property name="user.home" value="/Users/ibm"/>
+    <property name="user.timezone" value="America/Chicago"/>
+    <property name="java.awt.printerjob" value="apple.awt.CPrinterJob"/>
+    <property name="java.specification.version" value="1.6"/>
+    <property name="file.encoding" value="MacRoman"/>
+    <property name="user.name" value="ibm"/>
+    <property name="java.class.path" value="/Users/ibm/Documents/Development/Samples/manualpartition/target/test-classes:/Users/ibm/Documents/Development/Samples/manualpartition/target/classes:/Users/ibm/.m2/repository/org/apache/openjpa/openjpa/1.2.1/openjpa-1.2.1.jar:/Users/ibm/.m2/repository/net/sourceforge/serp/serp/1.13.1/serp-1.13.1.jar:/Users/ibm/.m2/repository/junit/junit/4.7/junit-4.7.jar:/Users/ibm/.m2/repository/commons-logging/commons-logging/1.0.4/commons-logging-1.0.4.jar:/Users/ibm/.m2/repository/commons-lang/commons-lang/2.1/commons-lang-2.1.jar:/Users/ibm/.m2/repository/commons-collections/commons-collections/3.2/commons-collections-3.2.jar:/Users/ibm/.m2/repository/commons-pool/commons-pool/1.3/commons-pool-1.3.jar:/Users/ibm/.m2/repository/org/apache/geronimo/specs/geronimo-jms_1.1_spec/1.0.1/geronimo-jms_1.1_spec-1.0.1.jar:/Users/ibm/.m2/repository/org/apache/geronimo/specs/geronimo-jta_1.1_spec/1.1/geronimo-jta_1.1_spec-1.1.jar:/Users/ibm/.m2/repository/org/apache/geronimo/specs/geronimo-jpa_3.0_spec/1.0/geronimo-jpa_3.0_spec-1.0.jar:/Users/ibm/.m2/repository/mysql/mysql-connector-java/5.1.10/mysql-connector-java-5.1.10.jar:/Users/ibm/.m2/repository/com/ibm/websphere/objectgrid/objectgrid-server/7.0.0.1/objectgrid-server-7.0.0.1.jar:"/>
+    <property name="java.vm.specification.version" value="1.0"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="java.home" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Home"/>
+    <property name="java.specification.vendor" value="Sun Microsystems Inc."/>
+    <property name="user.language" value="en"/>
+    <property name="awt.toolkit" value="apple.awt.CToolkit"/>
+    <property name="java.vm.info" value="mixed mode"/>
+    <property name="java.version" value="1.6.0_17"/>
+    <property name="java.ext.dirs" value="/Library/Java/Extensions:/System/Library/Java/Extensions:/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Home/lib/ext"/>
+    <property name="sun.boot.class.path" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Classes/jsfd.jar:/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Classes/classes.jar:/System/Library/Frameworks/JavaVM.framework/Frameworks/JavaRuntimeSupport.framework/Resources/Java/JavaRuntimeSupport.jar:/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Classes/ui.jar:/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Classes/laf.jar:/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Classes/sunrsasign.jar:/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Classes/jsse.jar:/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Classes/jce.jar:/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Classes/charsets.jar"/>
+    <property name="java.vendor" value="Apple Inc."/>
+    <property name="localRepository" value="/Users/ibm/.m2/repository"/>
+    <property name="file.separator" value="/"/>
+    <property name="java.vendor.url.bug" value="http://bugreport.apple.com/"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="mrj.version" value="1060.1.6.0_17-248"/>
+    <property name="socksNonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
+    <property name="ftp.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
+    <property name="sun.cpu.isalist" value=""/>
+  </properties>
+  <testcase time="1.908" classname="com.devwebsphere.mp.test.TestObjectGridLocally" name="test_TestJPALoader">
+    <failure message="Exception: com.ibm.websphere.objectgrid.plugins.LoaderException: Exception caught in ObjectGrid Grid map PartitionMap: There were errors initializing your configuration: &lt;openjpa-1.2.1-r752877:753278 fatal user error&gt; org.apache.openjpa.util.UserException: A connection could not be obtained for driver class &quot;com.mysql.jdbc.Driver&quot; and URL &quot;jdbc:mysql://localhost/TEST&quot;.  You may have specified an invalid URL.
+	at org.apache.openjpa.jdbc.schema.DataSourceFactory.newConnectException(DataSourceFactory.java:256)
+	at org.apache.openjpa.jdbc.schema.DataSourceFactory.installDBDictionary(DataSourceFactory.java:242)
+	at org.apache.openjpa.jdbc.conf.JDBCConfigurationImpl.getConnectionFactory(JDBCConfigurationImpl.java:692)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.apache.openjpa.lib.conf.ConfigurationImpl.instantiateAll(ConfigurationImpl.java:288)
+	at org.apache.openjpa.conf.OpenJPAConfigurationImpl.instantiateAll(OpenJPAConfigurationImpl.java:1432)
+	at org.apache.openjpa.kernel.AbstractBrokerFactory.makeReadOnly(AbstractBrokerFactory.java:646)
+	at org.apache.openjpa.kernel.AbstractBrokerFactory.newBroker(AbstractBrokerFactory.java:183)
+	at org.apache.openjpa.kernel.DelegatingBrokerFactory.newBroker(DelegatingBrokerFactory.java:142)
+	at org.apache.openjpa.persistence.EntityManagerFactoryImpl.createEntityManager(EntityManagerFactoryImpl.java:192)
+	at org.apache.openjpa.persistence.EntityManagerFactoryImpl.createEntityManager(EntityManagerFactoryImpl.java:145)
+	at org.apache.openjpa.persistence.EntityManagerFactoryImpl.createEntityManager(EntityManagerFactoryImpl.java:56)
+	at com.ibm.websphere.objectgrid.jpa.JPATxCallback.getEntityManager(JPATxCallback.java:339)
+	at com.ibm.websphere.objectgrid.jpa.JPALoader.get(JPALoader.java:312)
+	at com.ibm.ws.objectgrid.map.BaseMap.getRaw(BaseMap.java:2959)
+	at com.ibm.ws.objectgrid.DiffMap.lookForKey(DiffMap.java:790)
+	at com.ibm.ws.objectgrid.DiffMap.get(DiffMap.java:670)
+	at com.ibm.ws.objectgrid.ObjectMapImpl.get(ObjectMapImpl.java:411)
+	at com.ibm.ws.objectgrid.ObjectMapImpl.get(ObjectMapImpl.java:385)
+	at com.devwebsphere.mp.test.TestObjectGridLocally.test_TestJPALoader(TestObjectGridLocally.java:38)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at junit.framework.TestCase.runTest(TestCase.java:168)
+	at junit.framework.TestCase.runBare(TestCase.java:134)
+	at junit.framework.TestResult$1.protect(TestResult.java:110)
+	at junit.framework.TestResult.runProtected(TestResult.java:128)
+	at junit.framework.TestResult.run(TestResult.java:113)
+	at junit.framework.TestCase.run(TestCase.java:124)
+	at junit.framework.TestSuite.runTest(TestSuite.java:232)
+	at junit.framework.TestSuite.run(TestSuite.java:227)
+	at org.junit.internal.runners.JUnit38ClassRunner.run(JUnit38ClassRunner.java:83)
+	at org.apache.maven.surefire.junit4.JUnit4TestSet.execute(JUnit4TestSet.java:62)
+	at org.apache.maven.surefire.suite.AbstractDirectoryTestSuite.executeTestSet(AbstractDirectoryTestSuite.java:140)
+	at org.apache.maven.surefire.suite.AbstractDirectoryTestSuite.execute(AbstractDirectoryTestSuite.java:127)
+	at org.apache.maven.surefire.Surefire.run(Surefire.java:177)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.apache.maven.surefire.booter.SurefireBooter.runSuitesInProcess(SurefireBooter.java:345)
+	at org.apache.maven.surefire.booter.SurefireBooter.main(SurefireBooter.java:1009)
+Caused by: com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:39)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:27)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:513)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:406)
+	at com.mysql.jdbc.SQLError.createCommunicationsException(SQLError.java:1074)
+	at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2214)
+	at com.mysql.jdbc.ConnectionImpl.&lt;init&gt;(ConnectionImpl.java:781)
+	at com.mysql.jdbc.JDBC4Connection.&lt;init&gt;(JDBC4Connection.java:46)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:39)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:27)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:513)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:406)
+	at com.mysql.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:352)
+	at com.mysql.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:284)
+	at org.apache.openjpa.jdbc.schema.SimpleDriverDataSource.getConnection(SimpleDriverDataSource.java:81)
+	at org.apache.openjpa.jdbc.schema.SimpleDriverDataSource.getConnection(SimpleDriverDataSource.java:60)
+	at org.apache.openjpa.lib.jdbc.DelegatingDataSource.getConnection(DelegatingDataSource.java:112)
+	at org.apache.openjpa.lib.jdbc.DecoratingDataSource.getConnection(DecoratingDataSource.java:93)
+	at org.apache.openjpa.jdbc.schema.DataSourceFactory.installDBDictionary(DataSourceFactory.java:234)
+	... 44 more
+Caused by: com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:39)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:27)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:513)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:406)
+	at com.mysql.jdbc.SQLError.createCommunicationsException(SQLError.java:1074)
+	at com.mysql.jdbc.MysqlIO.&lt;init&gt;(MysqlIO.java:343)
+	at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2137)
+	... 58 more
+Caused by: java.net.ConnectException: Connection refused
+	at java.net.PlainSocketImpl.socketConnect(Native Method)
+	at java.net.PlainSocketImpl.doConnect(PlainSocketImpl.java:333)
+	at java.net.PlainSocketImpl.connectToAddress(PlainSocketImpl.java:195)
+	at java.net.PlainSocketImpl.connect(PlainSocketImpl.java:182)
+	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:432)
+	at java.net.Socket.connect(Socket.java:525)
+	at java.net.Socket.connect(Socket.java:475)
+	at java.net.Socket.&lt;init&gt;(Socket.java:372)
+	at java.net.Socket.&lt;init&gt;(Socket.java:215)
+	at com.mysql.jdbc.StandardSocketFactory.connect(StandardSocketFactory.java:253)
+	at com.mysql.jdbc.MysqlIO.&lt;init&gt;(MysqlIO.java:292)
+	... 59 more
+" type="junit.framework.AssertionFailedError">junit.framework.AssertionFailedError: Exception: com.ibm.websphere.objectgrid.plugins.LoaderException: Exception caught in ObjectGrid Grid map PartitionMap: There were errors initializing your configuration: &lt;openjpa-1.2.1-r752877:753278 fatal user error&gt; org.apache.openjpa.util.UserException: A connection could not be obtained for driver class &quot;com.mysql.jdbc.Driver&quot; and URL &quot;jdbc:mysql://localhost/TEST&quot;.  You may have specified an invalid URL.
+	at org.apache.openjpa.jdbc.schema.DataSourceFactory.newConnectException(DataSourceFactory.java:256)
+	at org.apache.openjpa.jdbc.schema.DataSourceFactory.installDBDictionary(DataSourceFactory.java:242)
+	at org.apache.openjpa.jdbc.conf.JDBCConfigurationImpl.getConnectionFactory(JDBCConfigurationImpl.java:692)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.apache.openjpa.lib.conf.ConfigurationImpl.instantiateAll(ConfigurationImpl.java:288)
+	at org.apache.openjpa.conf.OpenJPAConfigurationImpl.instantiateAll(OpenJPAConfigurationImpl.java:1432)
+	at org.apache.openjpa.kernel.AbstractBrokerFactory.makeReadOnly(AbstractBrokerFactory.java:646)
+	at org.apache.openjpa.kernel.AbstractBrokerFactory.newBroker(AbstractBrokerFactory.java:183)
+	at org.apache.openjpa.kernel.DelegatingBrokerFactory.newBroker(DelegatingBrokerFactory.java:142)
+	at org.apache.openjpa.persistence.EntityManagerFactoryImpl.createEntityManager(EntityManagerFactoryImpl.java:192)
+	at org.apache.openjpa.persistence.EntityManagerFactoryImpl.createEntityManager(EntityManagerFactoryImpl.java:145)
+	at org.apache.openjpa.persistence.EntityManagerFactoryImpl.createEntityManager(EntityManagerFactoryImpl.java:56)
+	at com.ibm.websphere.objectgrid.jpa.JPATxCallback.getEntityManager(JPATxCallback.java:339)
+	at com.ibm.websphere.objectgrid.jpa.JPALoader.get(JPALoader.java:312)
+	at com.ibm.ws.objectgrid.map.BaseMap.getRaw(BaseMap.java:2959)
+	at com.ibm.ws.objectgrid.DiffMap.lookForKey(DiffMap.java:790)
+	at com.ibm.ws.objectgrid.DiffMap.get(DiffMap.java:670)
+	at com.ibm.ws.objectgrid.ObjectMapImpl.get(ObjectMapImpl.java:411)
+	at com.ibm.ws.objectgrid.ObjectMapImpl.get(ObjectMapImpl.java:385)
+	at com.devwebsphere.mp.test.TestObjectGridLocally.test_TestJPALoader(TestObjectGridLocally.java:38)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at junit.framework.TestCase.runTest(TestCase.java:168)
+	at junit.framework.TestCase.runBare(TestCase.java:134)
+	at junit.framework.TestResult$1.protect(TestResult.java:110)
+	at junit.framework.TestResult.runProtected(TestResult.java:128)
+	at junit.framework.TestResult.run(TestResult.java:113)
+	at junit.framework.TestCase.run(TestCase.java:124)
+	at junit.framework.TestSuite.runTest(TestSuite.java:232)
+	at junit.framework.TestSuite.run(TestSuite.java:227)
+	at org.junit.internal.runners.JUnit38ClassRunner.run(JUnit38ClassRunner.java:83)
+	at org.apache.maven.surefire.junit4.JUnit4TestSet.execute(JUnit4TestSet.java:62)
+	at org.apache.maven.surefire.suite.AbstractDirectoryTestSuite.executeTestSet(AbstractDirectoryTestSuite.java:140)
+	at org.apache.maven.surefire.suite.AbstractDirectoryTestSuite.execute(AbstractDirectoryTestSuite.java:127)
+	at org.apache.maven.surefire.Surefire.run(Surefire.java:177)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.apache.maven.surefire.booter.SurefireBooter.runSuitesInProcess(SurefireBooter.java:345)
+	at org.apache.maven.surefire.booter.SurefireBooter.main(SurefireBooter.java:1009)
+Caused by: com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:39)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:27)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:513)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:406)
+	at com.mysql.jdbc.SQLError.createCommunicationsException(SQLError.java:1074)
+	at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2214)
+	at com.mysql.jdbc.ConnectionImpl.&lt;init&gt;(ConnectionImpl.java:781)
+	at com.mysql.jdbc.JDBC4Connection.&lt;init&gt;(JDBC4Connection.java:46)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:39)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:27)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:513)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:406)
+	at com.mysql.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:352)
+	at com.mysql.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:284)
+	at org.apache.openjpa.jdbc.schema.SimpleDriverDataSource.getConnection(SimpleDriverDataSource.java:81)
+	at org.apache.openjpa.jdbc.schema.SimpleDriverDataSource.getConnection(SimpleDriverDataSource.java:60)
+	at org.apache.openjpa.lib.jdbc.DelegatingDataSource.getConnection(DelegatingDataSource.java:112)
+	at org.apache.openjpa.lib.jdbc.DecoratingDataSource.getConnection(DecoratingDataSource.java:93)
+	at org.apache.openjpa.jdbc.schema.DataSourceFactory.installDBDictionary(DataSourceFactory.java:234)
+	... 44 more
+Caused by: com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:39)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:27)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:513)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:406)
+	at com.mysql.jdbc.SQLError.createCommunicationsException(SQLError.java:1074)
+	at com.mysql.jdbc.MysqlIO.&lt;init&gt;(MysqlIO.java:343)
+	at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2137)
+	... 58 more
+Caused by: java.net.ConnectException: Connection refused
+	at java.net.PlainSocketImpl.socketConnect(Native Method)
+	at java.net.PlainSocketImpl.doConnect(PlainSocketImpl.java:333)
+	at java.net.PlainSocketImpl.connectToAddress(PlainSocketImpl.java:195)
+	at java.net.PlainSocketImpl.connect(PlainSocketImpl.java:182)
+	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:432)
+	at java.net.Socket.connect(Socket.java:525)
+	at java.net.Socket.connect(Socket.java:475)
+	at java.net.Socket.&lt;init&gt;(Socket.java:372)
+	at java.net.Socket.&lt;init&gt;(Socket.java:215)
+	at com.mysql.jdbc.StandardSocketFactory.connect(StandardSocketFactory.java:253)
+	at com.mysql.jdbc.MysqlIO.&lt;init&gt;(MysqlIO.java:292)
+	... 59 more
+
+	at junit.framework.Assert.fail(Assert.java:47)
+	at com.devwebsphere.mp.test.TestObjectGridLocally.test_TestJPALoader(TestObjectGridLocally.java:44)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at junit.framework.TestCase.runTest(TestCase.java:168)
+	at junit.framework.TestCase.runBare(TestCase.java:134)
+	at junit.framework.TestResult$1.protect(TestResult.java:110)
+	at junit.framework.TestResult.runProtected(TestResult.java:128)
+	at junit.framework.TestResult.run(TestResult.java:113)
+	at junit.framework.TestCase.run(TestCase.java:124)
+	at junit.framework.TestSuite.runTest(TestSuite.java:232)
+	at junit.framework.TestSuite.run(TestSuite.java:227)
+	at org.junit.internal.runners.JUnit38ClassRunner.run(JUnit38ClassRunner.java:83)
+	at org.apache.maven.surefire.junit4.JUnit4TestSet.execute(JUnit4TestSet.java:62)
+	at org.apache.maven.surefire.suite.AbstractDirectoryTestSuite.executeTestSet(AbstractDirectoryTestSuite.java:140)
+	at org.apache.maven.surefire.suite.AbstractDirectoryTestSuite.execute(AbstractDirectoryTestSuite.java:127)
+	at org.apache.maven.surefire.Surefire.run(Surefire.java:177)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.apache.maven.surefire.booter.SurefireBooter.runSuitesInProcess(SurefireBooter.java:345)
+	at org.apache.maven.surefire.booter.SurefireBooter.main(SurefireBooter.java:1009)
+</failure>
+    <system-out>[12/16/09 11:47:44:607 CST] 2fdb7df8 RuntimeInfo   I CWOBJ0903I: The internal version of WebSphere eXtreme Scale ObjectGrid is: v3.0.1 (7.0.0.0 FIX1)
+</system-out>
+    <system-err>56  myPU  INFO   [main] openjpa.Runtime - Starting OpenJPA 1.2.1
+244  myPU  INFO   [main] openjpa.jdbc.JDBC - Using dictionary class &quot;org.apache.openjpa.jdbc.sql.MySQLDictionary&quot;.
+</system-err>
+  </testcase>
+</testsuite>

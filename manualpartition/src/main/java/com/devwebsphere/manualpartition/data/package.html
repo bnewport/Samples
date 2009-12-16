@@ -1,0 +1,10 @@
+<html>
+<body>
+The main class here is the MyKey class. This shows how to override the routing for this key and look up
+how a specific key should be routed based on a database table which manually specifies which partition
+owns which keys. This allows customers to use business rules rather than a uniform mathematical hash
+to specify which partitions own which keys. This can be important when certain keys get a lot more requests
+than others, for example, stocks in a trading system.
+<p></p>
+The PartitionMapping POJO uses JPA read the desired partition for a key from a database table.
+</body></html>
