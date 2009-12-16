@@ -21,6 +21,10 @@ import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
+/**
+ * This implements a set verb. This will either update an existing entry or insert it.
+ *
+ */
 public class Set implements MapGridAgent
 {
 	public Serializable value;

@@ -1,0 +1,15 @@
+<html>
+<body>
+This package has the important classes to use the prototype. The grid is defined by the objectgrid.xml and deployment.xml
+in the resources directory. The grid uses an SQL database to store the data permanently. It's currently configured
+to use mysql. The DDL to create the mysql database is in the resources directory. The database connection attributes
+are in the objectgrid.xml file.
+<p/>
+The data stored in the database is read in to the grid lazily and updated asynchronously using write behind. This means
+you can't stop the grid until the write behind has finished writing any pending changes.
+<p/>
+Clients that want to use the grid should use the R class as their only interface to it. They should call the initialize
+method providing the catalog service end points as its parameter. The R class has static methods to access typed Maps
+which allow you to read/write to those typed maps.
+</body>
+</html>

@@ -20,6 +20,10 @@ import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
+/**
+ * This agent is used to atomically increment a long value by a delta amount
+ *
+ */
 public class Incr implements MapGridAgent 
 {
 	public long delta;

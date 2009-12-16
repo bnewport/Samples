@@ -20,6 +20,10 @@ import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
+/**
+ * This removes an entry if it exists.
+ *
+ */
 public class Remove implements MapGridAgent 
 {
 

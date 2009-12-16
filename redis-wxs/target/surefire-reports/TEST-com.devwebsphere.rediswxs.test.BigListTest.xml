@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite failures="0" time="0.001" errors="0" skipped="0" tests="0" name="com.devwebsphere.rediswxs.test.BigListTest">
+<testsuite failures="0" time="0" errors="0" skipped="0" tests="0" name="com.devwebsphere.rediswxs.test.BigListTest">
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
     <property name="sun.boot.library.path" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Libraries"/>
@@ -22,7 +22,7 @@
     <property name="basedir" value="/Users/ibm/Documents/Development/Samples/redis-wxs"/>
     <property name="java.endorsed.dirs" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Home/lib/endorsed"/>
     <property name="os.arch" value="x86_64"/>
-    <property name="surefire.real.class.path" value="/var/folders/xP/xP719TA0GYOqgk3Ud1U4yk+++TI/-Tmp-/surefirebooter6036079914726187608.jar"/>
+    <property name="surefire.real.class.path" value="/var/folders/xP/xP719TA0GYOqgk3Ud1U4yk+++TI/-Tmp-/surefirebooter654463961506848706.jar"/>
     <property name="java.io.tmpdir" value="/var/folders/xP/xP719TA0GYOqgk3Ud1U4yk+++TI/-Tmp-/"/>
     <property name="line.separator" value="
 "/>
@@ -30,7 +30,7 @@
     <property name="os.name" value="Mac OS X"/>
     <property name="sun.jnu.encoding" value="MacRoman"/>
     <property name="java.library.path" value=".:/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java"/>
-    <property name="surefire.test.class.path" value="/Users/ibm/Documents/Development/Samples/redis-wxs/target/test-classes:/Users/ibm/Documents/Development/Samples/redis-wxs/target/classes:/Users/ibm/.m2/repository/junit/junit/3.8.1/junit-3.8.1.jar:/Users/ibm/.m2/repository/com/ibm/websphere/objectgrid/objectgrid-server/7.0.0.1/objectgrid-server-7.0.0.1.jar:/Users/ibm/.m2/repository/geronimo-spec/geronimo-spec-servlet/2.4-rc4/geronimo-spec-servlet-2.4-rc4.jar:/Users/ibm/.m2/repository/com/billynewport/wxsutils/wxsutils/1.0-SNAPSHOT/wxsutils-1.0-SNAPSHOT.jar:/Users/ibm/.m2/repository/com/ibm/ibm-purequery-runtime/2.6/ibm-purequery-runtime-2.6.jar:/Users/ibm/.m2/repository/commons-dbcp/commons-dbcp/1.2.2/commons-dbcp-1.2.2.jar:/Users/ibm/.m2/repository/commons-pool/commons-pool/1.3/commons-pool-1.3.jar:/Users/ibm/.m2/repository/com/ibm/ibm-objectgrid-spring/7.0.0.1/ibm-objectgrid-spring-7.0.0.1.jar:"/>
+    <property name="surefire.test.class.path" value="/Users/ibm/Documents/Development/Samples/redis-wxs/target/test-classes:/Users/ibm/Documents/Development/Samples/redis-wxs/target/classes:/Users/ibm/.m2/repository/junit/junit/3.8.1/junit-3.8.1.jar:/Users/ibm/.m2/repository/com/ibm/websphere/objectgrid/objectgrid-server/7.0.0.1/objectgrid-server-7.0.0.1.jar:/Users/ibm/.m2/repository/geronimo-spec/geronimo-spec-servlet/2.4-rc4/geronimo-spec-servlet-2.4-rc4.jar:/Users/ibm/.m2/repository/com/billynewport/wxsutils/wxsutils/1.0-SNAPSHOT/wxsutils-1.0-SNAPSHOT.jar:/Users/ibm/.m2/repository/com/ibm/ibm-purequery-runtime/2.6/ibm-purequery-runtime-2.6.jar:/Users/ibm/.m2/repository/commons-dbcp/commons-dbcp/1.2.2/commons-dbcp-1.2.2.jar:/Users/ibm/.m2/repository/commons-pool/commons-pool/1.3/commons-pool-1.3.jar:/Users/ibm/.m2/repository/com/ibm/ibm-objectgrid-spring/7.0.0.1/ibm-objectgrid-spring-7.0.0.1.jar:/Users/ibm/.m2/repository/mysql/mysql-connector-java/5.1.10/mysql-connector-java-5.1.10.jar:/Users/ibm/.m2/repository/org/springframework/spring/2.5.6/spring-2.5.6.jar:/Users/ibm/.m2/repository/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar:"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
     <property name="java.class.version" value="50.0"/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Server Compiler"/>
@@ -42,7 +42,7 @@
     <property name="java.specification.version" value="1.6"/>
     <property name="file.encoding" value="MacRoman"/>
     <property name="user.name" value="ibm"/>
-    <property name="java.class.path" value="/Users/ibm/Documents/Development/Samples/redis-wxs/target/test-classes:/Users/ibm/Documents/Development/Samples/redis-wxs/target/classes:/Users/ibm/.m2/repository/junit/junit/3.8.1/junit-3.8.1.jar:/Users/ibm/.m2/repository/com/ibm/websphere/objectgrid/objectgrid-server/7.0.0.1/objectgrid-server-7.0.0.1.jar:/Users/ibm/.m2/repository/geronimo-spec/geronimo-spec-servlet/2.4-rc4/geronimo-spec-servlet-2.4-rc4.jar:/Users/ibm/.m2/repository/com/billynewport/wxsutils/wxsutils/1.0-SNAPSHOT/wxsutils-1.0-SNAPSHOT.jar:/Users/ibm/.m2/repository/com/ibm/ibm-purequery-runtime/2.6/ibm-purequery-runtime-2.6.jar:/Users/ibm/.m2/repository/commons-dbcp/commons-dbcp/1.2.2/commons-dbcp-1.2.2.jar:/Users/ibm/.m2/repository/commons-pool/commons-pool/1.3/commons-pool-1.3.jar:/Users/ibm/.m2/repository/com/ibm/ibm-objectgrid-spring/7.0.0.1/ibm-objectgrid-spring-7.0.0.1.jar:"/>
+    <property name="java.class.path" value="/Users/ibm/Documents/Development/Samples/redis-wxs/target/test-classes:/Users/ibm/Documents/Development/Samples/redis-wxs/target/classes:/Users/ibm/.m2/repository/junit/junit/3.8.1/junit-3.8.1.jar:/Users/ibm/.m2/repository/com/ibm/websphere/objectgrid/objectgrid-server/7.0.0.1/objectgrid-server-7.0.0.1.jar:/Users/ibm/.m2/repository/geronimo-spec/geronimo-spec-servlet/2.4-rc4/geronimo-spec-servlet-2.4-rc4.jar:/Users/ibm/.m2/repository/com/billynewport/wxsutils/wxsutils/1.0-SNAPSHOT/wxsutils-1.0-SNAPSHOT.jar:/Users/ibm/.m2/repository/com/ibm/ibm-purequery-runtime/2.6/ibm-purequery-runtime-2.6.jar:/Users/ibm/.m2/repository/commons-dbcp/commons-dbcp/1.2.2/commons-dbcp-1.2.2.jar:/Users/ibm/.m2/repository/commons-pool/commons-pool/1.3/commons-pool-1.3.jar:/Users/ibm/.m2/repository/com/ibm/ibm-objectgrid-spring/7.0.0.1/ibm-objectgrid-spring-7.0.0.1.jar:/Users/ibm/.m2/repository/mysql/mysql-connector-java/5.1.10/mysql-connector-java-5.1.10.jar:/Users/ibm/.m2/repository/org/springframework/spring/2.5.6/spring-2.5.6.jar:/Users/ibm/.m2/repository/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar:"/>
     <property name="java.vm.specification.version" value="1.0"/>
     <property name="sun.arch.data.model" value="64"/>
     <property name="java.home" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Home"/>
