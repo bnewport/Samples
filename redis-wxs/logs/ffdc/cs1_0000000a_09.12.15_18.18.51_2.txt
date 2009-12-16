@@ -1,0 +1,103 @@
+------Start of DE processing------ = [12/15/09 18:18:51:703 CST] , key = com.ibm.websphere.objectgrid.plugins.TransactionCallbackException com.ibm.ws.objectgrid.ShardImpl.ShardImpl 243
+Exception = com.ibm.websphere.objectgrid.plugins.TransactionCallbackException
+Source = com.ibm.ws.objectgrid.ShardImpl.ShardImpl
+probeid = 243
+Stack Dump = com.ibm.websphere.objectgrid.plugins.TransactionCallbackException: java.lang.RuntimeException: Cannot open driver
+	at com.ibm.ws.objectgrid.ObjectGridImpl.initialize(ObjectGridImpl.java:1249)
+	at com.ibm.ws.objectgrid.ShardImpl.<init>(ShardImpl.java:235)
+	at com.ibm.ws.objectgrid.container.ObjectGridContainerImpl.activate(ObjectGridContainerImpl.java:510)
+	at com.ibm.ws.objectgrid.container.ObjectGridContainerImpl.doContainerWork(ObjectGridContainerImpl.java:384)
+	at com.ibm.ws.objectgrid.container.ObjectGridContainerImpl.doWork(ObjectGridContainerImpl.java:308)
+	at com.ibm.ws.objectgrid.container._IDLObjectGridContainerStub.doWork(_IDLObjectGridContainerStub.java:111)
+	at com.ibm.ws.objectgrid.catalog.placement.WorkExecutorImpl$WorkExecutorRunnable.run(WorkExecutorImpl.java:101)
+	at com.ibm.ws.util.ThreadPool$Worker.run(ThreadPool.java:1473)
+Caused by: java.lang.RuntimeException: Cannot open driver
+	at com.devwebsphere.purequery.loader.PQTxCallback.initialize(PQTxCallback.java:131)
+	at com.ibm.ws.objectgrid.ObjectGridImpl.initialize(ObjectGridImpl.java:1241)
+	... 7 more
+Caused by: org.apache.commons.dbcp.SQLNestedException: Cannot create JDBC driver of class '' for connect URL 'jdbc:mysql://localhost/chirp'
+	at org.apache.commons.dbcp.BasicDataSource.createDataSource(BasicDataSource.java:1150)
+	at org.apache.commons.dbcp.BasicDataSource.getConnection(BasicDataSource.java:880)
+	at com.devwebsphere.purequery.loader.PQTxCallback.initialize(PQTxCallback.java:124)
+	... 8 more
+Caused by: java.sql.SQLException: No suitable driver
+	at java.sql.DriverManager.getDriver(DriverManager.java:264)
+	at org.apache.commons.dbcp.BasicDataSource.createDataSource(BasicDataSource.java:1143)
+	... 10 more
+
+Dump of callerThis = 
+Object type = com.ibm.ws.objectgrid.ShardImpl
+com.ibm.ws.objectgrid.ShardImpl@4ae1b0db
+
+Exception = com.ibm.websphere.objectgrid.plugins.TransactionCallbackException
+Source = com.ibm.ws.objectgrid.ShardImpl.ShardImpl
+probeid = 243
+Dump of callerThis = 
+Object type = com.ibm.ws.objectgrid.ShardImpl
+  __ids = 
+    [0] = IDL:com.ibm.ws/objectgrid/partition/IDLShard:1.0
+    [1] = IDL:com.ibm.ws/objectgrid/SessionProxy:1.0
+  _methods = 
+    table = 
+      [0] = null
+      [1] = java.util.Hashtable$Entry@735ba5f7
+      [2] = java.util.Hashtable$Entry@5ed364c
+      [3] = null
+      [4] = null
+      [5] = java.util.Hashtable$Entry@1887ba9e
+      [6] = java.util.Hashtable$Entry@76ece7a6
+      [7] = null
+      [8] = java.util.Hashtable$Entry@3b5c8049
+      [9] = null
+      [10] = null
+      [11] = java.util.Hashtable$Entry@35ea5711
+      [12] = null
+      [13] = java.util.Hashtable$Entry@2bfa38be
+      [14] = null
+      [15] = null
+      [16] = java.util.Hashtable$Entry@38a35880
+      [17] = null
+      [18] = null
+      [19] = java.util.Hashtable$Entry@6c07588c
+      [20] = null
+      [21] = null
+      [22] = null
+      [23] = null
+      [24] = null
+      [25] = null
+      [26] = null
+      [27] = null
+      [28] = null
+      [29] = java.util.Hashtable$Entry@564686bc
+      [30] = java.util.Hashtable$Entry@3037cce4
+      [31] = java.util.Hashtable$Entry@1f6ca577
+      [32] = null
+      [33] = null
+      [34] = null
+      [35] = null
+      [36] = null
+      [37] = null
+      [38] = java.util.Hashtable$Entry@15e337bf
+      [39] = java.util.Hashtable$Entry@7860e7d2
+      [40] = null
+      [41] = null
+      [42] = java.util.Hashtable$Entry@2213c9bc
+      [43] = null
+      [44] = null
+      [45] = null
+      [46] = null
+    count = 19
+    threshold = 35
+    loadFactor = 0.75
+    modCount = 21
+    serialVersionUID = 1421746759512286392
+    keySet = null
+    entrySet = null
+    values = null
+    KEYS = 0
+    VALUES = 1
+    ENTRIES = 2
+    emptyEnumerator = java.util.Hashtable$EmptyEnumerator@2bbe71fd
+    emptyIterator = java.util.Hashtable$EmptyIterator@642daf7a
+  _delegate = null
+

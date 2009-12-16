@@ -1,0 +1,95 @@
+------Start of DE processing------ = [12/15/09 18:18:51:765 CST] , key = java.lang.RuntimeException com.ibm.ws.objectgrid.container.ObjectGridContainerImpl.activate 266
+Exception = java.lang.RuntimeException
+Source = com.ibm.ws.objectgrid.container.ObjectGridContainerImpl.activate
+probeid = 266
+Stack Dump = java.lang.RuntimeException: com.ibm.websphere.objectgrid.plugins.TransactionCallbackException: java.lang.RuntimeException: Cannot open driver
+	at com.ibm.ws.objectgrid.ShardImpl.<init>(ShardImpl.java:300)
+	at com.ibm.ws.objectgrid.container.ObjectGridContainerImpl.activate(ObjectGridContainerImpl.java:510)
+	at com.ibm.ws.objectgrid.container.ObjectGridContainerImpl.doContainerWork(ObjectGridContainerImpl.java:384)
+	at com.ibm.ws.objectgrid.container.ObjectGridContainerImpl.doWork(ObjectGridContainerImpl.java:308)
+	at com.ibm.ws.objectgrid.container._IDLObjectGridContainerStub.doWork(_IDLObjectGridContainerStub.java:111)
+	at com.ibm.ws.objectgrid.catalog.placement.WorkExecutorImpl$WorkExecutorRunnable.run(WorkExecutorImpl.java:101)
+	at com.ibm.ws.util.ThreadPool$Worker.run(ThreadPool.java:1473)
+Caused by: com.ibm.websphere.objectgrid.plugins.TransactionCallbackException: java.lang.RuntimeException: Cannot open driver
+	at com.ibm.ws.objectgrid.ObjectGridImpl.initialize(ObjectGridImpl.java:1249)
+	at com.ibm.ws.objectgrid.ShardImpl.<init>(ShardImpl.java:235)
+	... 6 more
+Caused by: java.lang.RuntimeException: Cannot open driver
+	at com.devwebsphere.purequery.loader.PQTxCallback.initialize(PQTxCallback.java:131)
+	at com.ibm.ws.objectgrid.ObjectGridImpl.initialize(ObjectGridImpl.java:1241)
+	... 7 more
+Caused by: org.apache.commons.dbcp.SQLNestedException: Cannot create JDBC driver of class '' for connect URL 'jdbc:mysql://localhost/chirp'
+	at org.apache.commons.dbcp.BasicDataSource.createDataSource(BasicDataSource.java:1150)
+	at org.apache.commons.dbcp.BasicDataSource.getConnection(BasicDataSource.java:880)
+	at com.devwebsphere.purequery.loader.PQTxCallback.initialize(PQTxCallback.java:124)
+	... 8 more
+Caused by: java.sql.SQLException: No suitable driver
+	at java.sql.DriverManager.getDriver(DriverManager.java:264)
+	at org.apache.commons.dbcp.BasicDataSource.createDataSource(BasicDataSource.java:1143)
+	... 10 more
+
+Dump of callerThis = 
+Object type = com.ibm.ws.objectgrid.container.ObjectGridContainerImpl
+com.ibm.ws.objectgrid.container.ObjectGridContainerImpl@1df4a7c7
+
+parm[0] = com.ibm.ws.objectgrid.partition.IDLPartitionInfoImpl@356b60d3#590942154[0 DefaultDomain:Grid:IBM_SYSTEM_ENTITYMANAGER_MAPSET:0{IBM_SYSTEM_ENTITYMETADATA_LOOKUP,IBM_SYSTEM_ENTITYMETADATA_CACHE,IBM_SYSTEM_CLASS_DESCRIPTORS_CACHE,IBM_SYSTEM_ENTITYMETADATA_ID_CACHE} primary=com.ibm.ws.objectgrid.partition.IDLPrimaryShardInfoImpl@773ba8d6[:->cs1_C-0]]
+Exception = java.lang.RuntimeException
+Source = com.ibm.ws.objectgrid.container.ObjectGridContainerImpl.activate
+probeid = 266
+Dump of callerThis = 
+Object type = com.ibm.ws.objectgrid.container.ObjectGridContainerImpl
+  __ids = 
+    [0] = IDL:com.ibm.ws/objectgrid/container/IDLObjectGridContainer:1.0
+  _methods = 
+    table = 
+      [0] = java.util.Hashtable$Entry@438b6281
+      [1] = java.util.Hashtable$Entry@73f025cb
+      [2] = null
+      [3] = null
+      [4] = null
+      [5] = java.util.Hashtable$Entry@1b416de4
+      [6] = java.util.Hashtable$Entry@6495a1b6
+      [7] = null
+      [8] = java.util.Hashtable$Entry@1babe751
+      [9] = null
+      [10] = java.util.Hashtable$Entry@32df8508
+    count = 8
+    threshold = 8
+    loadFactor = 0.75
+    modCount = 8
+    serialVersionUID = 1421746759512286392
+    keySet = null
+    entrySet = null
+    values = null
+    KEYS = 0
+    VALUES = 1
+    ENTRIES = 2
+    emptyEnumerator = java.util.Hashtable$EmptyEnumerator@2bbe71fd
+    emptyIterator = java.util.Hashtable$EmptyIterator@642daf7a
+  _delegate = 
+    _poa = 
+      reason = This is a locally constrained object.
+    _orb = 
+      orb_properties = orb.properties
+      CLASS = com.ibm.rmi.iiop.ORB
+      giopTransport = com.ibm.rmi.iiop.GIOPImpl@48e5707f
+      transientServerId = -886372807
+      threadGroup = java.lang.ThreadGroup@1f3c5cc8
+      orbLoadTime = 701646
+      lastTransientServerId = -886372807
+      instanceCounter = 1
+      thisInstanceNumber = 0
+      oldConnectRemoteArgs = [Ljava.lang.Class;@5bed2ccd
+      hasOldConnectRemote = false
+      currentCreators = java.util.Hashtable@15e31f72
+      exitHook = com.ibm.rmi.iiop.ORB$2$1@524c71d2
+      streamFormatCtx = null
+      commTraceEnabled = false
+      commTraceVarSet = false
+      interop = com.ibm.rmi.util.Interop@56606032
+      ORBClassKey = org.omg.CORBA.ORBClass
+      ORBSingletonClassKey = org.omg.CORBA.ORBSingletonClass
+      defaultORB = com.ibm.CORBA.iiop.ORB
+      defaultORBSingleton = com.ibm.rmi.corba.ORBSingleton
+      singleton = null
+

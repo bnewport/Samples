@@ -1,0 +1,33 @@
+------Start of DE processing------ = [12/15/09 18:18:51:652 CST] , key = java.lang.RuntimeException com.ibm.ws.objectgrid.ObjectGridImpl.initialize 554
+Exception = java.lang.RuntimeException
+Source = com.ibm.ws.objectgrid.ObjectGridImpl.initialize
+probeid = 554
+Stack Dump = java.lang.RuntimeException: Cannot open driver
+	at com.devwebsphere.purequery.loader.PQTxCallback.initialize(PQTxCallback.java:131)
+	at com.ibm.ws.objectgrid.ObjectGridImpl.initialize(ObjectGridImpl.java:1241)
+	at com.ibm.ws.objectgrid.ShardImpl.<init>(ShardImpl.java:235)
+	at com.ibm.ws.objectgrid.container.ObjectGridContainerImpl.activate(ObjectGridContainerImpl.java:510)
+	at com.ibm.ws.objectgrid.container.ObjectGridContainerImpl.doContainerWork(ObjectGridContainerImpl.java:384)
+	at com.ibm.ws.objectgrid.container.ObjectGridContainerImpl.doWork(ObjectGridContainerImpl.java:308)
+	at com.ibm.ws.objectgrid.container._IDLObjectGridContainerStub.doWork(_IDLObjectGridContainerStub.java:111)
+	at com.ibm.ws.objectgrid.catalog.placement.WorkExecutorImpl$WorkExecutorRunnable.run(WorkExecutorImpl.java:101)
+	at com.ibm.ws.util.ThreadPool$Worker.run(ThreadPool.java:1473)
+Caused by: org.apache.commons.dbcp.SQLNestedException: Cannot create JDBC driver of class '' for connect URL 'jdbc:mysql://localhost/chirp'
+	at org.apache.commons.dbcp.BasicDataSource.createDataSource(BasicDataSource.java:1150)
+	at org.apache.commons.dbcp.BasicDataSource.getConnection(BasicDataSource.java:880)
+	at com.devwebsphere.purequery.loader.PQTxCallback.initialize(PQTxCallback.java:124)
+	... 8 more
+Caused by: java.sql.SQLException: No suitable driver
+	at java.sql.DriverManager.getDriver(DriverManager.java:264)
+	at org.apache.commons.dbcp.BasicDataSource.createDataSource(BasicDataSource.java:1143)
+	... 10 more
+
+Dump of callerThis = 
+null
+
+Exception = java.lang.RuntimeException
+Source = com.ibm.ws.objectgrid.ObjectGridImpl.initialize
+probeid = 554
+Dump of callerThis = 
+null
+

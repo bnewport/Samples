@@ -1,0 +1,34 @@
+------Start of DE processing------ = [12/15/09 18:18:51:648 CST] , key = java.lang.reflect.InvocationTargetException com.ibm.ws.objectgrid.config.PropertySetter.setProperty() 161
+Exception = java.lang.reflect.InvocationTargetException
+Source = com.ibm.ws.objectgrid.config.PropertySetter.setProperty()
+probeid = 161
+Stack Dump = java.lang.reflect.InvocationTargetException
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at com.ibm.ws.objectgrid.config.PropertySetter.setProperty(PropertySetter.java:143)
+	at com.ibm.ws.objectgrid.config.ObjectGridConfigurationImpl.configureBackingMap(ObjectGridConfigurationImpl.java:947)
+	at com.ibm.ws.objectgrid.config.ObjectGridConfigurationImpl.completeInitialization(ObjectGridConfigurationImpl.java:765)
+	at com.ibm.ws.objectgrid.config.ObjectGridConfigurationImpl.getClusteredObjectGrid(ObjectGridConfigurationImpl.java:430)
+	at com.ibm.ws.objectgrid.ShardImpl.createObjectGrid(ShardImpl.java:384)
+	at com.ibm.ws.objectgrid.ShardImpl.<init>(ShardImpl.java:212)
+	at com.ibm.ws.objectgrid.container.ObjectGridContainerImpl.activate(ObjectGridContainerImpl.java:510)
+	at com.ibm.ws.objectgrid.container.ObjectGridContainerImpl.doContainerWork(ObjectGridContainerImpl.java:384)
+	at com.ibm.ws.objectgrid.container.ObjectGridContainerImpl.doWork(ObjectGridContainerImpl.java:308)
+	at com.ibm.ws.objectgrid.container._IDLObjectGridContainerStub.doWork(_IDLObjectGridContainerStub.java:111)
+	at com.ibm.ws.objectgrid.catalog.placement.WorkExecutorImpl$WorkExecutorRunnable.run(WorkExecutorImpl.java:101)
+	at com.ibm.ws.util.ThreadPool$Worker.run(ThreadPool.java:1473)
+Caused by: java.lang.IllegalArgumentException: Unknown class name: data.list.ListHead
+	at com.devwebsphere.purequery.loader.GenericPQLoader.setClassName(GenericPQLoader.java:60)
+	... 16 more
+
+Dump of callerThis = 
+null
+
+Exception = java.lang.reflect.InvocationTargetException
+Source = com.ibm.ws.objectgrid.config.PropertySetter.setProperty()
+probeid = 161
+Dump of callerThis = 
+null
+
