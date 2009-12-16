@@ -6,7 +6,6 @@ com.devwebsphere.rediswxs.agent.list
 com.devwebsphere.rediswxs.agent.set
 com.devwebsphere.rediswxs.data.list
 com.devwebsphere.rediswxs.data.set
-com.devwebsphere.rediswxs.data.test
 com.devwebsphere.rediswxs.jmx
 com.devwebsphere.wxs.asyncservice
 com.devwebsphere.wxs.asyncserviceimpl
