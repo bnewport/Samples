@@ -341,12 +341,16 @@ public class WXSUtils
 //			ServerFactory.getServerProperties().setTraceFileName("/Users/bnewport/trace.log");
 			com.ibm.websphere.objectgrid.server.Server server = ServerFactory.getInstance();
 			
+			System.out.println("Started catalog");
 			URL serverObjectgridXML =  WXSUtils.class.getResource(og_xml_path);
 			URL deployment =  WXSUtils.class.getResource(dep_xml_path);
+			System.out.println("OG is " + serverObjectgridXML.toString() + " DP is " + deployment.toString());
 			DeploymentPolicy policy = DeploymentPolicyFactory.createDeploymentPolicy(deployment, serverObjectgridXML);
 			container = server.createContainer(policy);
+			System.out.println("Container started");
 			ClientClusterContext ccc = ObjectGridManagerFactory.getObjectGridManager().connect(null, null);
 			ObjectGrid client = ObjectGridManagerFactory.getObjectGridManager().getObjectGrid(ccc, gridName);
+			System.out.println("Got client");
 			return client;
 		}
 		catch(Exception e)

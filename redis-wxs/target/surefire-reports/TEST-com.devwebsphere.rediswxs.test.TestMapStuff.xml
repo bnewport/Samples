@@ -22,7 +22,7 @@
     <property name="basedir" value="/Users/ibm/Documents/Development/Samples/redis-wxs"/>
     <property name="java.endorsed.dirs" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Home/lib/endorsed"/>
     <property name="os.arch" value="x86_64"/>
-    <property name="surefire.real.class.path" value="/var/folders/xP/xP719TA0GYOqgk3Ud1U4yk+++TI/-Tmp-/surefirebooter4264662421000186763.jar"/>
+    <property name="surefire.real.class.path" value="/var/folders/xP/xP719TA0GYOqgk3Ud1U4yk+++TI/-Tmp-/surefirebooter6251011869374171312.jar"/>
     <property name="java.io.tmpdir" value="/var/folders/xP/xP719TA0GYOqgk3Ud1U4yk+++TI/-Tmp-/"/>
     <property name="line.separator" value="
 "/>

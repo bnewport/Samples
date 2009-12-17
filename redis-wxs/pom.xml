@@ -77,4 +77,34 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+  	<profile>
+  		<id>singleServerGrid</id>
+  		<build>
+  			<plugins>
+  				<plugin>
+  					<groupId>org.codehaus.mojo</groupId>
+     				<artifactId>exec-maven-plugin</artifactId>
+     				<version>1.1.1</version>
+     				<executions>
+     					<execution>
+     						<phase>test</phase>
+     						<goals>
+     							<goal>java</goal>
+     						</goals>
+     						<configuration>
+	 							<mainClass>com.devwebsphere.wxsutils.StartSingleJVMGrid</mainClass>
+     							<arguments>
+     								<argument>Grid</argument>
+     								<argument>/objectgrid.xml</argument>
+     								<argument>/deployment.xml</argument>
+     							</arguments>
+     						</configuration>
+     					</execution>
+     				</executions>
+  				</plugin>
+  			</plugins>
+  		</build>
+  	</profile>
+  </profiles>
 </project>
