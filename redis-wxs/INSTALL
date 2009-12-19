@@ -1,0 +1,47 @@
+First, get maven from:
+http://maven.apache.org/
+
+
+
+Next, grab WebSphere eXtreme Scale trial edition from:
+http://www.ibm.com/developerworks/downloads/ws/wsdg/index.html
+
+Unzip the trial and then add the ogspring and objectgrid.jar files to
+the local maven repository like this:
+
+mvn install:install-file
+  -Dfile=XXX/lib/objectgrid.jar
+  -DgroupId=com.ibm.websphere.objectgrid
+  -DartifactId=objectgrid-server
+  -Dversion=7.0.0.1
+  -Dpackaging=jar
+
+mvn install:install-file
+  -Dfile=XXX/lib/ogspring.jar
+  -DgroupId=com.ibm
+  -DartifactId=ibm-objectgrid-spring
+  -Dversion=7.0.0.1
+  -Dpackaging=jar
+  
+Add this to your .profile or start up script file
+
+MAVEN_OPT="-Xmx512M -Djava.endorsed.dirs=/Users/ibm/Documents/Development/og7001/lib/endorsed -Dcom.sun.management.jmxremote"
+
+Grab wxsutils from http://www.github.com/bnewport and build/install it using maven
+
+Download the IBM purequery trial from here:
+
+http://www-01.ibm.com/software/data/optim/purequery-runtime/
+
+Install it and find the pdq.jar file. Add this to the maven repository:
+
+mvn install:install-file
+  -Dfile=XXX/lib/ogspring.jar
+  -DgroupId=com.ibm
+  -DartifactId=ibm-purequery-runtime
+  -Dversion=2.6
+  -Dpackaging=jar
+
+Now install mysql, and using phpadmin or something similar make a database called chirp
+and use the MYSQLDLL.SQL script in /src/main/resources to create the database
+
