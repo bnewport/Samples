@@ -46,4 +46,33 @@
       </plugin>
     </plugins>
   </reporting>
+  <profiles>
+  	<profile>
+  		<id>startSingleCatalog</id>
+  		<build>
+  			<plugins>
+  				<plugin>
+  					<groupId>org.codehaus.mojo</groupId>
+     				<artifactId>exec-maven-plugin</artifactId>
+     				<version>1.1.1</version>
+     				<executions>
+     					<execution>
+     						<phase>test</phase>
+     						<goals>
+     							<goal>java</goal>
+     						</goals>
+     						<configuration>
+	 							<mainClass>com.devwebsphere.wxsutils.StartSingleCatalog</mainClass>
+     							<arguments>
+     								<argument>cs0</argument>
+     								<argument>cs0:localhost:6601:6602</argument>
+     							</arguments>
+     						</configuration>
+     					</execution>
+     				</executions>
+  				</plugin>
+  			</plugins>
+  		</build>
+  	</profile>
+  </profiles>
 </project>

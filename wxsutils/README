@@ -1,0 +1,8 @@
+This module has some utility classes for customers using IBM WebSphere eXtreme Scale. 
+The maven pom module includes some special profiles to make getting going easier.
+
+This command will start a catalog server on the box. It's bound to localhost so it will only work
+for local container JVMs. You can change localhost to the real hostname in the pom.xml for a 'proper'
+hostname
+
+mvn test -PstartSingleCatalog -e

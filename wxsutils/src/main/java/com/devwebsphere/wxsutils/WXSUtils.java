@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ClientClusterContext;
 import com.ibm.websphere.objectgrid.ObjectGrid;
+import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridManagerFactory;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.Session;
@@ -316,7 +317,28 @@ public class WXSUtils
 	}
 	
 	static Container container;
-	
+
+	public static void startCatalogServer(String cep, String catName)
+	{
+		try
+		{
+			// start a collocated catalog server which makes developing
+			// in an IDE much easier.
+			ServerFactory.getCatalogProperties().setCatalogClusterEndpoints(cep);
+			ServerFactory.getCatalogProperties().setCatalogServer(true);
+			ServerFactory.getCatalogProperties().setQuorum(false);
+			ServerFactory.getServerProperties().setServerName(catName);
+			ServerFactory.getServerProperties().setSystemStreamsToFileEnabled(false); // output goes to console, not a file
+			
+			// this starts the server
+			com.ibm.websphere.objectgrid.server.Server server = ServerFactory.getInstance();
+		}
+		catch(Exception e)
+		{
+			throw new ObjectGridRuntimeException(e);
+		}
+		
+	}
 	/**
 	 * This is a boiler plate method to create a 'grid' within a single JVM. Both xml files must be loadable from the
 	 * class path. This will take about 20 seconds on a 2.4Ghz Core 2 Duo type processor. This makes it easy to do debugging of
@@ -329,16 +351,8 @@ public class WXSUtils
 	{
 		try
 		{
-			// start a collocated catalog server which makes developing
-			// in an IDE much easier.
-			ServerFactory.getCatalogProperties().setCatalogClusterEndpoints("cs1:localhost:6601:6602");
-			ServerFactory.getCatalogProperties().setCatalogServer(true);
-			ServerFactory.getCatalogProperties().setQuorum(false);
-			ServerFactory.getServerProperties().setServerName("cs1");
-			ServerFactory.getServerProperties().setSystemStreamsToFileEnabled(false); // output goes to console, not a file
+			startCatalogServer("cs1:localhost:6601:6602", "cs1");
 			
-//			ServerFactory.getServerProperties().setTraceSpecification("com.ibm.ws.objectgrid.asyncservice.*=all=enabled:com.ibm.ws.objectgrid.datagrid.*=all=enabled");
-//			ServerFactory.getServerProperties().setTraceFileName("/Users/bnewport/trace.log");
 			com.ibm.websphere.objectgrid.server.Server server = ServerFactory.getInstance();
 			
 			System.out.println("Started catalog");

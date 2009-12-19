@@ -1,0 +1,19 @@
+First, get maven from:
+http://maven.apache.org/
+
+Second grab WebSphere eXtreme Scale trial edition from:
+http://www.ibm.com/developerworks/downloads/ws/wsdg/index.html
+
+Unzip the trial and then add the objectgrid.jar files to
+the local maven repository like this:
+
+mvn install:install-file
+  -Dfile=XXX/lib/objectgrid.jar
+  -DgroupId=com.ibm.websphere.objectgrid
+  -DartifactId=objectgrid-server
+  -Dversion=7.0.0.1
+  -Dpackaging=jar
+  
+Add this to your .profile or start up script file
+
+MAVEN_OPT="-Xmx512M -Djava.endorsed.dirs=..../og7001/lib/endorsed -Dcom.sun.management.jmxremote"
