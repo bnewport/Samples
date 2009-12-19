@@ -1,0 +1,202 @@
+BODY {
+	background-image: url('../images/green_bg.jpg');
+	background-repeat: repeat;
+	background-color: #6ec200;
+    font-family: 'Arial';
+    margin: 0px;
+    padding: 0px;
+}
+
+#page {
+    margin: 0px;
+    width: 896px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0px;
+}
+
+.content {
+    background-color:white;
+    margin: 0px;
+    padding: 15px;
+}
+
+#header {
+	position:relative;
+    margin-bottom: -5px;
+}
+
+#navbar {
+    position:absolute;
+    top:5px;
+    right:10px;
+    font-size:12px;
+    color: #aaa;
+}
+
+#navbar a:link{
+    text-decoration: none;
+    font-size: 12px;
+    color: #00a1cf;
+}
+
+#navbar a:active{
+    text-decoration: none;
+    font-size: 12px;
+    font-color: #898989;
+    font-weight: bold;
+}	
+
+#navbar a:visited {
+    text-decoration: none;
+    font-size: 12px;
+    color: #00a1cf;
+}
+
+#footer {
+	margin: 0px;
+    font-size:12px;
+    color: #666;
+    text-align:center;
+}
+
+#welcomebox {
+	margin: 0px;
+	padding: 10px;
+	font-size: 18px;
+	color: #898989;
+	background-color:white;
+}
+#welcomebox li{
+	font-size: 12px;
+	color: #898989;
+}
+
+#welcomebox a{
+	text-decoration: none;
+	color: #00a1cf;
+}
+
+.register {
+	background-image: url('../images/register_bg.jpg');
+	font-size: 12px;
+	padding: 10px;
+}
+.login {
+	background-image: url('../images/login_bg.jpg');
+	font-size: 12px;
+	padding: 10px;
+	valign: top;
+}
+
+.post {
+	background-image: url('../images/dotted_line.jpg');
+	background-repeat: no-repeat;
+    margin:10px;
+    padding:10px;
+	font-size: 18px;
+	font-weight: normal;
+    color:#898989;
+}
+
+.post i {
+    font-size:12px;
+    color:#d2d2d2;
+}
+
+#postform {
+    position:relative;
+    margin:0px;
+}
+
+.update {
+	background-image: url('../images/update_box.jpg');
+	padding: 10px;
+    font-size: 18px;
+	color: #898989;
+    width: 650px;	
+}
+
+.rightlink {
+    text-align:right;
+    margin-right:30px;
+    color:#aaa;
+}
+
+.rightlink a {
+    color: #f55000;
+    text-decoration: none;
+}
+
+a.username {
+    text-decoration: none;
+    font-weight:bold;
+    font-size:18px;
+    color: #00a1cf;
+}
+
+h2.username {
+    color:#00a1cf;
+    margin-left:15px;
+}
+
+a.button {
+    margin-left:15px;
+    text-decoration:none;
+    border: 1px #aaa dotted;
+    padding:3px;
+    background-color:#eee;
+    color:#444;
+    font-size:12px;
+}
+
+#homeinfobox {
+	position:absolute;
+    right:0px;
+    top:0px;
+    background-color: #f4f4f4;
+    width:175px;
+    font-size:12px;
+    font-weight: bold;
+    color: #898989;
+    padding:3px;
+}
+
+a.follower {
+    text-decoration: none;
+    font-weight:normal;
+    font-size:12px;
+    color: #00a1cf;
+}
+
+#timeline {
+    font-size:18px;
+    color: #898989;
+    background-color:white;
+    margin:0px;
+    padding:10px;
+}
+
+#users a.username {
+	text-decoration: none;
+    font-weight:normal;
+    font-size:12px;
+    color: #00a1cf;
+}
+
+#error {
+	font-size:18px;
+    color: #898989;
+}
+
+#error a:link{
+    text-decoration: none;
+    font-size: 12px;
+    color: #00a1cf;
+}
+
+#error a:visited{
+    text-decoration: none;
+    font-size: 12px;
+    color: #00a1cf;
+}
