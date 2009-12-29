@@ -14,6 +14,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Map;
 
+import com.devwebsphere.purequery.loader.ScalarKey;
 import com.devwebsphere.rediswxs.data.set.SetHead;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
@@ -34,6 +35,11 @@ public class SetAdd implements MapGridAgent
 	private static final long serialVersionUID = 6253283139729226636L;
 
 	public Object process(Session sess, ObjectMap map, Object key) {
+		if(key instanceof ScalarKey)
+		{
+			ScalarKey sk = (ScalarKey)key;
+			key = sk.getKey();
+		}
 		AgentMBeanImpl mbean = AgentMBeanManager.getBean(this.getClass().getName());
 		long startNS = System.nanoTime();
 		try

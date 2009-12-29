@@ -10,16 +10,28 @@
 //
 package com.devwebsphere.rediswxs;
 
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
+
+import com.devwebsphere.purequery.loader.ScalarKey;
+
 
 /**
  * This is the main class. Call the initialize method with the catalog endpoints
  * or NULL at the start of your application and then use the X_X variables to
- * interact with the store or c_X_X for the near cached equivalent
+ * interact with the store or c_X_X for the near cached equivalent.
+ * 
+ * @see IRedis
  *
  */
 public class R
 {
-	static public IRedisLowLevel r;
+	/**
+	 * The shared client connect to the grid.
+	 */
+	static public RedisClient r;
 	
 	/**
 	 * This allows String/String entries to be worked with
@@ -52,17 +64,112 @@ public class R
 	 */
 	static public void initialize(String cep)
 	{
-		r = new RedisClient(cep);
-		// create non caches classes
-		str_str = new RedisMapAdapter<String, String>(false, String.class, String.class, r);
-		str_long = new RedisMapAdapter<String, Long>(false, String.class, Long.class, r);
-		long_str = new RedisMapAdapter<Long, String>(false, Long.class, String.class, r);
-		long_long = new RedisMapAdapter<Long, Long>(false, Long.class, Long.class, r);
+		// initialize multi meta data dictionary
+		metaData = new AtomicReference<Map<Class<?>,MultiMetaData<?>>>();
+		metaData.compareAndSet(null, new Hashtable<Class<?>, MultiMetaData<?>>());
 		
-		// create the local caches versions
-		c_str_str = new RedisMapAdapter<String, String>(true, String.class, String.class, r);
-		c_str_long = new RedisMapAdapter<String, Long>(true, String.class, Long.class, r);
-		c_long_str = new RedisMapAdapter<Long, String>(true, Long.class, String.class, r);
-		c_long_long = new RedisMapAdapter<Long, Long>(true, Long.class, Long.class, r);
+		// shared client connect to the grid, this actually contains
+		// two connections, one with near cache and one without
+		r = new RedisClient(cep);
+		// create non caches adapters sharing the no near cache client
+		str_str = new RedisMapWithStringKeyAdapter<String>(CacheUsage.NONEARCACHE, String.class, r);
+		str_long = new RedisMapWithStringKeyAdapter<Long>(CacheUsage.NONEARCACHE, Long.class, r);
+		long_str = new RedisMapAdapter<Long, String>(CacheUsage.NONEARCACHE, Long.class, String.class, r);
+		long_long = new RedisMapAdapter<Long, Long>(CacheUsage.NONEARCACHE, Long.class, Long.class, r);
+		
+		// create near caches adapters sharing the near cache client
+		c_str_str = new RedisMapWithStringKeyAdapter<String>(CacheUsage.NEARCACHE, String.class, r);
+		c_str_long = new RedisMapWithStringKeyAdapter<Long>(CacheUsage.NEARCACHE, Long.class, r);
+		c_long_str = new RedisMapAdapter<Long, String>(CacheUsage.NEARCACHE, Long.class, String.class, r);
+		c_long_long = new RedisMapAdapter<Long, Long>(CacheUsage.NEARCACHE, Long.class, Long.class, r);
+	}
+	
+	static AtomicReference<Map<Class<?>, MultiMetaData<?>>> metaData;
+
+	static public <X> MultiMetaData<X> getMetaData(Class<X> clazz)
+	{
+		MultiMetaData<X> rc = null;
+		Map<Class<?>, MultiMetaData<?>> map = metaData.get();
+		rc = (MultiMetaData<X>)map.get(clazz);
+		if(rc == null)
+		{
+			while(true)
+			{
+				// get current meta data map
+				Map<Class<?>, MultiMetaData<?>> last = metaData.get();
+				
+				// if this class is there, fine
+				if(last.containsKey(clazz))
+					return (MultiMetaData<X>)last.get(clazz);
+				
+				// otherwise, merge this new class with whats there
+				MultiMetaData<X> md = new MultiMetaData<X>(clazz);
+				Map<Class<?>, MultiMetaData<?>> copy = new ConcurrentHashMap<Class<?>, MultiMetaData<?>>();
+				copy.putAll(last);
+				copy.put(clazz, md);
+				// try put it in, we may not succeed if someone gets there
+				// first
+				metaData.compareAndSet(last, copy);
+			}
+		}
+		return rc;
+	}
+
+	/**
+	 * Multi attribute fetch
+	 * @param <O> The class type to fetch
+	 * @param prefix The routable key without the braces {}
+	 * @param clazz The class to use
+	 * @return An instance of O or classz with the attributes or NULL if not found
+	 */
+	static public <O> O multiGet(String prefix, Class<O> clazz)
+	{
+		try
+		{
+			MultiMetaData<O> md = getMetaData(clazz);
+			return md.get(prefix);
+		}
+		catch(Exception e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+	/**
+	 * Multiattribute put. Put the attributes of the object using the
+	 * attribute entry notation.
+	 * @param <O>
+	 * @param prefix The routable key for all attributes
+	 * @param object
+	 */
+	static public <O> void multiPut(String prefix, O pojo)
+	{
+		try
+		{
+			MultiMetaData<O> md = (MultiMetaData<O>) getMetaData(pojo.getClass());
+			md.put(prefix, pojo);
+		}
+		catch(Exception e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
+	 * This removes all attributes entries for a given POJO
+	 * @param <O>
+	 * @param prefix
+	 * @param clazz
+	 */
+	static public <O> void multiRemove(String prefix, Class<O> clazz)
+	{
+		try
+		{
+			MultiMetaData<O> md = (MultiMetaData<O>) getMetaData(clazz);
+			md.remove(prefix);
+		}
+		catch(Exception e)
+		{
+			throw new RuntimeException(e);
+		}
 	}
 }

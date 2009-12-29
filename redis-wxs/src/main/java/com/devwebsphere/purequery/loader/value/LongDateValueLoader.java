@@ -15,7 +15,7 @@ import java.sql.Date;
 
 
 import com.devwebsphere.purequery.loader.BaseKeyValue;
-import com.devwebsphere.purequery.loader.ValueLoader;
+import com.devwebsphere.purequery.loader.PQValueLoader;
 import com.ibm.websphere.objectgrid.plugins.LogElement;
 
 /**
@@ -23,7 +23,7 @@ import com.ibm.websphere.objectgrid.plugins.LogElement;
  * @author bnewport
  *
  */
-public class LongDateValueLoader extends ValueLoader {
+public class LongDateValueLoader extends PQValueLoader {
 
 	@Override
 	public BaseKeyValue<Long,Date> getPOJOProperty(LogElement e) 

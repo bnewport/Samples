@@ -13,21 +13,21 @@ package com.devwebsphere.purequery.loader.value;
 
 
 import com.devwebsphere.purequery.loader.BaseKeyValue;
-import com.devwebsphere.purequery.loader.ValueLoader;
+import com.devwebsphere.purequery.loader.PQValueLoader;
 import com.ibm.websphere.objectgrid.plugins.LogElement;
 
 
-public class StringStringValueLoader extends ValueLoader {
+public class StringStringValueLoader extends PQValueLoader {
 
 	@Override
 	public BaseKeyValue<String,String> getPOJOProperty(LogElement e) 
 	{
-		return new TemplateProperty<String, String>(e);
+		return new TemplateStringKeyProperty<String>(e);
 	}
 
 	@Override
 	public Class getPOJOClass() 
 	{
-		return TemplateProperty.class;
+		return TemplateStringKeyProperty.class;
 	}
 }

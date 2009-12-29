@@ -10,6 +10,9 @@ Licensed Materials - Property of IBM
 5724-J34 (C) COPYRIGHT International Business Machines Corp. 2009
 -->
 
+<!-- 
+This file configures a grid that uses purequery and write behind.
+ -->
 <objectGridConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
  xsi:schemaLocation="http://ibm.com/ws/objectgrid/config ../objectGrid.xsd"
  xmlns="http://ibm.com/ws/objectgrid/config">
@@ -125,7 +128,7 @@ Licensed Materials - Property of IBM
         	</bean>
     	</backingMapPluginCollection>
     	<backingMapPluginCollection id="set-item-string-long">
-        	<bean id="Loader" className="com.devwebsphere.purequery.loader.GenericPQLoader">
+        	<bean id="Loader" className="com.devwebsphere.rediswxs.agent.set.SetItemPureQueryLoader">
             	<property name="tableName" 
                       type="java.lang.String" 
                       value="SETITEMSTRINGLONG"/>

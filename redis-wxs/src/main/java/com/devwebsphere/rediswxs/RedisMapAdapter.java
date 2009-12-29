@@ -41,7 +41,7 @@ public final class RedisMapAdapter<K extends Serializable, V extends Serializabl
 	 * This is used to actually interact with the grid using the mapnames
 	 */
 	final IRedisLowLevel r;
-	final boolean useCache;
+	final CacheUsage useCache;
 	
 	/**
 	 * Need to pass in the classes directly as you can't get the class
@@ -50,7 +50,7 @@ public final class RedisMapAdapter<K extends Serializable, V extends Serializabl
 	 * @param key The Class for the key, must match the K type
 	 * @param value The Class for the value, must match the V type
 	 */
-	public RedisMapAdapter(boolean isNear, Class<K> key, Class<V> value, IRedisLowLevel rr)
+	public RedisMapAdapter(CacheUsage isNear, Class<K> key, Class<V> value, IRedisLowLevel rr)
 	{
 		useCache = isNear;
 		String tail = null;
@@ -172,4 +172,8 @@ public final class RedisMapAdapter<K extends Serializable, V extends Serializabl
 		r.invokeAsyncOperation(eventName, properties);
 	}
 
+	public String getMapName()
+	{
+		return mapName;
+	}
 }

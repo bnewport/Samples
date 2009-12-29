@@ -6,6 +6,7 @@ import java.util.HashSet;
 
 import com.devwebsphere.purequery.loader.BasePQLoader;
 import com.devwebsphere.purequery.loader.GenericPQLoader;
+import com.devwebsphere.rediswxs.agent.set.SetLoaderOperations;
 import com.devwebsphere.rediswxs.data.list.ListItem;
 import com.devwebsphere.rediswxs.data.list.ListItemKey;
 import com.ibm.pdq.runtime.Data;
@@ -70,15 +71,7 @@ public class SetHead implements Serializable, Cloneable
 	public HashSet<Serializable> fetchSetItems(Session sess)
 		throws ObjectGridException
 	{
-		Data data = BasePQLoader.getData(sess.getTxID());
-		GenericPQLoader itemLoader = (GenericPQLoader)sess.getObjectGrid().getMap("set-item-string-long").getLoader();
-		String sql = "SELECT * FROM " + itemLoader.getTableName() + " WHERE KEYZ=:key";
-		ListItem[] list = data.queryArray(sql, ListItem.class, this);
-		HashSet<Serializable> value = new HashSet<Serializable>();
-		for(ListItem item : list)
-		{
-			value.add(item.value);
-		}
-		return value;
+		SetLoaderOperations itemLoader = (SetLoaderOperations)sess.getObjectGrid().getMap("set-item-string-long").getLoader();
+		return itemLoader.getAllMembers(sess, keyz);
 	}
 }

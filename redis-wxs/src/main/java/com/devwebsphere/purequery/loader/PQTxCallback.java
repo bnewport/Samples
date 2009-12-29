@@ -113,26 +113,29 @@ public class PQTxCallback implements TransactionCallback
 	 */
 	public void initialize(ObjectGrid og) throws TransactionCallbackException 
 	{
-		/**
-		 * Reserve a slot in the TxID to store the Data instance reference in.
-		 */
-		dataSlot = og.reserveSlot(TxID.SLOT_NAME);
-		/**
-		 * Connect to the database. We share a single data source between all primary shards within
-		 * a single JVM.
-		 */
-		ds = setupDataSource(connecturi, username, password);
-		try
+		if(og.getObjectGridType() == og.SERVER)
 		{
-			// check we can connect
-			Connection conn = ds.getConnection();
-			if(conn == null)
-				throw new RuntimeException("Cannot open driver");
-			conn.close();
-		}
-		catch(SQLException e)
-		{
-			throw new RuntimeException("Cannot open driver", e);
+			/**
+			 * Reserve a slot in the TxID to store the Data instance reference in.
+			 */
+			dataSlot = og.reserveSlot(TxID.SLOT_NAME);
+			/**
+			 * Connect to the database. We share a single data source between all primary shards within
+			 * a single JVM.
+			 */
+			ds = setupDataSource(connecturi, username, password);
+			try
+			{
+				// check we can connect
+				Connection conn = ds.getConnection();
+				if(conn == null)
+					throw new RuntimeException("Cannot open driver");
+				conn.close();
+			}
+			catch(SQLException e)
+			{
+				throw new RuntimeException("Cannot open driver", e);
+			}
 		}
 	}
 
@@ -150,12 +153,15 @@ public class PQTxCallback implements TransactionCallback
 	 */
 	public void commit(TxID tx) throws TransactionCallbackException 
 	{
-		Data d = (Data)tx.getSlot(dataSlot);
-		if(d != null)
+		if(tx.getSession().getObjectGrid().getObjectGridType() == ObjectGrid.SERVER)
 		{
-			d.commit();
-			d.close();
-			tx.putSlot(dataSlot, null);
+			Data d = (Data)tx.getSlot(dataSlot);
+			if(d != null)
+			{
+				d.commit();
+				d.close();
+				tx.putSlot(dataSlot, null);
+			}
 		}
 	}
 
@@ -165,12 +171,15 @@ public class PQTxCallback implements TransactionCallback
 	 */
 	public void rollback(TxID tx) throws TransactionCallbackException 
 	{
-		Data d = (Data)tx.getSlot(dataSlot);
-		if(d != null)
+		if(tx.getSession().getObjectGrid().getObjectGridType() == ObjectGrid.SERVER)
 		{
-			d.rollback();
-			d.close();
-			tx.putSlot(dataSlot, null);
+			Data d = (Data)tx.getSlot(dataSlot);
+			if(d != null)
+			{
+				d.rollback();
+				d.close();
+				tx.putSlot(dataSlot, null);
+			}
 		}
 	}
 	

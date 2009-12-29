@@ -42,11 +42,7 @@ public class ListHead implements Serializable, Cloneable
 	@Override
 	public Object clone() throws CloneNotSupportedException 
 	{
-		ListHead copy = new ListHead();
-		copy.keyz = keyz;
-		copy.listid = listid;
-		copy.max = max;
-		copy.min = min;
+		ListHead copy = new ListHead(keyz, listid, min, max);
 		return copy;
 	}
 	/**

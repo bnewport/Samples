@@ -175,4 +175,6 @@ public interface IRedis  <K extends Serializable, V extends Serializable>
 	 * @param properties The parameters for the event
 	 */
 	public void invokeAsyncOperation(String eventName, Map<String,String> properties);
+	
+	public String getMapName();
 }

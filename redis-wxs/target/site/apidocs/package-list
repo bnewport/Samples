@@ -1,3 +1,5 @@
+com.devwebsphere.jdbc.loader
+com.devwebsphere.jdbc.loader.value
 com.devwebsphere.purequery.loader
 com.devwebsphere.purequery.loader.value
 com.devwebsphere.rediswxs

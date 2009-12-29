@@ -18,6 +18,7 @@ import java.util.Map;
 
 import com.devwebsphere.purequery.loader.BasePQLoader;
 import com.devwebsphere.purequery.loader.GenericPQLoader;
+import com.devwebsphere.purequery.loader.ScalarKey;
 import com.devwebsphere.rediswxs.data.list.ListItem;
 import com.devwebsphere.rediswxs.data.list.ListItemKey;
 import com.devwebsphere.rediswxs.data.set.SetHead;
@@ -40,6 +41,11 @@ public class SRemove extends BaseAgent<Object> implements MapGridAgent
 	private static final long serialVersionUID = 8842082032401137638L;
 	public Object process(Session sess, ObjectMap map, Object key) 
 	{
+		if(key instanceof ScalarKey)
+		{
+			ScalarKey sk = (ScalarKey)key;
+			key = sk.getKey();
+		}
 		AgentMBeanImpl mbean = AgentMBeanManager.getBean(this.getClass().getName());
 		long startNS = System.nanoTime();
 		try
@@ -55,11 +61,8 @@ public class SRemove extends BaseAgent<Object> implements MapGridAgent
 					s.remove(value);
 					
 					// first the pos value for this set element
-					Data data = BasePQLoader.getData(sess.getTxID());
-					GenericPQLoader itemLoader = (GenericPQLoader)sess.getObjectGrid().getMap("set-item-string-long").getLoader();
-					String sql = "SELECT * FROM " + itemLoader.getTableName() + " WHERE KEYZ=:keyz AND VALUE=:value";
-					ListItem item = new ListItem((String)key, 0L, (Long)value);
-					item = data.queryFirst(sql, ListItem.class, item);
+					SetLoaderOperations itemLoader = (SetLoaderOperations)sess.getObjectGrid().getMap("set-item-string-long").getLoader();
+					ListItem item = itemLoader.getSetRecord(sess, (String)key, (Long)value);
 					if(item != null)
 					{
 						// remove it from backing table

@@ -26,9 +26,9 @@ import java.util.Map;
 interface IRedisLowLevel 
 {
 	public <K extends Serializable, V extends Serializable> void set(
-			boolean useCache, String name, K key, V value);
+			CacheUsage useCache, String name, K key, V value);
 
-	public <K extends Serializable, V extends Serializable> V get(boolean useCache, String name,
+	public <K extends Serializable, V extends Serializable> V get(CacheUsage useCache, String name,
 			K key);
 	
 	public <K extends Serializable> void invalidate(String name, K key);
@@ -71,9 +71,6 @@ interface IRedisLowLevel
 
 	public <K extends Serializable, V extends Serializable> List<V> smembers(
 			String name, K key);
-
-	public <K extends Serializable, V extends Serializable> List<V> sinter(
-			String name, List<K> keyList);
 
 	public void invokeAsyncOperation(String eventName, Map<String,String> properties);
 }

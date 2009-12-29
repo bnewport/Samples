@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 
+import com.devwebsphere.purequery.loader.ScalarKey;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
 import com.ibm.websphere.objectgrid.ObjectGridException;
@@ -32,6 +33,11 @@ public class SetMembers extends BaseAgent<String> implements MapGridAgent {
 
 	public Object process(Session sess, ObjectMap map, Object key) 
 	{
+		if(key instanceof ScalarKey)
+		{
+			ScalarKey sk = (ScalarKey)key;
+			key = sk.getKey();
+		}
 		AgentMBeanImpl mbean = AgentMBeanManager.getBean(this.getClass().getName());
 		long startNS = System.nanoTime();
 		try

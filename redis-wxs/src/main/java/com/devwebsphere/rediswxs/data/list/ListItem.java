@@ -14,6 +14,7 @@ package com.devwebsphere.rediswxs.data.list;
 import java.io.Serializable;
 
 import com.ibm.websphere.projector.annotations.Id;
+import com.ibm.websphere.projector.annotations.IdClass;
 
 /**
  * This is used for both set and list items. It's persisted to different tables depending on whether its a set or a list. In a set, the pos attribute is
@@ -21,15 +22,13 @@ import com.ibm.websphere.projector.annotations.Id;
  * @author bnewport
  *
  */
+@IdClass(value=ListItemKey.class)
 public class ListItem implements Serializable, Cloneable
 {
 	@Override
 	public Object clone() throws CloneNotSupportedException 
 	{
-		ListItem copy = new ListItem();
-		copy.keyz = keyz;
-		copy.pos = pos;
-		copy.value = value;
+		ListItem copy = new ListItem(keyz, pos, value);
 		return copy;
 	}
 

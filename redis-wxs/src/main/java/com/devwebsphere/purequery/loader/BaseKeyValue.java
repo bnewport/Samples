@@ -17,7 +17,7 @@ package com.devwebsphere.purequery.loader;
  * using ValueLoader.
  * @see LongLongProperty
  * @see StringLongProperty
- * @see ValueLoader
+ * @see PQValueLoader
  */
 public abstract class BaseKeyValue <K,V> 
 {

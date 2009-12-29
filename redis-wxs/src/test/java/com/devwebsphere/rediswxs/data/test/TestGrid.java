@@ -1,83 +1,128 @@
 package com.devwebsphere.rediswxs.data.test;
 
+import java.util.Iterator;
 import java.util.List;
 
+import junit.framework.Assert;
+
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import com.devwebsphere.rediswxs.R;
-import com.devwebsphere.rediswxs.RedisClient;
 
 
-public class TestGrid {
-
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) 
+public class TestGrid 
+{
+	@BeforeClass
+	public static void setupGrid()
 	{
-		try
-		{
-			R.initialize(null);
+		R.initialize(null);
+	}
 
-			if(false)
-			{
-				R.str_str.set("TestKey", "Bobby");
-				String s = R.str_str.get("TestKey");
-				R.str_long.set("TestKeySL", new Long(5));
-				Long l5 = R.str_long.get("TestKeySL");
-			}
-			if(true)
-			{
-				String key = "Test5";
-				for(int i = 0; i < 10;++i)
-				{
-					R.str_long.rpush(key, new Long(i));
-				}
+	@Test
+	public void testKVOperations()
+	{
+		// check set works
+		R.str_str.set("TestKey", "Bobby");
+		String s = R.str_str.get("TestKey");
+		Assert.assertEquals("Bobby", s);
+		// check update works
+		R.str_str.set("TestKey", "Billy");
+		s = R.str_str.get("TestKey");
+		Assert.assertEquals("Billy", s);
+		// check remove works
+		Assert.assertTrue(R.str_str.remove("TestKey"));
+		// check removing something unknown works
+		Assert.assertFalse(R.str_str.remove("TestKey"));
+		// check looking up something unknown works
+		s = R.str_str.get("TestKey");
+		Assert.assertNull(s);
 		
-				System.out.println("Inserted 10");
-				while(true)
-				{
-					Long v = R.str_long.lpop(key);
-					if(v == null)
-					{
-						System.out.println("Empty");
-						break;
-					}
-					System.out.println("Popped " + v);
-					List<Long> list = R.str_long.lrange(key, 0, 100);
-					for(Long l : list)
-					{
-						System.out.println(l.toString());
-					}
-				}
-			}
-			{
-				String key = "Test6";
-				for(int i = 0; i < 10;++i)
-				{
-					R.str_long.lpush(key, new Long(i));
-				}
+		R.str_long.set("TestKeySL", new Long(5));
+		Long l5 = R.str_long.get("TestKeySL");
+		Assert.assertEquals(new Long(5), l5);
+		Long l6 = R.str_long.incr("TestKeySL");
+		Assert.assertEquals(l6.intValue(), 6);
+		Long l8 = R.str_long.incrby("TestKeySL", 2);
+		Assert.assertEquals(l8.intValue(), 8);
+		Assert.assertTrue(R.str_long.remove("TestKeySL"));
 		
-				System.out.println("Inserted 10");
-				while(true)
-				{
-					Long v = R.str_long.rpop(key);
-					if(v == null)
-					{
-						System.out.println("Empty");
-						break;
-					}
-					System.out.println("Popped " + v);
-					List<Long> list = R.str_long.lrange(key, 0, 100);
-					for(Long l : list)
-					{
-						System.out.println(l.toString());
-					}
-				}
-			}
-		}
-		catch(Throwable e)
+	}
+	
+	@Test
+	public void testListOperations()
+	{
+		String key = "Test5";
+		R.str_long.ltrim(key, 0);
+		Assert.assertEquals(0, R.str_long.llen(key));
+		
+		Assert.assertNull(R.str_long.lpop(key));
+		Assert.assertNull(R.str_long.rpop(key));
+
+		final int numElements = 10;
+		for(int i = 0; i < numElements;++i)
 		{
-			e.printStackTrace();
+			R.str_long.rpush(key, new Long(i));
+			Assert.assertEquals(i+1, R.str_long.llen(key));
 		}
-		System.exit(0);
+		Assert.assertEquals(R.str_long.llen(key), numElements);
+		
+		List<Long> list = R.str_long.lrange(key, 0, numElements);
+		for(int i = 0; i < numElements; ++i)
+		{
+			Assert.assertEquals(list.get(i).intValue(), i);
+		}
+		Assert.assertEquals(numElements, list.size());
+
+		for(int i = 0; i < numElements; ++i)
+		{
+			Long ll = R.str_long.lpop(key);
+			Assert.assertNotNull(ll);
+			Assert.assertEquals(ll.intValue(), i);
+			Assert.assertEquals(R.str_long.llen(key), numElements - i - 1);
+		}
+		Assert.assertEquals(R.str_long.llen(key), 0);
+		
+		for(int i = 0; i < numElements;++i)
+		{
+			R.str_long.lpush(key, new Long(i));
+			Assert.assertEquals(i+1, R.str_long.llen(key));
+		}
+		list = R.str_long.lrange(key, 0, numElements);
+		Iterator<Long> iter = list.iterator();
+		for(int i = numElements - 1; i >= 0; --i)
+		{
+			Assert.assertEquals(iter.next().intValue(), i);
+		}
+		for(int i = 0; i < numElements; ++i)
+		{
+			Long ll = R.str_long.rpop(key);
+			Assert.assertNotNull(ll);
+			Assert.assertEquals(ll.intValue(), i);
+		}
+		Assert.assertEquals(0, R.str_long.llen(key));
+	}
+	
+	@Test
+	public void testSetOperations()
+		throws Throwable
+	{
+		String key = "Set";
+
+		for(int i = 0; i < 100; ++i)
+		{
+			Assert.assertTrue(R.str_long.sadd(key, new Long(i)));
+			
+			Assert.assertTrue(R.str_long.sismember(key, new Long(i)));
+			Assert.assertEquals(i+1, R.str_long.scard(key));
+			List<Long> contents = R.str_long.smembers(key);
+			Assert.assertEquals(i+1, contents.size());
+		}
+		
+		for(int i = 0; i < 100; ++i)
+		{
+			Assert.assertTrue(R.str_long.srem(key, new Long(i)));
+			Assert.assertFalse(R.str_long.srem(key, new Long(i)));
+		}
 	}
 }

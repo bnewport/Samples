@@ -11,19 +11,24 @@ package com.devwebsphere.purequery.loader;
 //All Rights Reserved * Licensed Materials - Property of IBM
 //
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
+import com.devwebsphere.rediswxs.agent.set.SetLoaderOperations;
+import com.devwebsphere.rediswxs.data.list.ListItem;
 import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanManager;
 import com.ibm.pdq.runtime.Data;
 import com.ibm.pdq.runtime.exception.DataRuntimeException;
 import com.ibm.pdq.runtime.exception.UpdateManyException;
 import com.ibm.websphere.objectgrid.BackingMap;
+import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.TxID;
 import com.ibm.websphere.objectgrid.plugins.Loader;
@@ -40,7 +45,7 @@ import com.ibm.websphere.projector.annotations.Id;
  * @author bnewport
  *
  */
-public class GenericPQLoader extends BasePQLoader implements Loader 
+public class GenericPQLoader extends BasePQLoader implements Loader
 {
 	static Logger logger = Logger.getLogger(GenericPQLoader.class.getName());
 	

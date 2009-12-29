@@ -14,6 +14,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 
+import com.devwebsphere.purequery.loader.ScalarKey;
 import com.devwebsphere.rediswxs.data.list.ListHead;
 import com.devwebsphere.rediswxs.data.list.ListItem;
 import com.devwebsphere.rediswxs.data.list.ListItemKey;
@@ -35,6 +36,11 @@ public class Pop extends BaseAgent<Object> implements MapGridAgent
 	private static final long serialVersionUID = 8842082032401137638L;
 	public Object process(Session sess, ObjectMap headMap, Object key) 
 	{
+		if(key instanceof ScalarKey)
+		{
+			ScalarKey sk = (ScalarKey)key;
+			key = sk.getKey();
+		}
 		AgentMBeanImpl mbean = AgentMBeanManager.getBean(this.getClass().getName());
 		long startNS = System.nanoTime();
 		try

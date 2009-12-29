@@ -50,9 +50,10 @@ import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.AgentManager;
 import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 
-public final class RedisClient implements IRedisLowLevel 
+public class RedisClient implements IRedisLowLevel 
 {
 	RedisMBeanImpl mbean;
+	WXSUtils wxsutils;
 	
 	/**
 	 * This class is stored in a ThreadLocal and keeps a session to the cached
@@ -110,11 +111,11 @@ public final class RedisClient implements IRedisLowLevel
 		 * @param name The map name
 		 * @return An ObjectGrid for this thread
 		 */
-		public ObjectMap getMap(boolean cached, String name)
+		public ObjectMap getMap(CacheUsage c, String name)
 		{
 			try
 			{
-				if(cached)
+				if(c == CacheUsage.NEARCACHE)
 					return getCacheSession().getMap(name);
 				else
 					return getNoCacheSession().getMap(name);
@@ -139,7 +140,7 @@ public final class RedisClient implements IRedisLowLevel
 	/**
 	 * This is a thread local for this client
 	 */
-	ThreadLocalSession thread = new ThreadLocalSession();
+	public ThreadLocalSession thread = new ThreadLocalSession();
 
 	/**
 	 * This initializes a Redis client to WebSphere eXtreme Scale. If the cep parameter is null then a local WXS test instance
@@ -159,7 +160,8 @@ public final class RedisClient implements IRedisLowLevel
 		else
 		{
 			// start a local WXS catalog and container for debugging
-			String ogxml = "/objectgrid.xml";
+//			String ogxml = "/objectgrid_writethrough.xml";
+			String ogxml = "/objectgrid_jdbc_writethrough.xml";
 			String depxml = "/deployment.xml";
 			
 			URL serverObjectgridXML =  this.getClass().getResource(ogxml);
@@ -168,9 +170,20 @@ public final class RedisClient implements IRedisLowLevel
 			cacheog = WXSUtils.startTestServer("Grid", ogxml, depxml);
 			nocacheog = cacheog;
 		}
+		wxsutils = new WXSUtils(nocacheog);
 		initializeJMX();
 	}
 
+	public ObjectGrid getNoCacheOG()
+	{
+		return nocacheog;
+	}
+	
+	public WXSUtils getWXSUtils()
+	{
+		return wxsutils;
+	}
+	
 	private void initializeJMX()
 	{
 		try
@@ -200,6 +213,14 @@ public final class RedisClient implements IRedisLowLevel
 		WXSUtils.stopContainer();
 	}
 
+	/**
+	 * Returns the map name suffix for a given key/value type pair
+	 * @param <K>
+	 * @param <V>
+	 * @param keyClass
+	 * @param valueClass
+	 * @return
+	 */
 	static public <K,V> String getMapName(Class<K> keyClass, Class<V> valueClass)
 	{
 		if(keyClass == String.class)
@@ -224,10 +245,9 @@ public final class RedisClient implements IRedisLowLevel
 	 * @see redis.IRedis#set(java.lang.String, K, V)
 	 */
 	@SuppressWarnings("unchecked")
-	public <K extends Serializable, V extends Serializable> void set(boolean isCached, String name, K key, V value)
+	public <K extends Serializable, V extends Serializable> void set(CacheUsage isCached, String name, K key, V value)
 	{
 		long startNS = System.nanoTime();
-//		System.out.println("Map set: " + name + " Key: " + key + " Value: " + value);
 		Set a = new Set();
 		a.value = value;
 		
@@ -253,7 +273,7 @@ public final class RedisClient implements IRedisLowLevel
 	 * @see redis.IRedis#get(java.lang.String, K)
 	 */
 	@SuppressWarnings("unchecked")
-	public <K extends Serializable, V extends Serializable> V get(boolean useCache, String name, K key)
+	public <K extends Serializable, V extends Serializable> V get(CacheUsage useCache, String name, K key)
 	{
 		long startNS = System.nanoTime();
 		try
@@ -288,7 +308,7 @@ public final class RedisClient implements IRedisLowLevel
 		Incr a = new Incr();
 		a.delta = delta;
 		
-		AgentManager am = thread.getMap(false, name).getAgentManager();
+		AgentManager am = thread.getMap(CacheUsage.NONEARCACHE, name).getAgentManager();
 		List<K> list = Collections.singletonList(key);
 		Map<K,Object> m = am.callMapAgent(a, list);
 		Object rawReturn = m.get(key);
@@ -313,7 +333,7 @@ public final class RedisClient implements IRedisLowLevel
 		LTrim a = new LTrim();
 		a.size = size;
 		
-		AgentManager am = thread.getMap(false, name).getAgentManager();
+		AgentManager am = thread.getMap(CacheUsage.NONEARCACHE, name).getAgentManager();
 		List<K> list = Collections.singletonList(key);
 		Map<K,Object> m = am.callMapAgent(a, list);
 		Object rawReturn = m.get(key);
@@ -322,9 +342,13 @@ public final class RedisClient implements IRedisLowLevel
 			EntryErrorValue rc = (EntryErrorValue)rawReturn;
 			logAgentError("ltrim", rc);
 			mbean.getLtrimMetrics().logException(rc.getException());
+			return false;
 		}
-		mbean.getLtrimMetrics().logTime(System.nanoTime() - startNS);
-		return ((Boolean)m.get(key)).booleanValue();
+		else
+		{
+			mbean.getLtrimMetrics().logTime(System.nanoTime() - startNS);
+			return ((Boolean)m.get(key)).booleanValue();
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -338,7 +362,7 @@ public final class RedisClient implements IRedisLowLevel
 		a.isLeft = true;
 		a.value = value;
 		
-		AgentManager am = thread.getMap(false, name).getAgentManager();
+		AgentManager am = thread.getMap(CacheUsage.NONEARCACHE, name).getAgentManager();
 		List<K> list = Collections.singletonList(key);
 		Map <K, Object> m = am.callMapAgent(a, list);
 		Object rawReturn = m.get(key);
@@ -361,7 +385,7 @@ public final class RedisClient implements IRedisLowLevel
 		Pop a = new Pop();
 		a.isLeft = true;
 		
-		AgentManager am = thread.getMap(false, name).getAgentManager();
+		AgentManager am = thread.getMap(CacheUsage.NONEARCACHE, name).getAgentManager();
 		List<K> list = Collections.singletonList(key);
 		Map <K, Object> m = am.callMapAgent(a, list);
 		Object rawReturn = m.get(key);
@@ -389,7 +413,7 @@ public final class RedisClient implements IRedisLowLevel
 		Pop a = new Pop();
 		a.isLeft = false;
 		
-		AgentManager am = thread.getMap(false, name).getAgentManager();
+		AgentManager am = thread.getMap(CacheUsage.NONEARCACHE, name).getAgentManager();
 		List<K> list = Collections.singletonList(key);
 		Map <K, Object> m = am.callMapAgent(a, list);
 		Object rawReturn = m.get(key);
@@ -418,7 +442,7 @@ public final class RedisClient implements IRedisLowLevel
 		a.isLeft = false;
 		a.value = value;
 		
-		AgentManager am = thread.getMap(false, name).getAgentManager();
+		AgentManager am = thread.getMap(CacheUsage.NONEARCACHE, name).getAgentManager();
 		List<K> list = Collections.singletonList(key);
 		Map <K, Object> m = am.callMapAgent(a, list);
 		Object rawReturn = m.get(key);
@@ -447,7 +471,7 @@ public final class RedisClient implements IRedisLowLevel
 		a.low = low;
 		a.high = high;
 		
-		AgentManager am = thread.getMap(false, name).getAgentManager();
+		AgentManager am = thread.getMap(CacheUsage.NONEARCACHE, name).getAgentManager();
 		List<K> list = Collections.singletonList(key);
 		Map<K,Object> result = am.callMapAgent(a, list);
 		Object rawReturn = result.get(key);
@@ -475,7 +499,7 @@ public final class RedisClient implements IRedisLowLevel
 		SetAdd a = new SetAdd();
 		a.value = value;
 		
-		AgentManager am = thread.getMap(false, name).getAgentManager();
+		AgentManager am = thread.getMap(CacheUsage.NONEARCACHE, name).getAgentManager();
 		List<K> list = Collections.singletonList(key);
 		Map<K, Object> rc = am.callMapAgent(a, list);
 		Object rawReturn = rc.get(key);
@@ -500,7 +524,7 @@ public final class RedisClient implements IRedisLowLevel
 		SRemove a = new SRemove();
 		a.value = value;
 		
-		AgentManager am = thread.getMap(false, name).getAgentManager();
+		AgentManager am = thread.getMap(CacheUsage.NONEARCACHE, name).getAgentManager();
 		List<K> list = Collections.singletonList(key);
 		Map<K, Object> rc = am.callMapAgent(a, list);
 		Object rawReturn = rc.get(key);
@@ -527,7 +551,7 @@ public final class RedisClient implements IRedisLowLevel
 		long startNS = System.nanoTime();
 		SetCard a = new SetCard();
 		
-		AgentManager am = thread.getMap(false, name).getAgentManager();
+		AgentManager am = thread.getMap(CacheUsage.NONEARCACHE, name).getAgentManager();
 		List<K> list = Collections.singletonList(key);
 		Map<K,Object> rc = am.callMapAgent(a, list);
 		Object rawReturn = rc.get(key);
@@ -554,7 +578,7 @@ public final class RedisClient implements IRedisLowLevel
 		long startNS = System.nanoTime();
 		LLen a = new LLen();
 		
-		AgentManager am = thread.getMap(false, name).getAgentManager();
+		AgentManager am = thread.getMap(CacheUsage.NONEARCACHE, name).getAgentManager();
 		List<K> list = Collections.singletonList(key);
 		Map<K,Object> rc = am.callMapAgent(a, list);
 		Object rawReturn = rc.get(key);
@@ -581,7 +605,7 @@ public final class RedisClient implements IRedisLowLevel
 		long startNS = System.nanoTime();
 		Remove a = new Remove();
 		
-		AgentManager am = thread.getMap(true, name).getAgentManager();
+		AgentManager am = thread.getMap(CacheUsage.NEARCACHE, name).getAgentManager();
 		List<K> list = Collections.singletonList(key);
 		Map<K,Object> rc = am.callMapAgent(a, list);
 		Object rawReturn = rc.get(key);
@@ -609,7 +633,7 @@ public final class RedisClient implements IRedisLowLevel
 		SetIsMember a = new SetIsMember();
 		a.value = value;
 		
-		AgentManager am = thread.getMap(false, name).getAgentManager();
+		AgentManager am = thread.getMap(CacheUsage.NONEARCACHE, name).getAgentManager();
 		List<K> list = Collections.singletonList(key);
 		Map<K,Object> rc = am.callMapAgent(a, list);
 		Object rawReturn = rc.get(key);
@@ -636,7 +660,7 @@ public final class RedisClient implements IRedisLowLevel
 		long startNS = System.nanoTime();
 		SetMembers a = new SetMembers();
 		
-		AgentManager am = thread.getMap(false, name).getAgentManager();
+		AgentManager am = thread.getMap(CacheUsage.NONEARCACHE, name).getAgentManager();
 		List<K> list = Collections.singletonList(key);
 		Map<K,Object> result = am.callMapAgent(a, list);
 		Object rawReturn = result.get(key);
@@ -654,18 +678,10 @@ public final class RedisClient implements IRedisLowLevel
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see redis.IRedis#sinter(java.lang.String, java.util.List)
-	 */
-	public <K extends Serializable, V extends Serializable> List<V> sinter(String name, List<K> keyList)
-	{
-		return null;
-	}
-	
 	public <K extends Serializable> void invalidate(String name, K key)
 	{
 		long startNS = System.nanoTime();
-		ObjectMap map = thread.getMap(false, name);
+		ObjectMap map = thread.getMap(CacheUsage.NONEARCACHE, name);
 		// remove from near cache
 		try
 		{

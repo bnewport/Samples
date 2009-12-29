@@ -15,22 +15,22 @@ import java.sql.Date;
 
 
 import com.devwebsphere.purequery.loader.BaseKeyValue;
-import com.devwebsphere.purequery.loader.ValueLoader;
+import com.devwebsphere.purequery.loader.PQValueLoader;
 import com.ibm.websphere.objectgrid.plugins.LogElement;
 
 
-public class StringDateValueLoader extends ValueLoader {
+public class StringDateValueLoader extends PQValueLoader {
 
 	@Override
 	public BaseKeyValue<String,Date> getPOJOProperty(LogElement e) 
 	{
-		return new TemplateProperty<String, Date>(e);
+		return new TemplateStringKeyProperty<Date>(e);
 	}
 
 	@Override
 	public Class getPOJOClass() 
 	{
-		return TemplateProperty.class;
+		return TemplateStringKeyProperty.class;
 		
 	}
 }

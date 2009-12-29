@@ -13,6 +13,7 @@ package com.devwebsphere.rediswxs.agent.list;
 import java.io.Serializable;
 import java.util.Map;
 
+import com.devwebsphere.purequery.loader.ScalarKey;
 import com.devwebsphere.rediswxs.data.list.ListHead;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
@@ -33,6 +34,11 @@ public class Push implements MapGridAgent
 	private static final long serialVersionUID = 8842082032401137638L;
 	public Object process(Session sess, ObjectMap headMap, Object key) 
 	{
+		if(key instanceof ScalarKey)
+		{
+			ScalarKey sk = (ScalarKey)key;
+			key = sk.getKey();
+		}
 		AgentMBeanImpl mbean = AgentMBeanManager.getBean(this.getClass().getName());
 		long startNS = System.nanoTime();
 		try

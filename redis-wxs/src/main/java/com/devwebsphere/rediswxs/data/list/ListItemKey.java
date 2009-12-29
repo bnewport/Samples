@@ -9,8 +9,14 @@ import com.ibm.websphere.projector.annotations.Id;
  * @author bnewport
  *
  */
-public class ListItemKey implements Serializable
+public class ListItemKey implements Serializable, Cloneable
 {
+	
+	public Object clone()
+	{
+		ListItemKey copy = new ListItemKey(this.keyz, this.pos);
+		return copy;
+	}
 	/**
 	 * 
 	 */
