@@ -1,21 +1,7 @@
 
  Index  Count   Time of last Occurrence   Exception SourceId ProbeId
 ------+------+---------------------------+--------------------------
-     1      0   12/29/09 17:40:18:508 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
-     2      0   12/29/09 17:40:18:508 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
-     3      1   12/29/09 17:40:20:573 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
-------+------+---------------------------+--------------------------
-
- Index  Count   Time of last Occurrence   Exception SourceId ProbeId
-------+------+---------------------------+--------------------------
-     1      0   12/29/09 17:42:08:633 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
-     2      0   12/29/09 17:42:08:633 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
-     3      1   12/29/09 17:42:10:640 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
-------+------+---------------------------+--------------------------
-
- Index  Count   Time of last Occurrence   Exception SourceId ProbeId
-------+------+---------------------------+--------------------------
-     1      0   12/29/09 17:43:24:747 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
-     2      0   12/29/09 17:43:24:747 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
-     3      1   12/29/09 17:43:27:660 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
+     1      0   12/29/09 17:48:35:179 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
+     2      0   12/29/09 17:48:35:179 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
+     3      1   12/29/09 17:48:37:055 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
 ------+------+---------------------------+--------------------------
