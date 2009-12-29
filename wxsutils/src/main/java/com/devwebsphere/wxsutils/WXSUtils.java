@@ -358,6 +358,10 @@ public class WXSUtils
 			System.out.println("Started catalog");
 			URL serverObjectgridXML =  WXSUtils.class.getResource(og_xml_path);
 			URL deployment =  WXSUtils.class.getResource(dep_xml_path);
+			if(serverObjectgridXML == null)
+				throw new ObjectGridRuntimeException("ObjectGrid xml file not found: " + og_xml_path);
+			if(deployment == null)
+				throw new ObjectGridRuntimeException("Deployment xml file not found: " + dep_xml_path);
 			System.out.println("OG is " + serverObjectgridXML.toString() + " DP is " + deployment.toString());
 			DeploymentPolicy policy = DeploymentPolicyFactory.createDeploymentPolicy(deployment, serverObjectgridXML);
 			container = server.createContainer(policy);

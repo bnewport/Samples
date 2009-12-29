@@ -33,7 +33,7 @@ public class GetAllAgent<K,V> implements ReduceGridAgent
 	 */
 	private static final long serialVersionUID = 6568906743945108310L;
 	
-	List<K> batch;
+	public List<K> batch;
 
 	public Object reduce(Session sess, ObjectMap map) 
 	{

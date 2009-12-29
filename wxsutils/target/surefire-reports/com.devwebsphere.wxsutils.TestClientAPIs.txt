@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
-Test set: com.devwebsphere.wxsutils.AppTest
+Test set: com.devwebsphere.wxsutils.TestClientAPIs
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.02 sec
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 26.406 sec

@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite failures="0" time="0.019" errors="0" skipped="0" tests="1" name="com.devwebsphere.wxsutils.AppTest">
+<testsuite failures="0" time="26.406" errors="0" skipped="0" tests="1" name="com.devwebsphere.wxsutils.TestClientAPIs">
   <properties>
     <property name="java.runtime.name" value="Java(TM) 2 Runtime Environment, Standard Edition"/>
     <property name="sun.boot.library.path" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Libraries"/>
     <property name="java.vm.version" value="14.3-b01-101"/>
     <property name="awt.nativeDoubleBuffering" value="true"/>
     <property name="gopherProxySet" value="false"/>
+    <property name="com.ibm.CORBA.RasManager" value="com.ibm.websphere.ras.WsOrbRasManager"/>
     <property name="mrj.build" value="10M3025"/>
     <property name="java.vm.vendor" value="Apple Inc."/>
     <property name="java.vendor.url" value="http://www.apple.com/"/>
@@ -23,6 +24,7 @@
     <property name="basedir" value="/Users/ibm/Documents/Development/Samples/wxsutils"/>
     <property name="java.endorsed.dirs" value="/Users/ibm/Documents/Development/og7001/lib/endorsed"/>
     <property name="os.arch" value="x86_64"/>
+    <property name="javax.rmi.CORBA.StubClass" value="com.sun.corba.se.impl.javax.rmi.CORBA.StubDelegateImpl"/>
     <property name="java.io.tmpdir" value="/var/folders/xP/xP719TA0GYOqgk3Ud1U4yk+++TI/-Tmp-/"/>
     <property name="line.separator" value="
 "/>
@@ -30,6 +32,7 @@
     <property name="os.name" value="Mac OS X"/>
     <property name="classworlds.conf" value="/usr/share/maven/bin/m2.conf"/>
     <property name="sun.jnu.encoding" value="MacRoman"/>
+    <property name="com.ibm.websphere.zos.forcedist" value="true"/>
     <property name="java.library.path" value=".:/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java"/>
     <property name="surefire.test.class.path" value="/Users/ibm/Documents/Development/Samples/wxsutils/target/test-classes:/Users/ibm/Documents/Development/Samples/wxsutils/target/classes:/Users/ibm/.m2/repository/junit/junit/4.7/junit-4.7.jar:/Users/ibm/.m2/repository/com/ibm/websphere/objectgrid/objectgrid-server/7.0.0.1/objectgrid-server-7.0.0.1.jar:"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
@@ -39,6 +42,7 @@
     <property name="http.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="user.home" value="/Users/ibm"/>
     <property name="user.timezone" value="America/Chicago"/>
+    <property name="javax.rmi.CORBA.PortableRemoteObjectClass" value="com.sun.corba.se.impl.javax.rmi.PortableRemoteObject"/>
     <property name="java.awt.printerjob" value="apple.awt.CPrinterJob"/>
     <property name="java.specification.version" value="1.6"/>
     <property name="file.encoding" value="MacRoman"/>
@@ -67,5 +71,5 @@
     <property name="ftp.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="sun.cpu.isalist" value=""/>
   </properties>
-  <testcase time="0.005" classname="com.devwebsphere.wxsutils.AppTest" name="testApp"/>
+  <testcase time="3.037" classname="com.devwebsphere.wxsutils.TestClientAPIs" name="testPutAll"/>
 </testsuite>
