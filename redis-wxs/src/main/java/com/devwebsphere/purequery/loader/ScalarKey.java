@@ -44,6 +44,11 @@ public class ScalarKey implements PartitionableKey, Cloneable, Serializable
 		key = k;
 	}
 	
+	public ScalarKey(String prefix, String field)
+	{
+		key = "{" + prefix + "}" + field;
+	}
+	
 	/**
 	 * This is only called really one on the client
 	 * so I don't think it's worth a lot of effort
@@ -70,4 +75,32 @@ public class ScalarKey implements PartitionableKey, Cloneable, Serializable
 	{
 		return this;
 	}
+	
+	public String toString()
+	{
+		return "SK<"+key+">";
+	}
+	
+	@Override
+	public int hashCode() {
+		return key.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ScalarKey other = (ScalarKey) obj;
+		if (key == null) {
+			if (other.key != null)
+				return false;
+		} else if (!key.equals(other.key))
+			return false;
+		return true;
+	}
+
 }

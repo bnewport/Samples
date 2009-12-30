@@ -104,6 +104,31 @@ public class TestGrid
 	}
 	
 	@Test
+	public void testPartitioning()
+	{
+		Person p1 = new Person();
+		p1.firstName = "Billy";
+		p1.surname = "Newport";
+		p1.userId = "bnewport";
+		p1.password = "password";
+		
+		R.multiPut("u:billy", p1);
+		
+		Person copy = R.multiGet("u:billy", Person.class);
+		
+		Assert.assertEquals(p1.firstName, copy.firstName);
+		Assert.assertEquals(p1.surname, copy.surname);
+		Assert.assertEquals(p1.userId, copy.userId);
+		Assert.assertEquals(p1.password, copy.password);
+		
+		copy = R.multiGet("u:bobby", Person.class);
+		Assert.assertNotNull(copy);
+		Assert.assertNull(copy.firstName);
+		Assert.assertNull(copy.surname);
+		Assert.assertNull(copy.userId);
+		Assert.assertNull(copy.password);
+	}
+	@Test
 	public void testSetOperations()
 		throws Throwable
 	{
@@ -125,4 +150,5 @@ public class TestGrid
 			Assert.assertFalse(R.str_long.srem(key, new Long(i)));
 		}
 	}
+	
 }

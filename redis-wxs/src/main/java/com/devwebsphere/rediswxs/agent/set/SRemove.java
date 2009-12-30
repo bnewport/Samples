@@ -15,16 +15,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 
-
-import com.devwebsphere.purequery.loader.BasePQLoader;
-import com.devwebsphere.purequery.loader.GenericPQLoader;
 import com.devwebsphere.purequery.loader.ScalarKey;
 import com.devwebsphere.rediswxs.data.list.ListItem;
 import com.devwebsphere.rediswxs.data.list.ListItemKey;
 import com.devwebsphere.rediswxs.data.set.SetHead;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
-import com.ibm.pdq.runtime.Data;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
