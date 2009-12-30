@@ -270,26 +270,31 @@ public class WXSUtils
 			Map<Integer, Map<K,A>> pmap = convertToPartitionEntryMap(bmap, batch);
 			Iterator<Map<K,A>> items = pmap.values().iterator();
 			ArrayList<Future<X>> results = new ArrayList<Future<X>>();
-			while(items.hasNext())
+			if(batch.size() > 0)
 			{
-				Map<K,A> perPartitionEntries = items.next();
-				// we need one key for partition routing
-				// so get the first one
-				K key = perPartitionEntries.keySet().iterator().next();
-				
-				// invoke the agent to add the batch of records to the grid
-				ReduceAgentExecutor<K,A> ia = new ReduceAgentExecutor<K,A>();
-				ia.batch = perPartitionEntries;
-				Future<X> fv = threadPool.submit(new CallReduceAgentThread<K,X>(bmap.getName(), key, ia));
-				results.add(fv);
+				while(items.hasNext())
+				{
+					Map<K,A> perPartitionEntries = items.next();
+					// we need one key for partition routing
+					// so get the first one
+					K key = perPartitionEntries.keySet().iterator().next();
+					
+					// invoke the agent to add the batch of records to the grid
+					ReduceAgentExecutor<K,A> ia = new ReduceAgentExecutor<K,A>();
+					ia.batch = perPartitionEntries;
+					Future<X> fv = threadPool.submit(new CallReduceAgentThread<K,X>(bmap.getName(), key, ia));
+					results.add(fv);
+				}
+				Iterator<Future<X>> iter = results.iterator();
+				A agent = batch.get(batch.keySet().iterator().next());
+				ArrayList<X> tempList = new ArrayList<X>();
+				while(iter.hasNext())
+					tempList.add(iter.next().get());
+				X r = (X)agent.reduceResults(tempList);
+				return r;
 			}
-			Iterator<Future<X>> iter = results.iterator();
-			A agent = batch.get(batch.keySet().iterator().next());
-			ArrayList<X> tempList = new ArrayList<X>();
-			while(iter.hasNext())
-				tempList.add(iter.next().get());
-			X r = (X)agent.reduceResults(tempList);
-			return r;
+			else
+				return null;
 		}
 		catch(Exception e)
 		{

@@ -19,6 +19,7 @@ import junit.framework.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 
@@ -32,6 +33,7 @@ public class TestClientAPIs
 {
 	static ObjectGrid ogclient;
 	static WXSUtils utils;
+	static BackingMap bmFarMap3;
 	
 	@BeforeClass
 	public static void setupTest()
@@ -41,6 +43,7 @@ public class TestClientAPIs
 		// switch to this to connect to remote grid instead.
 //		ogclient = WXSUtils.connectClient("localhost:2809", "Grid", "/objectgrid.xml");
 		utils = new WXSUtils(ogclient);
+		bmFarMap3 = ogclient.getMap("FarMap3");
 	}
 
 	/**
@@ -73,7 +76,7 @@ public class TestClientAPIs
 			{
 				batch.put("" + i, "V" + i);
 			}
-			utils.putAll(batch, ogclient.getMap("FarMap3"));
+			utils.putAll(batch, bmFarMap3);
 		}
 		
 		for(int k = 0; k < 10; ++k)
@@ -84,15 +87,15 @@ public class TestClientAPIs
 			{
 				keys.add("" + i);
 			}
-			Map<String, String> rc = utils.getAll(keys, ogclient.getMap("FarMap3"));
+			Map<String, String> rc = utils.getAll(keys, bmFarMap3);
 			
 			for(Map.Entry<String, String> e : rc.entrySet())
 			{
 				Assert.assertEquals("V" + e.getKey(), e.getValue());
 			}
 
-			utils.removeAll(keys, ogclient.getMap("FarMap3"));
-			rc = utils.getAll(keys, ogclient.getMap("FarMap3"));
+			utils.removeAll(keys, bmFarMap3);
+			rc = utils.getAll(keys, bmFarMap3);
 			
 			for(Map.Entry<String, String> e : rc.entrySet())
 			{
@@ -101,6 +104,15 @@ public class TestClientAPIs
 		}
 	}
 	
+	@Test 
+	public void testEmptyBulkOperations()
+	{
+		ArrayList<String> emptyList = new ArrayList<String>();
+		utils.getAll(emptyList, bmFarMap3);
+		utils.removeAll(emptyList, bmFarMap3);
+		Map<String, String> emptyMap = new HashMap<String, String>();
+		utils.putAll(emptyMap, bmFarMap3);
+	}
 	/**
 	 * This does a simple stress test against the grid.
 	 */
