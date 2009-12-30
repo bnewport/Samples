@@ -10,6 +10,7 @@
 //
 package com.devwebsphere.wxsutils;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 
@@ -45,6 +46,8 @@ public class InsertAgent<K,V> implements ReduceGridAgent
 			Session s = sess.getObjectGrid().getSession();
 			ObjectMap m = s.getMap(map.getName());
 			s.beginNoWriteThrough();
+			ArrayList keys = new ArrayList(batch.keySet());
+			m.getAll(keys);
 			m.putAll(batch);
 			s.commit();
 			agent.getKeysMetric().logTime(System.nanoTime() - startNS);

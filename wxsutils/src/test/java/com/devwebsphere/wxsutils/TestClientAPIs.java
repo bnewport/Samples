@@ -36,9 +36,15 @@ public class TestClientAPIs
 	@BeforeClass
 	public static void setupTest()
 	{
+		// do everything in one JVM for test
 //		ogclient = WXSUtils.startTestServer("Grid", "/objectgrid.xml", "/deployment.xml");
+		// switch to this to connect to remote grid instead.
 		ogclient = WXSUtils.connectClient("localhost:2809", "Grid", "/objectgrid.xml");
 		utils = new WXSUtils(ogclient);
+	}
+
+	public static void clearMap()
+	{
 		try
 		{
 			ogclient.getSession().getMap("FarMap3").clear();
@@ -48,10 +54,10 @@ public class TestClientAPIs
 			Assert.fail("Exception during clear");
 		}
 	}
-
 	@Test
 	public void testPutAll()
 	{
+		clearMap();
 		for(int k = 0; k < 10; ++k)
 		{
 			int base = k * 1000;
@@ -91,6 +97,7 @@ public class TestClientAPIs
 	@Test 
 	public void testPutRate()
 	{
+		clearMap();
 		int maxTests = 50;
 		// run five times to allow JIT to settle
 		for(int loop = 0; loop < 5; ++loop)
@@ -99,12 +106,26 @@ public class TestClientAPIs
 			{
 				Map<String, String> batch = new HashMap<String, String>();
 				for(int i = 0; i < batchSize; ++i)
-					batch.put(Integer.toString(i), "K" + i);
+					batch.put(Integer.toString(i), "V" + i);
 				
 				long start = System.nanoTime();
 				for(int test = 0; test < maxTests; ++test)
 				{
 					utils.putAll(batch, ogclient.getMap("FarMap3"));
+				}
+				if(false)
+				{
+					ArrayList<String> keys = new ArrayList<String>();
+					for(int i = 0; i < batchSize; ++i)
+					{
+						keys.add(Integer.toString(i));
+					}
+					Map<String, String> rc = utils.getAll(keys, ogclient.getMap("FarMap3"));
+					
+					for(Map.Entry<String, String> e : rc.entrySet())
+					{
+						Assert.assertEquals("V" + e.getKey(), e.getValue());
+					}
 				}
 				double duration = (System.nanoTime() - start) / 1000000000.0;
 				double rate = (double)batchSize * (double)maxTests / duration;
