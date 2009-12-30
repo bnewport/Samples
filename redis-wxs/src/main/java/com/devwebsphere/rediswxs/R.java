@@ -15,8 +15,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.devwebsphere.purequery.loader.ScalarKey;
-
 
 /**
  * This is the main class. Call the initialize method with the catalog endpoints
