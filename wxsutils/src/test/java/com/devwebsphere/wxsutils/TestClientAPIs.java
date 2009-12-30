@@ -20,6 +20,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ibm.websphere.objectgrid.ObjectGrid;
+import com.ibm.websphere.objectgrid.ObjectGridException;
 
 /**
  * This test connects to a grid running on the same box. Use the gettingstarted example
@@ -30,19 +31,27 @@ import com.ibm.websphere.objectgrid.ObjectGrid;
 public class TestClientAPIs 
 {
 	static ObjectGrid ogclient;
+	static WXSUtils utils;
 	
 	@BeforeClass
 	public static void setupTest()
 	{
-		ogclient = WXSUtils.startTestServer("Grid", "/objectgrid.xml", "/deployment.xml");
-//		ogclient = WXSUtils.connectClient("localhost:2809", "Grid", "/objectgrid.xml");
+//		ogclient = WXSUtils.startTestServer("Grid", "/objectgrid.xml", "/deployment.xml");
+		ogclient = WXSUtils.connectClient("localhost:2809", "Grid", "/objectgrid.xml");
+		utils = new WXSUtils(ogclient);
+		try
+		{
+			ogclient.getSession().getMap("FarMap3").clear();
+		}
+		catch(ObjectGridException e)
+		{
+			Assert.fail("Exception during clear");
+		}
 	}
 
 	@Test
 	public void testPutAll()
 	{
-		
-		WXSUtils utils = new WXSUtils(ogclient);
 		for(int k = 0; k < 10; ++k)
 		{
 			int base = k * 1000;
@@ -77,6 +86,30 @@ public class TestClientAPIs
 				Assert.assertNull(e.getValue());
 			}
 		}
-
+	}
+	
+	@Test 
+	public void testPutRate()
+	{
+		int maxTests = 50;
+		// run five times to allow JIT to settle
+		for(int loop = 0; loop < 5; ++loop)
+		{
+			for(int batchSize = 1000; batchSize <= 32000; batchSize *= 2 )
+			{
+				Map<String, String> batch = new HashMap<String, String>();
+				for(int i = 0; i < batchSize; ++i)
+					batch.put(Integer.toString(i), "K" + i);
+				
+				long start = System.nanoTime();
+				for(int test = 0; test < maxTests; ++test)
+				{
+					utils.putAll(batch, ogclient.getMap("FarMap3"));
+				}
+				double duration = (System.nanoTime() - start) / 1000000000.0;
+				double rate = (double)batchSize * (double)maxTests / duration;
+				System.out.println("Batch of " + batchSize + " rate is " + rate + " <" + (batch.size() * maxTests) + ":" + duration + ">");
+			}
+		}
 	}
 }
