@@ -37,12 +37,15 @@ public class TestClientAPIs
 	public static void setupTest()
 	{
 		// do everything in one JVM for test
-//		ogclient = WXSUtils.startTestServer("Grid", "/objectgrid.xml", "/deployment.xml");
+		ogclient = WXSUtils.startTestServer("Grid", "/objectgrid.xml", "/deployment.xml");
 		// switch to this to connect to remote grid instead.
-		ogclient = WXSUtils.connectClient("localhost:2809", "Grid", "/objectgrid.xml");
+//		ogclient = WXSUtils.connectClient("localhost:2809", "Grid", "/objectgrid.xml");
 		utils = new WXSUtils(ogclient);
 	}
 
+	/**
+	 * This clears the FarMap3 in preparation for any tests
+	 */
 	public static void clearMap()
 	{
 		try
@@ -54,6 +57,10 @@ public class TestClientAPIs
 			Assert.fail("Exception during clear");
 		}
 	}
+	
+	/**
+	 * This tests the basic putAll/getAll/removeAll capabilities
+	 */
 	@Test
 	public void testPutAll()
 	{
@@ -94,13 +101,17 @@ public class TestClientAPIs
 		}
 	}
 	
+	/**
+	 * This does a simple stress test against the grid.
+	 */
 	@Test 
 	public void testPutRate()
 	{
 		clearMap();
 		int maxTests = 50;
-		// run five times to allow JIT to settle
-		for(int loop = 0; loop < 5; ++loop)
+		// run more than one time to allow JIT to settle
+		// for unit test once is enough
+		for(int loop = 0; loop < 1; ++loop)
 		{
 			for(int batchSize = 1000; batchSize <= 32000; batchSize *= 2 )
 			{

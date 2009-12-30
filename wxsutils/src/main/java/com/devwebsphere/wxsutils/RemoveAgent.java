@@ -12,10 +12,8 @@ package com.devwebsphere.wxsutils;
 
 import java.util.Collection;
 
-
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
-import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
@@ -54,12 +52,31 @@ public class RemoveAgent<K> implements ReduceGridAgent
 		catch(Exception e)
 		{
 			agent.getKeysMetric().logException(e);
-			throw new ObjectGridRuntimeException(e);
+			return Boolean.FALSE;
 		}
 	}
 
-	public Object reduceResults(Collection arg0) {
-		return null;
+	/**
+	 * Combine the Boolean results of the process calls using
+	 * AND
+	 */
+	public Object reduceResults(Collection arg0) 
+	{
+		boolean rc = true;
+		for(Object o : arg0)
+		{
+			if(o instanceof Boolean)
+			{
+				Boolean b = (Boolean)o;
+				rc = rc && b;
+			}
+			else
+			{
+				rc = false;
+			}
+			if(!rc) break;
+		}
+		return rc;
 	}
 	
 	public RemoveAgent()

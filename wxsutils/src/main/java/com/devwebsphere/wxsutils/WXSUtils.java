@@ -20,6 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -145,8 +146,38 @@ public class WXSUtils
 		}
 
 		blockForAllFuturesToFinish(results);
+		if(!areAllFuturesTRUE(results))
+			throw new ObjectGridRuntimeException("putAll failed");
 	}
-	
+
+	/**
+	 * This is used to check all Agents returned TRUE which indicates
+	 * no problems.
+	 * @param results
+	 * @return true if all Agents returned true
+	 */
+	boolean areAllFuturesTRUE(List<Future<?>> results)
+	{
+		try
+		{
+			for(Future<?> f : results)
+			{
+				Boolean b = (Boolean)f.get();
+				if(!b)
+					return false;
+			}
+		}
+		catch(ExecutionException e)
+		{
+			throw new ObjectGridRuntimeException(e);
+		}
+		catch(InterruptedException e)
+		{
+			throw new ObjectGridRuntimeException(e);
+		}
+		return true;
+	}
+
 	/**
 	 * This removes the Keys from the grid in parallel as efficiently as possible. The entries will
 	 * also be <b>removed</b> from any backend if a Loader is used. This isn't an invalidate, it's
@@ -168,13 +199,15 @@ public class WXSUtils
 			K key = perPartitionEntries.iterator().next();
 			
 			// invoke the agent to add the batch of records to the grid
-			RemoveAgent<K> ia = new RemoveAgent<K>();
-			ia.batch = perPartitionEntries;
-			Future<?> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ia));
+			RemoveAgent<K> ra = new RemoveAgent<K>();
+			ra.batch = perPartitionEntries;
+			Future<?> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ra));
 			results.add(fv);
 		}
 
 		blockForAllFuturesToFinish(results);
+		if(!areAllFuturesTRUE(results))
+			throw new ObjectGridRuntimeException("removeAll failed");
 	}
 	/**
 	 * This takes a Map of key/MapAgent pairs and then invokes the agent for each key as efficiently
@@ -439,15 +472,16 @@ public class WXSUtils
 	 * This waits for all the Futures to be complete
 	 * @param results The list of Futures to wait on.
 	 */
-	void blockForAllFuturesToFinish(List<Future<?>> results)
+	void blockForAllFuturesToFinish(List<Future<?>> futures)
 	{
 		// wait for all threads to finish or cancel
-		while(!results.isEmpty())
+		ArrayList<Future<?>> copy = new ArrayList<Future<?>>(futures);
+		while(!copy.isEmpty())
 		{
-			int last = results.size() - 1;
-			if(results.get(last).isDone() || results.get(last).isCancelled())
+			int last = copy.size() - 1;
+			if(copy.get(last).isDone() || copy.get(last).isCancelled())
 			{
-				results.remove(last);
+				copy.remove(last);
 			}
 		}
 	}
