@@ -3,14 +3,12 @@ schema is constant so that schema works for the chirp storage.
 
 Once everything is compiled and built, i.e. do a mvn install for wxsutils and then do it for redis-wxs. Next, build chirp-webapp.
 
-Start a test redis server using:
+Start a test redis server using this script in the chirp-webapp folder:
 
-cd redis-wxs
-mvn test -PsingleServerGrid
+./runtestserver.sh
 
 Make sure your mysql database is running and that you have created the chirp database (see instructions in redis-wxs).
 
-cd ../chirp-webapp
 mvn jetty:run
 
 Now, open a browser and goto http://localhost:8080/chirp-webapp
