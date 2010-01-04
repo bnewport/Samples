@@ -128,19 +128,19 @@ public abstract class BaseJDBCLoader
 			Field f = allFields.get(i);
 			if(f.getType().equals(String.class))
 			{
-				f.set(value, rs.getString(i+1));
+				f.set(value, rs.getString(f.getName()));
 			} else if(f.getType().equals(Integer.class))
 			{
-				f.set(value, new Integer(rs.getInt(i+1)));
+				f.set(value, new Integer(rs.getInt(f.getName())));
 			} else if(f.getType().getName().equals("int"))
 			{
-				f.setInt(value, rs.getInt(i+1));
+				f.setInt(value, rs.getInt(f.getName()));
 			} else if(f.getType().equals(Long.class))
 			{
-				f.set(value, new Long(rs.getLong(i+1)));
+				f.set(value, new Long(rs.getLong(f.getName())));
 			} else if(f.getType().getName().equals("long"))
 			{
-				f.setLong(value, rs.getLong(i+1));
+				f.setLong(value, rs.getLong(f.getName()));
 			} else
 			{
 				// add more types above if you get this exception

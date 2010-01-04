@@ -23,13 +23,15 @@ public class TestGrid
 	public void testKVOperations()
 	{
 		// check set works
-		R.str_str.set("TestKey", "Bobby");
+		String testValue = Long.toString(System.nanoTime());
+		R.str_str.set("TestKey", testValue);
 		String s = R.str_str.get("TestKey");
-		Assert.assertEquals("Bobby", s);
+		Assert.assertEquals(testValue, s);
 		// check update works
-		R.str_str.set("TestKey", "Billy");
+		testValue = Long.toString(System.nanoTime());
+		R.str_str.set("TestKey", testValue);
 		s = R.str_str.get("TestKey");
-		Assert.assertEquals("Billy", s);
+		Assert.assertEquals(testValue, s);
 		// check remove works
 		Assert.assertTrue(R.str_str.remove("TestKey"));
 		// check removing something unknown works
@@ -132,7 +134,7 @@ public class TestGrid
 	public void testSetOperations()
 		throws Throwable
 	{
-		String key = "Set";
+		String key = "S" + System.currentTimeMillis();
 
 		for(int i = 0; i < 100; ++i)
 		{
@@ -142,6 +144,19 @@ public class TestGrid
 			Assert.assertEquals(i+1, R.str_long.scard(key));
 			List<Long> contents = R.str_long.smembers(key);
 			Assert.assertEquals(i+1, contents.size());
+			for(int j = 0; j <= i; ++j)
+			{
+				Long jo = new Long(j);
+				for(int k = 0; k < contents.size(); ++k)
+				{
+					if(contents.get(k).equals(jo))
+					{
+						contents.remove(k);
+						break;
+					}
+				}
+			}
+			Assert.assertTrue(contents.isEmpty());
 		}
 		
 		for(int i = 0; i < 100; ++i)

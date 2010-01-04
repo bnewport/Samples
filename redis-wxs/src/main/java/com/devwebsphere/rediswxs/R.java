@@ -49,11 +49,6 @@ public class R
 	 */
 	static public IRedis<Long, Long> long_long;
 
-	static public IRedis<String, String> c_str_str;
-	static public IRedis<String, Long> c_str_long;
-	static public IRedis<Long, String> c_long_str;
-	static public IRedis<Long, Long> c_long_long;
-
 	/**
 	 * This MUST be called when your application starts to initialize the client
 	 * If the cep is null then a grid is started within the client JVM to host the
@@ -74,12 +69,6 @@ public class R
 		str_long = new RedisMapWithStringKeyAdapter<Long>(CacheUsage.NONEARCACHE, Long.class, r);
 		long_str = new RedisMapAdapter<Long, String>(CacheUsage.NONEARCACHE, Long.class, String.class, r);
 		long_long = new RedisMapAdapter<Long, Long>(CacheUsage.NONEARCACHE, Long.class, Long.class, r);
-		
-		// create near caches adapters sharing the near cache client
-		c_str_str = new RedisMapWithStringKeyAdapter<String>(CacheUsage.NEARCACHE, String.class, r);
-		c_str_long = new RedisMapWithStringKeyAdapter<Long>(CacheUsage.NEARCACHE, Long.class, r);
-		c_long_str = new RedisMapAdapter<Long, String>(CacheUsage.NEARCACHE, Long.class, String.class, r);
-		c_long_long = new RedisMapAdapter<Long, Long>(CacheUsage.NEARCACHE, Long.class, Long.class, r);
 	}
 	
 	static AtomicReference<Map<Class<?>, MultiMetaData<?>>> metaData;

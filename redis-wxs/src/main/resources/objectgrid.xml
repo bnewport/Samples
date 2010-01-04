@@ -32,13 +32,13 @@ This file configures a grid that uses purequery and write behind.
 
 			<!-- All the following maps share a database table, far-long-string uses the same table as near-long-string -->
 			<!-- These maps have a near cache -->            
-            <backingMap name="long-string" writeBehind="T5;C900" copyMode="COPY_ON_READ" lockStrategy="OPTIMISTIC" 
+            <backingMap name="long-string" writeBehind="T5;C900" copyMode="COPY_ON_READ" lockStrategy="PESSIMISTIC" 
             				evictionTriggers="MEMORY_USAGE_THRESHOLD" ttlEvictorType="LAST_ACCESS_TIME" timeToLive="3600" pluginCollectionRef="long-string"/>
-            <backingMap name="string-long" writeBehind="T5;C900" copyMode="COPY_ON_READ" lockStrategy="OPTIMISTIC" 
+            <backingMap name="string-long" writeBehind="T5;C900" copyMode="COPY_ON_READ" lockStrategy="PESSIMISTIC" 
             				evictionTriggers="MEMORY_USAGE_THRESHOLD" ttlEvictorType="LAST_ACCESS_TIME" timeToLive="3600" pluginCollectionRef="string-long"/>
-            <backingMap name="string-string" writeBehind="T5;C900" copyMode="COPY_ON_READ" lockStrategy="OPTIMISTIC" 
+            <backingMap name="string-string" writeBehind="T5;C900" copyMode="COPY_ON_READ" lockStrategy="PESSIMISTIC" 
             				evictionTriggers="MEMORY_USAGE_THRESHOLD" ttlEvictorType="LAST_ACCESS_TIME" timeToLive="3600" pluginCollectionRef="string-string"/>
-            <backingMap name="long-long" writeBehind="T5;C900" copyMode="COPY_ON_READ" lockStrategy="OPTIMISTIC" 
+            <backingMap name="long-long" writeBehind="T5;C900" copyMode="COPY_ON_READ" lockStrategy="PESSIMISTIC" 
             				evictionTriggers="MEMORY_USAGE_THRESHOLD" ttlEvictorType="LAST_ACCESS_TIME" timeToLive="3600" pluginCollectionRef="long-long"/>
 
 			<!--  These maps are for the lists and sets -->            

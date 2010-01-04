@@ -152,23 +152,22 @@ public class RedisClient implements IRedisLowLevel
 	{
 		if(cep != null)
 		{
-			// use the client og override xml file with the near cache turned on
-			cacheog = WXSUtils.connectClient(cep, "Grid", "/clientwithcacheobjectgrid.xml");
 			// use the client og override xml file with the near cache disabled
 			nocacheog = WXSUtils.connectClient(cep, "Grid", "/clientobjectgrid.xml");
+			// use the client og override xml file with the near cache turned on
+			cacheog = nocacheog;
+//			cacheog = WXSUtils.connectClient(cep, "Grid", "/clientwithcacheobjectgrid.xml");
 		}
 		else
 		{
 			// start a local WXS catalog and container for debugging
 //			String ogxml = "/objectgrid_writethrough.xml";
-			String ogxml = "/objectgrid_jdbc_writethrough.xml";
+
 			String depxml = "/deployment.xml";
-			
-			URL serverObjectgridXML =  this.getClass().getResource(ogxml);
-			URL deployment =  this.getClass().getResource(depxml);
-			
+			String ogxml = "/objectgrid_jdbc_writethrough.xml";
 			cacheog = WXSUtils.startTestServer("Grid", ogxml, depxml);
 			nocacheog = cacheog;
+//			nocacheog = WXSUtils.connectClient("localhost:2809", "Grid", "/clientobjectgrid.xml");
 		}
 		wxsutils = new WXSUtils(nocacheog);
 		initializeJMX();
@@ -252,14 +251,12 @@ public class RedisClient implements IRedisLowLevel
 		a.value = value;
 		
 		AgentManager am = thread.getMap(isCached, name).getAgentManager();
-		ArrayList<K> list = new ArrayList<K>();
-		list.add(key);
 		
 		// Call the agent. If an agent throws an exception for a given key
 		// then the value returned is an EntryErrorValue instance rather than the
 		// expected value so we need to check for this.
 		// This applies to all the agent calls below also.
-		Map<K, Object> m = am.callMapAgent(a, list);
+		Map<K, Object> m = am.callMapAgent(a, Collections.singleton(key));
 		Object rawReturn = m.get(key);
 		if(rawReturn instanceof EntryErrorValue)
 		{

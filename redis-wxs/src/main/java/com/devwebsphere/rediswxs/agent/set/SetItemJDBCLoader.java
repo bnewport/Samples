@@ -65,7 +65,7 @@ public class SetItemJDBCLoader extends GenericJDBCLoader implements
 		{
 			// first the pos value for this set element
 			Connection conn = BaseJDBCLoader.getConnection(sess.getTxID());
-			String sql = "SELECT * FROM " + getTableName() + " WHERE KEYZ=:keyz AND VALUE=:value";
+			String sql = "SELECT KEYZ, POS, VALUE FROM " + getTableName() + " WHERE KEYZ=:keyz AND VALUE=:value";
 			ListItem item = new ListItem(key, 0L, value);
 			
 			NamedParameterStatement s = new NamedParameterStatement(conn, sql);
@@ -87,7 +87,7 @@ public class SetItemJDBCLoader extends GenericJDBCLoader implements
 		try
 		{
 			Connection conn = BaseJDBCLoader.getConnection(sess.getTxID());
-			String sql = "SELECT * FROM " + getTableName() + " WHERE KEYZ=:keyz";
+			String sql = "SELECT KEYZ, POS, VALUE FROM " + getTableName() + " WHERE KEYZ=:keyz";
 			NamedParameterStatement s = new NamedParameterStatement(conn, sql);
 			ListItem itemKey = new ListItem();
 			itemKey.keyz = key;
