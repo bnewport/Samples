@@ -7,7 +7,7 @@
 <div class="content">
 <%
 	String u = PageUtils.getParam(request, "u");
-	Long userid = R.c_str_long.get("un:"+u+":id");
+	Long userid = R.str_long.get("un:"+u+":id");
 	if(u == null || userid == null)
 	{
 		%> <jsp:forward page="index.jsp"/> <%

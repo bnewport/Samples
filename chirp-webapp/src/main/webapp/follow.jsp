@@ -7,7 +7,7 @@
 <%
 	String uid_str = PageUtils.getParam(request, "uid");
 	String f_str = PageUtils.getParam(request, "f");
-	String username = R.c_str_str.get("u:"+uid_str+":username");
+	String username = R.str_str.get("u:"+uid_str+":username");
 	if(PageUtils.isLoggedIn(request) == false || uid_str == null || f_str == null)
 	{
 		%><jsp:forward page="index.jsp"/><%

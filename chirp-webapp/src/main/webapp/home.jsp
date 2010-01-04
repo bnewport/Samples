@@ -43,7 +43,7 @@
    		HashSet<Long> followerSet = new HashSet<Long>(followersList);
    		for(Long i : followerSet)
 		{
-            String fname = R.c_str_str.get("u:"+i.toString()+ ":username");
+            String fname = R.str_str.get("u:"+i.toString()+ ":username");
             if (fname !=null) {
                     if (fname.startsWith("user")) continue;
     	%>
@@ -66,7 +66,9 @@
    		HashSet<Long> followingSet = new HashSet<Long>(followingList);
    		for(Long i : followingSet)
 		{
-   			String fname = R.c_str_str.get("u:"+i.toString()+ ":username");
+   			String fname = R.str_str.get("u:"+i.toString()+ ":username");
+   			if(fname == null)
+   				fname = "No user name for " + i.toString();
    		%>
    		<a class="follower" href="profile.jsp?u=<%=URLEncoder.encode(fname)%>"><%=PageUtils.escapeHtmlFull(fname)%></a>
    		<br>

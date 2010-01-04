@@ -8,9 +8,8 @@ WebSphere eXtreme Scale</a>.  Key
 points:
 <ul>
 	<li>WebSphere eXtreme Scale is an elastic key-graph in memory data grid.</li>
-	<li>WebSphere eXtreme Scale is writing all data to a DB2 database which can be sharded
-	using <a href="http://www-01.ibm.com/software/data/studio/purequery/">IBMs
-	Data Studio purequery runtime</a> APIs.</li>
+	<li>WebSphere eXtreme Scale is writing all data to a relational SQL database which can be sharded
+	using JDBC APIs.</li>
 	<li>WebSphere eXtreme Scale can
 	automatically linearly scale as more boxes are added to the grid. More
 	boxes increases memory capacity and processing and network performance

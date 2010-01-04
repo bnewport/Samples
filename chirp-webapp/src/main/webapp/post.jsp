@@ -22,7 +22,7 @@
     			Long userId = PageUtils.getUserID(request);
 	    		long time = System.currentTimeMillis();
 	    		String post=Long.toString(userId)+"|"+Long.toString(time)+"|"+status;
-	    		R.c_str_str.set("p:"+Long.toString(postid), post);
+	    		R.str_str.set("p:"+Long.toString(postid), post);
 	    		List<Long> followersList = R.str_long.smembers(Long.toString(userId)+":followers");
 	    		if(followersList == null)
 	    		{

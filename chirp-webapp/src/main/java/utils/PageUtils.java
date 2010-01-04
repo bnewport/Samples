@@ -43,7 +43,7 @@ public class PageUtils
 	static public void loadUserInfo(HttpServletRequest request, long userId)
 	{
 		request.getSession().setAttribute("userid", userId);
-		String username = R.c_str_str.get("u:" + Long.toString(userId) + ":username");
+		String username = R.str_str.get("u:" + Long.toString(userId) + ":username");
 		request.getSession().setAttribute("username", username);
 	}
 	
@@ -111,14 +111,14 @@ public class PageUtils
 	
 	static public void showPost(StringBuilder buff, long id)
 	{
-		String postData = R.c_str_str.get("p:"+Long.toString(id));
+		String postData = R.str_str.get("p:"+Long.toString(id));
 		if(postData == null)
 			return;
 		StringTokenizer tok = new StringTokenizer(postData, "|");
 		String uid = tok.nextToken();
 		long time = Long.parseLong(tok.nextToken());
 		String post = tok.nextToken();
-		String username = R.c_str_str.get("u:"+uid + ":username");
+		String username = R.str_str.get("u:"+uid + ":username");
 		String elapsed = strElapsed(time);
 		String userlink = getUserLink(username);
 		buff.append("<div class=\"post\">");
@@ -243,7 +243,7 @@ public class PageUtils
 		
 		for(Long userId : lastUsers)
 		{
-			String userName = R.c_str_str.get("u:"+Long.toString(userId)+":username");
+			String userName = R.str_str.get("u:"+Long.toString(userId)+":username");
 			String userlink = null;    
 			if(userName != null)     
 				userlink = getUserLink(userName);    
@@ -262,7 +262,7 @@ public class PageUtils
 			String username = tok.nextToken();
 			if(username.length() <= MAX_USERNAME_SIZE)
 			{
-				Long userid = R.c_str_long.get("un:"+username+":id");
+				Long userid = R.str_long.get("un:"+username+":id");
 				if(userid != null)
 					return userid.longValue();
 			}

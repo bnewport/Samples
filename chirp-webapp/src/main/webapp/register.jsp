@@ -20,20 +20,20 @@
 	}
 	else
 	{
-		if(R.c_str_long.get("un:"+username + ":id") != null)
+		if(R.str_long.get("un:"+username + ":id") != null)
 		{
 			%> <%= PageUtils.goback("Sorry, the selected username is already in use") %> <%
 		}
 		else
 		{
 			long userid = R.str_long.incr("nextUserId");
-			R.c_str_long.set("un:"+username + ":id", userid);
-			R.c_str_str.set("u:"+Long.toString(userid)+":username", username);
+			R.str_long.set("un:"+username + ":id", userid);
+			R.str_str.set("u:"+Long.toString(userid)+":username", username);
 			
 			String encryptedPassword = PageUtils.hashPassword(password);
 			if(encryptedPassword == null)
 				encryptedPassword = password;
-			R.c_str_str.set("u:"+Long.toString(userid)+":password", encryptedPassword);
+			R.str_str.set("u:"+Long.toString(userid)+":password", encryptedPassword);
 			
 			R.str_long.sadd("users", userid);
 			R.str_long.lpush("last50users", userid);
