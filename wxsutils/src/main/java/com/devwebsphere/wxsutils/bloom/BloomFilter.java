@@ -10,6 +10,7 @@
 //
 package com.devwebsphere.wxsutils.bloom;
 
+import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.BitSet;
@@ -23,8 +24,12 @@ import java.util.BitSet;
  * @author bnewport
  *
  */
-public final class BloomFilter 
+public final class BloomFilter implements Serializable
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5465191270790202776L;
 	BitSet bitset;
 	double expectedFalsePositive;
 	
