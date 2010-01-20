@@ -118,6 +118,30 @@ public class WXSUtils
 	}
 	
 	/**
+	 * Checks contains for keys in parallel from a map
+	 * @param <K> The key of the Map
+	 * @param <V> The values of the Map
+	 * @param keys The keys to fetch in parallel
+	 * @param bmap The map from which to fetch the keys
+	 * @return A Map of the key/value pairs
+	 */
+	public <K> Map<K,Boolean> containsAll(Collection<K> keys, BackingMap bmap)
+	{
+		Map<Integer, List<K>> pmap = convertToPartitionEntryMap(bmap, keys);
+		
+		Map<K, ContainsAllAgent<K>> agents = new HashMap<K, ContainsAllAgent<K>>();
+		for(Map.Entry<Integer, List<K>> e : pmap.entrySet())
+		{
+			ContainsAllAgent<K> a = new ContainsAllAgent<K>();
+			a.batch = e.getValue();
+			agents.put(a.batch.get(0), a);
+		}
+		
+		Map<K,Boolean> r = callReduceAgentAll(agents, bmap);
+		return r;
+	}
+	
+	/**
 	 * This puts the K/V pairs in to the grid in parallel as efficiently as possible. Any existing values
 	 * for any K are over written.
 	 * @param <K> The key type to use
@@ -186,7 +210,7 @@ public class WXSUtils
 	 * @param batch The keys to remove from the grid
 	 * @param bmap The map to store them in.
 	 */
-	public <K> void removeAll(List<K> batch, BackingMap bmap)
+	public <K> void removeAll(Collection<K> batch, BackingMap bmap)
 	{
 		Map<Integer, List<K>> pmap = convertToPartitionEntryMap(bmap, batch);
 		Iterator<List<K>> items = pmap.values().iterator();
