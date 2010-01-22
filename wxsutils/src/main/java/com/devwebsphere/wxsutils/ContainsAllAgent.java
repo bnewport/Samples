@@ -15,9 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
-import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
@@ -42,7 +40,7 @@ public class ContainsAllAgent<K> implements ReduceGridAgent
 
 	public Object reduce(Session sess, ObjectMap map, Collection arg2) 
 	{
-		AgentMBeanImpl bean = AgentMBeanManager.getBean(this.getClass().getName());
+		AgentMBeanImpl bean = WXSUtils.getAgentMBeanManager().getBean(this.getClass().getName());
 		long startNS = System.nanoTime();
 		try
 		{

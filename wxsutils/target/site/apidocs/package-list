@@ -3,3 +3,4 @@ com.devwebsphere.wxsutils.bloom
 com.devwebsphere.wxsutils.jmx
 com.devwebsphere.wxsutils.jmx.agent
 com.devwebsphere.wxsutils.jmx.loader
+com.devwebsphere.wxsutils.jmx.wxsmap

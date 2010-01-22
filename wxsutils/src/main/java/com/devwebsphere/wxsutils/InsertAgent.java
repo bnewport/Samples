@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
-import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
@@ -38,7 +37,7 @@ public class InsertAgent<K,V> implements ReduceGridAgent
 	}
 
 	public Object reduce(Session sess, ObjectMap map, Collection arg2) {
-		AgentMBeanImpl agent = AgentMBeanManager.getBean(this.getClass().getName());
+		AgentMBeanImpl agent = WXSUtils.getAgentMBeanManager().getBean(this.getClass().getName());
 		long startNS = System.nanoTime();
 		try
 		{

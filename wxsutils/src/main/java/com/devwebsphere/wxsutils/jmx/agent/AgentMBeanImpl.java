@@ -29,6 +29,12 @@ public class AgentMBeanImpl implements AgentMBean
 	String className;
 	MinMaxAvgMetric partitionMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric keysMetric = new MinMaxAvgMetric();
+	
+	public AgentMBeanImpl(String className)
+	{
+		this.className = className;
+	}
+	
 	@TabularKey
 	public String getClassName() 
 	{

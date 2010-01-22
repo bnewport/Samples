@@ -20,12 +20,16 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
+import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanManager;
+import com.devwebsphere.wxsutils.jmx.wxsmap.WXSMapMBeanManager;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ClientClusterContext;
 import com.ibm.websphere.objectgrid.ObjectGrid;
@@ -63,6 +67,54 @@ public class WXSUtils
 	static AtomicReference<ExecutorService> globalThreadPool = new AtomicReference<ExecutorService>();
 	ExecutorService threadPool;
 	
+	Map<String, WXSMap> maps = new ConcurrentHashMap<String, WXSMap>();
+
+	static AtomicReference<AgentMBeanManager> agentMBeanManager = new AtomicReference<AgentMBeanManager>();
+	static AtomicReference<LoaderMBeanManager> loaderMBeanManager = new AtomicReference<LoaderMBeanManager>();
+	static AtomicReference<WXSMapMBeanManager> wxsMapMBeanManager = new AtomicReference<WXSMapMBeanManager>();
+
+	/**
+	 * Returns a static MBean Manager. Hack until I get DI using Aries
+	 * @return
+	 */
+	public static AgentMBeanManager getAgentMBeanManager()
+	{
+		if(agentMBeanManager.get() == null)
+		{
+			AgentMBeanManager m = new AgentMBeanManager("Grid");
+			agentMBeanManager.compareAndSet(null, m);
+		}
+		return agentMBeanManager.get();
+	}
+	
+	/**
+	 * Returns a static MBean Manager. Hack until I get DI using Aries
+	 * @return
+	 */
+	public static LoaderMBeanManager getLoaderMBeanManager()
+	{
+		if(loaderMBeanManager.get() == null)
+		{
+			LoaderMBeanManager m = new LoaderMBeanManager("Grid");
+			loaderMBeanManager.compareAndSet(null, m);
+		}
+		return loaderMBeanManager.get();
+	}
+	
+	/**
+	 * Returns a static MBean Manager. Hack until I get DI using Aries
+	 * @return
+	 */
+	public static WXSMapMBeanManager getWXSMapMBeanManager()
+	{
+		if(wxsMapMBeanManager.get() == null)
+		{
+			WXSMapMBeanManager m = new WXSMapMBeanManager("Grid");
+			wxsMapMBeanManager.compareAndSet(null, m);
+		}
+		return wxsMapMBeanManager.get();
+	}
+	
 	/**
 	 * This constructs an instance of this helper class.
 	 * @param grid The grid to use with this instance. It is usually a client connection
@@ -74,6 +126,22 @@ public class WXSUtils
 		threadPool = pool;
 	}
 
+	/**
+	 * This returns a simplified Map object to interact with the
+	 * data in a cache.
+	 * @param mapName
+	 * @return
+	 */
+	public WXSMap getCache(String mapName)
+	{
+		WXSMap rc = maps.get(mapName);
+		if(rc == null)
+		{
+			rc = new WXSMap(this, mapName);
+			maps.put(mapName, rc);
+		}
+		return rc;
+	}
 	/**
 	 * This constructs an instance of this helper class with a
 	 * built in default

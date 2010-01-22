@@ -27,7 +27,7 @@ public class SummaryMBeanImpl<T> implements SummaryMBean
 	 */
 	final public static String MONITOR_MBEAN = "monitor";
 	
-	public SummaryMBeanImpl(SummaryMBeanSource<T> beanSource, Class<T> sourceClass, String indexName, String typePrefix)
+	public SummaryMBeanImpl(MBeanGroupManager<T> beanSource, Class<T> sourceClass, String indexName, String typePrefix)
 		throws OpenDataException
 	{
 		this.typePrefix = typePrefix;

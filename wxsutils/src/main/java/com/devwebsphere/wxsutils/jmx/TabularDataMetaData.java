@@ -55,7 +55,7 @@ public class TabularDataMetaData<T>
 	/**
 	 * This is used to fetch all MBeans and extract the necessary attributes for this table
 	 */
-	SummaryMBeanSource<T> beanSource;
+	MBeanGroupManager<T> beanSource;
 
 	/**
 	 * This returns the attribute name from a get Method definition.
@@ -90,7 +90,7 @@ public class TabularDataMetaData<T>
 	 * @param typeDescription 
 	 * @throws OpenDataException
 	 */
-	public TabularDataMetaData(SummaryMBeanSource<T> bs, String idColumnName, Class<T> source, String name, String typeName, String typeDescription)
+	public TabularDataMetaData(MBeanGroupManager<T> bs, String idColumnName, Class<T> source, String name, String typeName, String typeDescription)
 		throws OpenDataException
 	{
 		beanSource = bs;
