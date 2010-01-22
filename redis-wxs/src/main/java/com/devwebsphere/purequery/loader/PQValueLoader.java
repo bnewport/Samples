@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanManager;
 import com.ibm.pdq.runtime.Data;
@@ -60,7 +61,7 @@ public abstract class PQValueLoader extends BasePQLoader implements Loader
 			throws LoaderException, OptimisticCollisionException 
 	{
 		mapName = ls.getMapName();
-		LoaderMBeanImpl mbean = LoaderMBeanManager.getBean(mapName);
+		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(mapName);
 		mbean.getBatchSizeMetrics().logTime(ls.size());
 		long startNS = System.nanoTime();
 		Data data = getData(tx);
@@ -153,7 +154,7 @@ public abstract class PQValueLoader extends BasePQLoader implements Loader
 	 */
 	public List get(TxID tx, List keys, boolean arg2) throws LoaderException 
 	{
-		LoaderMBeanImpl mbean = LoaderMBeanManager.getBean(mapName);
+		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(mapName);
 		long startNS = System.nanoTime();
 		try
 		{

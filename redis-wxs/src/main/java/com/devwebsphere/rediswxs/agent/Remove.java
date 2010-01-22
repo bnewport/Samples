@@ -12,6 +12,7 @@ package com.devwebsphere.rediswxs.agent;
 
 import java.util.Map;
 
+import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
 import com.ibm.websphere.objectgrid.ObjectGridException;
@@ -34,7 +35,7 @@ public class Remove implements MapGridAgent
 
 	public Object process(Session sess, ObjectMap map, Object key) 
 	{
-		AgentMBeanImpl mbean = AgentMBeanManager.getBean(this.getClass().getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(this.getClass().getName());
 		long startNS = System.nanoTime();
 		try
 		{

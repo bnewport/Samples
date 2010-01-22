@@ -1,49 +1,54 @@
 
  Index  Count   Time of last Occurrence   Exception SourceId ProbeId
 ------+------+---------------------------+--------------------------
-     1      0    12/16/09 0:21:48:380 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
-     2      0    12/16/09 0:21:48:380 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
-     3      1    12/16/09 0:21:50:327 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
+     1      0    1/14/10 10:43:23:514 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
+     2      0    1/14/10 10:43:23:514 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
+     3      1    1/14/10 10:43:26:302 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
+------+------+---------------------------+--------------------------
++    4      1    1/14/10 10:43:50:274 CST java.lang.RuntimeException com.ibm.ws.objectgrid.ObjectGridImpl.initialize 554
++    5      1    1/14/10 10:43:50:295 CST com.ibm.websphere.objectgrid.plugins.TransactionCallbackException com.ibm.ws.objectgrid.ShardImpl.ShardImpl 243
++    6      1    1/14/10 10:43:50:354 CST java.lang.RuntimeException com.ibm.ws.objectgrid.container.ObjectGridContainerImpl.activate 266
+
+ Index  Count   Time of last Occurrence   Exception SourceId ProbeId
+------+------+---------------------------+--------------------------
+     1      0    1/14/10 10:44:16:617 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
+     2      0    1/14/10 10:44:16:617 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
+     3      1    1/14/10 10:44:18:917 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
 ------+------+---------------------------+--------------------------
 
  Index  Count   Time of last Occurrence   Exception SourceId ProbeId
 ------+------+---------------------------+--------------------------
-     1      0   12/17/09 16:30:19:740 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
-     2      0   12/17/09 16:30:19:740 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
-     3      1   12/17/09 16:30:22:142 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
+     1      0    1/21/10 17:26:05:579 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
+     2      0    1/21/10 17:26:05:579 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
+     3      1    1/21/10 17:26:09:291 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
+------+------+---------------------------+--------------------------
++    4      1    1/21/10 17:26:35:258 CST com.ibm.websphere.objectgrid.ObjectGridRuntimeException class com.ibm.ws.objectgrid.datagrid.EntryAgentCommand.processAgent() 130
+
+ Index  Count   Time of last Occurrence   Exception SourceId ProbeId
+------+------+---------------------------+--------------------------
+     1      0    1/21/10 17:32:34:935 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
+     2      0    1/21/10 17:32:34:935 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
+     3      1    1/21/10 17:32:37:186 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
+------+------+---------------------------+--------------------------
++    4      1    1/21/10 17:33:13:151 CST com.ibm.websphere.objectgrid.TransactionException class com.ibm.ws.objectgrid.datagrid.EntryAgentCommand.run() 250
+
+ Index  Count   Time of last Occurrence   Exception SourceId ProbeId
+------+------+---------------------------+--------------------------
+     1      0    1/21/10 17:37:01:085 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
+     2      0    1/21/10 17:37:01:085 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
+     3      1    1/21/10 17:37:03:427 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
 ------+------+---------------------------+--------------------------
 
  Index  Count   Time of last Occurrence   Exception SourceId ProbeId
 ------+------+---------------------------+--------------------------
-     1      0   12/17/09 16:32:39:844 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
-     2      0   12/17/09 16:32:39:844 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
-     3      1   12/17/09 16:32:41:874 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
+     1      0    1/21/10 17:38:54:476 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
+     2      0    1/21/10 17:38:54:476 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
+     3      1    1/21/10 17:38:56:717 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
 ------+------+---------------------------+--------------------------
 
  Index  Count   Time of last Occurrence   Exception SourceId ProbeId
 ------+------+---------------------------+--------------------------
-     1      0   12/17/09 16:36:31:342 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
-     2      0   12/17/09 16:36:31:342 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
-     3      1   12/17/09 16:36:33:623 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
-------+------+---------------------------+--------------------------
-
- Index  Count   Time of last Occurrence   Exception SourceId ProbeId
-------+------+---------------------------+--------------------------
-     1      0   12/17/09 16:37:47:234 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
-     2      0   12/17/09 16:37:47:234 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
-     3      1   12/17/09 16:37:49:326 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
-------+------+---------------------------+--------------------------
-
- Index  Count   Time of last Occurrence   Exception SourceId ProbeId
-------+------+---------------------------+--------------------------
-     1      0   12/17/09 16:39:09:178 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
-     2      0   12/17/09 16:39:09:178 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
-     3      1   12/17/09 16:39:11:282 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
-------+------+---------------------------+--------------------------
-
- Index  Count   Time of last Occurrence   Exception SourceId ProbeId
-------+------+---------------------------+--------------------------
-     1      0   12/17/09 16:44:31:075 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
-     2      0   12/17/09 16:44:31:075 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
-     3      1   12/17/09 16:44:33:406 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
+     1      0     1/22/10 9:29:35:204 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.APPSECTaggedComponent.getAPPSECComponentData 302
+     2      0     1/22/10 9:29:35:204 CST java.lang.NullPointerException com.ibm.ISecurityLocalObjectBaseL13Impl.SecurityComponentFactory.establish_components 436
+     3      1     1/22/10 9:29:37:823 CST java.lang.ClassNotFoundException com.ibm.ws.management.AdminHelper.<clinit> 33
 ------+------+---------------------------+--------------------------

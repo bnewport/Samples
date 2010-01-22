@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
@@ -40,7 +41,7 @@ public class MultiAttributePutAgent implements MapGridAgent
 
 	public Object process(Session sess, ObjectMap map, Object key) 
 	{
-		AgentMBeanImpl bean = AgentMBeanManager.getBean(this.getClass().getName());
+		AgentMBeanImpl bean = WXSUtils.getAgentMBeanManager().getBean(this.getClass().getName());
 		long startNS = System.nanoTime();
 		try
 		{

@@ -188,7 +188,7 @@ public class RedisClient implements IRedisLowLevel
 		try
 		{
 			mbean = new RedisMBeanImpl();
-			MBeanServer jmxServer = LoaderMBeanManager.getServer();
+			MBeanServer jmxServer = WXSUtils.getLoaderMBeanManager().getServer();
 			StandardMBean mbn = new StandardMBean(mbean, RedisMBean.class);
 			MBeanInfo info = mbn.getMBeanInfo();
 			Hashtable<String, String> props = new Hashtable<String, String>();

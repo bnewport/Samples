@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 
 import com.devwebsphere.rediswxs.agent.set.SetLoaderOperations;
 import com.devwebsphere.rediswxs.data.list.ListItem;
+import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanManager;
 import com.ibm.websphere.objectgrid.BackingMap;
@@ -175,7 +176,7 @@ public class GenericJDBCLoader extends BaseJDBCLoader implements Loader, SetLoad
 			throws LoaderException, OptimisticCollisionException 
 	{
 		mapName = ls.getMapName();
-		LoaderMBeanImpl mbean = LoaderMBeanManager.getBean(ls.getMapName());
+		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(ls.getMapName());
 		mbean.getBatchSizeMetrics().logTime(ls.size());
 		long startNS = System.nanoTime();
 		// start a hetero batch.
@@ -284,7 +285,7 @@ public class GenericJDBCLoader extends BaseJDBCLoader implements Loader, SetLoad
 	@SuppressWarnings("unchecked")
 	public List get(TxID tx, List keys, boolean arg2) throws LoaderException 
 	{
-		LoaderMBeanImpl mbean = LoaderMBeanManager.getBean(mapName);
+		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(mapName);
 		try
 		{
 			mbean.getGetSizeMetrics().logTime(keys.size());

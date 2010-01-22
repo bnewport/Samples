@@ -14,6 +14,7 @@ import java.util.Map;
 
 import com.devwebsphere.purequery.loader.ScalarKey;
 import com.devwebsphere.rediswxs.data.list.ListHead;
+import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
 import com.ibm.websphere.objectgrid.ObjectGridException;
@@ -38,7 +39,7 @@ public class LLen extends BaseAgent<Object> implements MapGridAgent
 			ScalarKey sk = (ScalarKey)key;
 			key = sk.getKey();
 		}
-		AgentMBeanImpl mbean = AgentMBeanManager.getBean(this.getClass().getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(this.getClass().getName());
 		long startNS = System.nanoTime();
 		try
 		{

@@ -19,8 +19,8 @@ import com.devwebsphere.purequery.loader.ScalarKey;
 import com.devwebsphere.rediswxs.data.list.ListItem;
 import com.devwebsphere.rediswxs.data.list.ListItemKey;
 import com.devwebsphere.rediswxs.data.set.SetHead;
+import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
-import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
@@ -42,7 +42,7 @@ public class SRemove extends BaseAgent<Object> implements MapGridAgent
 			ScalarKey sk = (ScalarKey)key;
 			key = sk.getKey();
 		}
-		AgentMBeanImpl mbean = AgentMBeanManager.getBean(this.getClass().getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(this.getClass().getName());
 		long startNS = System.nanoTime();
 		try
 		{
