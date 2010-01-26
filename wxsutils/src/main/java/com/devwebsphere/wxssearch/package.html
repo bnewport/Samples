@@ -1,0 +1,14 @@
+<html>
+<body>
+This is a package for allowing full text search on terms associated with a key. An example would be an application
+that wants to index on the name field of a customer. The application should iterate over all entries and
+call Index#insert after creating a Map with entry pairs consisting of the customer id and the name field. Later,
+the application can use the index to retrieve the customer ids for all entries whose name includes
+a particular string. The application needs to ensure the index is maintained as the main map changes. The
+insert and remove methods allow this. An update is simply a remove followed by an insert.
+<p/>
+The testog.xml file includes templates which must be present in your objectgrid.xml file and deployment.xml. The
+actual maps used for the index are automatically created using these templates. Make sure your objectgrid servers
+include this package and wxsutils on their classpath as well as the key classes you use for the index.
+</body>
+</html>

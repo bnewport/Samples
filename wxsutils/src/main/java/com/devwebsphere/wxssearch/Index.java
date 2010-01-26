@@ -1,0 +1,348 @@
+//
+//This sample program is provided AS IS and may be used, executed, copied and
+//modified without royalty payment by customer (a) for its own instruction and 
+//study, (b) in order to develop applications designed to run with an IBM 
+//WebSphere product, either for customer's own internal use or for redistribution 
+//by customer, as part of such an application, in customer's own products. "
+//
+//5724-J34 (C) COPYRIGHT International Business Machines Corp. 2005
+//All Rights Reserved * Licensed Materials - Property of IBM
+//
+package com.devwebsphere.wxssearch;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import com.ibm.websphere.objectgrid.BackingMap;
+import com.ibm.websphere.objectgrid.ObjectGrid;
+import com.ibm.websphere.objectgrid.ObjectGridException;
+import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
+import com.ibm.websphere.objectgrid.ObjectMap;
+import com.ibm.websphere.objectgrid.Session;
+import com.ibm.websphere.objectgrid.datagrid.AgentManager;
+
+/**
+ * Each index uses 4 dynamic maps named after the index.
+ *
+ * @param <RK> The actual key of the entities being indexed.
+ */
+public class Index<RK> 
+{
+
+	static String DYN_INDEX_MAP_SUFFIX = "Index";
+	static String DYN_BAD_SYMBOL_MAP_SUFFIX = "BadSymbol";
+	static String DYN_ATTRIBUTES_MAP_SUFFIX = "Attributes";
+	static String DYN_COUNTER_MAP_SUFFIX = "Counter";
+	
+	static Logger logger = Logger.getLogger(Index.class.getName());
+	IndexManager manager;
+	
+	String indexName;
+	String attributeMapName;
+	String attributeIndexMapName;
+	String indexMapName;
+	String badSymbolMapName;
+
+	/**
+	 * This should only be called indirectly by this framework
+	 * @see IndexManager#getIndex(String)
+	 * @param im
+	 * @param indexName
+	 */
+	Index(IndexManager im, String indexName)
+	{
+		this.manager = im;
+		this.indexName = indexName;
+        attributeMapName = indexName + "_" + DYN_ATTRIBUTES_MAP_SUFFIX;
+        attributeIndexMapName = indexName + "_" + DYN_INDEX_MAP_SUFFIX;
+		indexMapName = indexName + "_" + DYN_INDEX_MAP_SUFFIX;
+		badSymbolMapName = indexName + "_" + DYN_BAD_SYMBOL_MAP_SUFFIX;
+		
+		try
+		{
+			// make sure the maps based on the index name are dynamically created
+			// a Dynamic Map won't exist unless a client calls Session#getMap using
+			// the dynamic map name.
+			Session s = manager.utils.getObjectGrid().getSession();
+			ObjectMap m = s.getMap(attributeMapName);
+			m = s.getMap(attributeIndexMapName);
+			m = s.getMap(indexMapName);
+			m = s.getMap(badSymbolMapName);
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.SEVERE, "Cannot create dynamic maps for index", e);
+			throw new ObjectGridRuntimeException(e);
+		}
+	}
+	
+	/**
+	 * This adds index entries. It takes the key for the actual record and the
+	 * value of the attribute for the record. The index can later be used to retrieve
+	 * the keys for all entries with an attribute containing a symbol
+	 * @param entries
+	 */
+    public void insert(Map<RK, String> entries)
+    {
+    	try
+    	{
+	    	ObjectGrid grid = manager.utils.getObjectGrid();
+	
+	        Session sess = grid.getSession();
+	
+	        int size = entries.size();
+	        long longKey = getNameCounterRange(sess, size);
+	
+	        HashMap<Long, RK> allLongNames = new HashMap<Long, RK>();
+	        HashMap<String, Set<Long>> indexMap = new HashMap<String, Set<Long>>();
+
+	        for(Map.Entry<RK, String> e : entries.entrySet())
+	        {
+	            allLongNames.put(longKey, e.getKey());
+	            Set<String> symbols = generate(e.getValue());
+	
+	            for (String a : symbols)
+	            {
+	                Set<Long> list = indexMap.get(a);
+	                if (list == null)
+	                    list = new HashSet<Long>();
+	                list.add(longKey);
+	                indexMap.put(a, list);
+	            }
+	            longKey++;
+	        }
+	        BackingMap bmap = grid.getMap(attributeMapName);
+	        manager.utils.putAll(allLongNames, bmap);
+	
+	        Set<String> allSymbols = indexMap.keySet();
+	        Map<String, IndexEntryUpdateAgent> batchAgents = new HashMap<String, IndexEntryUpdateAgent>();
+	        for (String symbol : allSymbols)
+	        {
+	            Set<Long> keys = indexMap.get(symbol);
+	            IndexEntryUpdateAgent agent = new IndexEntryUpdateAgent();
+	            agent.nameKeys = new long[keys.size()];
+	            agent.gridName = manager.utils.getObjectGrid().getName();
+	            int idx = 0;
+	            for (Long k : keys)
+	            {
+	                agent.nameKeys[idx++] = k;
+	            }
+	            agent.isAddOperation = true;
+	            agent.indexName = indexName;
+	            batchAgents.put(symbol, agent);
+	        }
+	        manager.utils.callMapAgentAll(batchAgents, grid.getMap(attributeIndexMapName));
+    	}
+    	catch(Exception e)
+    	{
+    		logger.log(Level.SEVERE, "Exception inserting index entries", e);
+    		throw new ObjectGridRuntimeException(e);
+    	}
+    }
+    
+    /**
+     * This retrieves the list of keys for all entries with an attribute
+     * containing the symbol anywhere.
+     * @param symbol
+     * @return
+     */
+    public Collection<RK> contains(String symbol)
+	{
+    	try
+    	{
+			ObjectGrid grid = manager.utils.getObjectGrid();
+			Session sess = grid.getSession();
+			ObjectMap indexMap = sess.getMap(indexMapName);
+			ObjectMap badSymbolMap = sess.getMap(badSymbolMapName);
+			
+			if (badSymbolMap.containsKey(symbol))
+			    return (Collection<RK>)Collections.EMPTY_LIST;
+			
+			long[] keys = (long[]) indexMap.get(symbol);
+			if (keys == null)
+			    return (Collection<RK>)Collections.EMPTY_LIST;
+			ArrayList<Long> listKeys = new ArrayList<Long>(keys.length);
+			for (long k : keys)
+			{
+			    listKeys.add(k);
+			}
+			
+			Map<Long, RK> all = manager.utils.getAll(listKeys, grid.getMap(attributeMapName));
+			return all.values();
+    	}
+    	catch(ObjectGridException e)
+    	{
+    		logger.log(Level.SEVERE, "Exception looking up substrings", e);
+    		throw new ObjectGridRuntimeException(e);
+    	}
+	}
+    
+    /**
+     * This removes the index entry for the record with the key key and the attribute value
+     * attributeValue
+     * @param key
+     * @param attributeValue
+     */
+    public void remove(RK key, String attributeValue)
+    {
+    	try
+    	{
+	    	ObjectGrid grid = manager.utils.getObjectGrid();
+	    	/*
+	    	 * 1) Find the entry for attributeValue. If the attributevalue is in BadSymbol map, do nothing. 
+	    	 * 2) Retrieve all the matched entries from Names map. 
+	    	 *    Find out which long id represents the key ". 
+	    	 * 3) Remove the long id from Attribute map.
+	    	 * 4) Remove the long id for all the symbol genreated by the attribute name in Index map.  
+	    	 */
+	
+	    	// 1) Find the entry for attributeValue. If the attributevalue is in BadSymbol map, do nothing. 
+	    	Session sess = grid.getSession();
+	    	ObjectMap badSymbolMap = sess.getMap(badSymbolMapName);
+	    	if (badSymbolMap.containsKey(key))
+	    	{
+	    		logger.finest("removeAttribute - the attributeValue '" + attributeValue + "' matches to too many values. "
+	    				+ "There is no need to remove from the Index map.");
+	    		return;
+	    	}
+	
+	    	// 2) Retrieve all the matched entries from Names map. 
+	    	// Find out which long id represents key. 
+	
+	    	// Get the ObjectMap representing the attribute index map
+	    	ObjectMap indexMap = grid.getSession().getMap(indexMapName);
+	
+	    	long[] keys = (long[]) indexMap.get(attributeValue);
+	    	if (keys == null)
+	    	{
+	    		logger.warning("removeAttribute - the attributeValue '" + attributeValue
+	    				+ "' cannot be found in Index map. This should not happen.");
+	    		return;
+	    	}
+	
+	    	logger.finest("removeAttribute - total " + keys.length + " matches for attribute value'" + attributeValue
+	    			+ "'.");
+	
+	    	List<Long> listKeys = new ArrayList<Long>(keys.length);
+	    	for (long k : keys)
+	    	{
+	    		listKeys.add(k);
+	    	}
+	
+	    	ObjectMap attributeMap = grid.getSession().getMap(indexMapName);
+	    	Map<Long, RK> all = manager.utils.getAll(listKeys, grid.getMap(attributeMapName));
+	
+	    	long id = 0;
+	    	boolean found = false;
+	    	for (Map.Entry<Long, RK> entry : all.entrySet())
+	    	{
+	    		if (entry.getValue().equals(key))
+	    		{
+	    			found = true;
+	    			id = entry.getKey();
+	    			break;
+	    		}
+	    	}
+	
+	    	if (!found)
+	    	{
+	    		logger.warning("removeAttribute - the attributeValue '" + attributeValue + "' cannot be found in the "
+	    				+ attributeMapName + " map. This should not happen.");
+	    		return;
+	    	}
+	
+	    	logger.finest("removeAttribute - Found the long id for attribute value'" + attributeValue + "': " + id);
+	    	// 3) Remove the long id from Attribute map.
+	    	attributeMap.remove(new Long(id));
+	
+	    	// 4) Remove the long id for all the symbol genreated by the attribute name in Index map.  
+	
+	    	Set<String> symbols = generate(attributeValue);
+	
+	    	ObjectMap names = sess.getMap(attributeMapName);
+	    	names.remove(key);
+	
+	    	AgentManager am = sess.getMap(indexMapName).getAgentManager();
+	
+	    	for (String symbol : symbols)
+	    	{
+	    		IndexEntryUpdateAgent agent = new IndexEntryUpdateAgent();
+	    		agent.nameKeys = new long[1];
+	    		agent.nameKeys[0] = id;
+	    		agent.isAddOperation = false;
+	    		agent.indexName = indexName;
+	    		agent.gridName = manager.utils.getObjectGrid().getName();
+	    		am.callMapAgent(agent, Collections.singletonList(symbol));
+	    	}
+    	}
+    	catch(ObjectGridException e)
+    	{
+    		logger.log(Level.SEVERE, "Exception removing entries", e);
+    		throw new ObjectGridRuntimeException(e);
+    	}
+    }
+
+    /**
+     * This is an internal method for allocating contiguous
+     * ranges of longs.
+     * @param sess
+     * @param numKeys
+     * @return
+     * @throws ObjectGridException
+     */
+    long getNameCounterRange(Session sess, long numKeys) throws ObjectGridException
+    {
+        String counterKey = indexName + "_counter";
+
+        sess.begin();
+        ObjectMap counter = sess.getMap(DYN_COUNTER_MAP_SUFFIX);
+        Long key = (Long) counter.getForUpdate(counterKey);
+        Long next = null;
+        if (key == null)
+        {
+            key = new Long(Long.MIN_VALUE);
+            next = new Long(Long.MIN_VALUE + numKeys);
+            counter.insert(counterKey, next);
+        } else
+        {
+            next = new Long(key.longValue() + numKeys);
+            counter.update(counterKey, next);
+        }
+        sess.commit();
+        return key;
+    }
+
+    /**
+     * Generate all possible substrings for a string
+     * @param str
+     * @return
+     */
+    static public Set<String> generate(String str)
+    {
+        HashSet<String> rc = new HashSet<String>();
+
+        if (str != null)
+        {
+            String s = str.toUpperCase();
+
+            for (int i = 0; i < s.length(); ++i)
+            {
+                for (int j = i; j <= s.length(); ++j)
+                {
+                    String v = s.substring(i, j);
+                    rc.add(v);
+                }
+            }
+        }
+        return rc;
+    }
+
+}

@@ -14,4 +14,52 @@ public interface WXSMapMBean {
 
 	public String getMapName();
 
+	public Integer getGetExceptionCount();
+
+	public String getGetLastExceptionString();
+
+	public Double getGetTimeAvgMS();
+
+	public Double getGetTimeMaxMS();
+
+	public Double getGetTimeMinMS();
+
+	public Double getGetTotalTimeMS();
+
+	public Integer getPutExceptionCount();
+
+	public String getPutLastExceptionString();
+
+	public Double getPutTimeAvgMS();
+
+	public Double getPutTimeMaxMS();
+
+	public Double getPutTimeMinMS();
+
+	public Double getPutTotalTimeMS();
+
+	public Integer getRemoveExceptionCount();
+
+	public String getRemoveLastExceptionString();
+
+	public Double getRemoveTimeAvgMS();
+
+	public Double getRemoveTimeMaxMS();
+
+	public Double getRemoveTimeMinMS();
+
+	public Double getRemoveTotalTimeMS();
+
+	public Integer getContainsExceptionCount();
+
+	public String getContainsLastExceptionString();
+
+	public Double getContainsTimeAvgMS();
+
+	public Double getContainsTimeMaxMS();
+
+	public Double getContainsTimeMinMS();
+
+	public Double getContainsTotalTimeMS();
+
 }

@@ -583,4 +583,12 @@ public class WXSUtils
 		}
 	}
 
+	/**
+	 * This returns the ObjectGrid instance associated with this class instance
+	 * @return
+	 */
+	public ObjectGrid getObjectGrid()
+	{
+		return grid;
+	}
 }

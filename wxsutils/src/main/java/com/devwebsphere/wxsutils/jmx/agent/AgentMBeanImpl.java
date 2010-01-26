@@ -24,8 +24,6 @@ import com.devwebsphere.wxsutils.jmx.TabularKey;
 public class AgentMBeanImpl implements AgentMBean 
 {
 	
-	static final double TIME_SCALE_NS_MS = 1000000.0;
-	
 	String className;
 	MinMaxAvgMetric partitionMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric keysMetric = new MinMaxAvgMetric();
@@ -61,21 +59,21 @@ public class AgentMBeanImpl implements AgentMBean
 	@TabularAttribute
 	public Double getKeysTimeAvgMS() 
 	{
-		return new Double(keysMetric.getAvgTimeNS() / TIME_SCALE_NS_MS);
+		return new Double(keysMetric.getAvgTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 	
 	@TabularAttribute
 	public Double getKeysTimeMaxMS() 
 	{
-		return new Double(keysMetric.getMaxTimeNS() / TIME_SCALE_NS_MS);
+		return new Double(keysMetric.getMaxTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 	@TabularAttribute
 	public Double getKeysTimeMinMS() {
-		return new Double(keysMetric.getMinTimeNS() / TIME_SCALE_NS_MS);
+		return new Double(keysMetric.getMinTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
 	public Double getKeysTotalTimeMS() {
-		return new Double(keysMetric.getTotalTimeNS() / TIME_SCALE_NS_MS);
+		return new Double(keysMetric.getTotalTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 	
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
@@ -96,19 +94,19 @@ public class AgentMBeanImpl implements AgentMBean
 	}
 	@TabularAttribute
 	public Double getPartitionTimeAvgMS() {
-		return new Double(partitionMetric.getAvgTimeNS() / TIME_SCALE_NS_MS);
+		return new Double(partitionMetric.getAvgTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 	@TabularAttribute
 	public Double getPartitionTimeMaxMS() {
-		return new Double(partitionMetric.getMaxTimeNS() / TIME_SCALE_NS_MS);
+		return new Double(partitionMetric.getMaxTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 	@TabularAttribute
 	public Double getPartitionTimeMinMS() {
-		return new Double(partitionMetric.getMinTimeNS() / TIME_SCALE_NS_MS);
+		return new Double(partitionMetric.getMinTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
 	public Double getPartitionTotalTimeMS() {
-		return new Double(partitionMetric.getTotalTimeNS() / TIME_SCALE_NS_MS);
+		return new Double(partitionMetric.getTotalTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)

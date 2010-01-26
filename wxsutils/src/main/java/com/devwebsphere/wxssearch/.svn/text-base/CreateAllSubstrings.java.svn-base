@@ -1,0 +1,406 @@
+package substring;
+//
+//This sample program is provided AS IS and may be used, executed, copied and
+//modified without royalty payment by customer (a) for its own instruction and 
+//study, (b) in order to develop applications designed to run with an IBM 
+//WebSphere product, either for customer's own internal use or for redistribution 
+//by customer, as part of such an application, in customer's own products. "
+//
+//5724-J34 (C) COPYRIGHT International Business Machines Corp. 2005
+//All Rights Reserved * Licensed Materials - Property of IBM
+//
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
+import wxsutils.WXSUtils;
+
+
+import com.ibm.websphere.objectgrid.ClientClusterContext;
+import com.ibm.websphere.objectgrid.ObjectGrid;
+import com.ibm.websphere.objectgrid.ObjectGridException;
+import com.ibm.websphere.objectgrid.ObjectGridManagerFactory;
+import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
+import com.ibm.websphere.objectgrid.ObjectMap;
+import com.ibm.websphere.objectgrid.Session;
+import com.ibm.websphere.objectgrid.datagrid.AgentManager;
+import com.ibm.websphere.objectgrid.deployment.DeploymentPolicy;
+import com.ibm.websphere.objectgrid.deployment.DeploymentPolicyFactory;
+import com.ibm.websphere.objectgrid.server.Container;
+import com.ibm.websphere.objectgrid.server.ServerFactory;
+
+public class CreateAllSubstrings 
+{
+	final static int maxUsefulMatches = 500;
+	static Container container = null;
+	static ScheduledExecutorService pool = Executors.newScheduledThreadPool(5);
+
+	static ObjectGrid startTestServer(String og_xml_path, String dep_xml_path) 
+	{
+		try
+		{
+			// start a collocated catalog server which makes developing
+			// in an IDE much easier.
+			ServerFactory.getCatalogProperties().setCatalogClusterEndpoints("cs1:localhost:6601:6602");
+			ServerFactory.getCatalogProperties().setCatalogServer(true);
+			ServerFactory.getCatalogProperties().setQuorum(false);
+			ServerFactory.getServerProperties().setServerName("cs1");
+			
+//			ServerFactory.getServerProperties().setTraceSpecification("com.ibm.ws.objectgrid.asyncservice.*=all=enabled:com.ibm.ws.objectgrid.datagrid.*=all=enabled");
+//			ServerFactory.getServerProperties().setTraceFileName("/Users/bnewport/trace.log");
+			com.ibm.websphere.objectgrid.server.Server server = ServerFactory.getInstance();
+			
+			URL serverObjectgridXML =  CreateAllSubstrings.class.getResource(og_xml_path);
+			URL deployment =  CreateAllSubstrings.class.getResource(dep_xml_path);
+			DeploymentPolicy policy = DeploymentPolicyFactory.createDeploymentPolicy(deployment, serverObjectgridXML);
+			container = server.createContainer(policy);
+			ClientClusterContext ccc = ObjectGridManagerFactory.getObjectGridManager().connect(null, null);
+			ObjectGrid grid = ObjectGridManagerFactory.getObjectGridManager().getObjectGrid(ccc, "Grid");
+			return grid;
+		}
+		catch(Exception e)
+		{
+			throw new ObjectGridRuntimeException("Cannot start OG container", e);
+		}
+	}
+
+	/**
+	 * This connects to a remote WXS grid.
+	 * @param cep A comma seperated list of host:port pairs for the catalog service
+	 * @param gridName The name of the grid thats desired.
+	 * @return A client connection to the grid
+	 */
+	static private ObjectGrid connectClient(String cep, String gridName) 
+	{
+		try
+		{
+			URL cog = CreateAllSubstrings.class.getClassLoader().getResource("/objectgrid.xml");
+			
+			ClientClusterContext ccc = ObjectGridManagerFactory.getObjectGridManager().connect(cep, null, cog);
+			ObjectGrid grid = ObjectGridManagerFactory.getObjectGridManager().getObjectGrid(ccc, gridName);
+			return grid;
+		}
+		catch(Exception e)
+		{
+			throw new ObjectGridRuntimeException("Cannot start OG client", e);
+		}
+	}
+	
+	/**
+	 * Generate all possible substrings for a string
+	 * @param str
+	 * @return
+	 */
+	static Set<String> generate(String str)
+	{
+		HashSet<String> rc = new HashSet<String>();
+
+		String s = str.toUpperCase();
+
+		for(int i = 0; i < s.length(); ++i)
+			for(int j = i; j <= s.length(); ++j)
+			{
+				String v = s.substring(i, j);
+				rc.add(v);
+			}
+		return rc;
+	}
+
+	/**
+	 * Get an id for the name, generate the symbols for the name and then add the id to the list for every symbol
+	 * @param grid
+	 * @param name
+	 * @throws ObjectGridException
+	 */
+	static public void addName(ObjectGrid grid, String name)
+		throws ObjectGridException
+	{
+		Set<String> symbols = generate(name);
+		Session sess = grid.getSession();
+		
+		long key = getNameCounterRange(sess, 1);
+		
+		ObjectMap names = sess.getMap(MapNames.names);
+		names.insert(key, name);
+
+		AgentManager am = sess.getMap(MapNames.Index).getAgentManager();
+		
+		for(String symbol : symbols)
+		{
+			UpdateSymbolSetAgent agent = new UpdateSymbolSetAgent();
+			agent.nameKeys = new long[1];
+			agent.nameKeys[0] = key;
+			agent.isAddOperation = true;
+			am.callMapAgent(agent, Collections.singletonList(symbol));
+		}
+	}
+
+	/**
+	 * This reserves numKeys slots in the counter for names
+	 * @param sess
+	 * @param numKeys
+	 * @return
+	 * @throws ObjectGridException
+	 */
+	static long getNameCounterRange(Session sess, long numKeys)
+		throws ObjectGridException
+	{
+		sess.begin();
+		ObjectMap counter = sess.getMap(MapNames.counter);
+		Long key = (Long)counter.getForUpdate("counter");
+		Long next = null;
+		if(key == null)
+		{
+			key = new Long(Long.MIN_VALUE);
+			next = new Long(Long.MIN_VALUE + numKeys);
+			counter.insert("counter", next);
+		}
+		else
+		{
+			next = new Long(key.longValue() + numKeys);
+			counter.update("counter", next);
+		}
+		sess.commit();
+		return key;
+	}
+	
+	static public void addNames(ObjectGrid grid, ArrayList<String> names)
+		throws ObjectGridException, Exception
+	{
+		String[] v = new String[names.size()];
+		names.toArray(v);
+		addNames(grid, v);
+	}
+	
+	/**
+	 * This adds N names in a batch in a more efficient form than just calling addName in a loop
+	 * @param grid
+	 * @param names
+	 * @throws ObjectGridException
+	 * @throws Exception
+	 */
+	static public void addNames(ObjectGrid grid, String[] names)
+		throws ObjectGridException, Exception
+	{
+		Session sess = grid.getSession();
+		
+		long key = getNameCounterRange(sess, names.length);
+
+		WXSUtils batcher = new WXSUtils(grid, pool);
+		HashMap<Long, String> allLongNames = new HashMap<Long, String>();
+		HashMap<String, Set<Long>> index = new HashMap<String, Set<Long>>();
+		for(String name: names)
+		{
+			allLongNames.put(key, name);
+			Set<String> symbols = generate(name);
+			
+			for(String a : symbols)
+			{
+				Set<Long> list = index.get(a);
+				if(list == null)
+					list = new HashSet<Long>();
+				list.add(key);
+				index.put(a, list);
+			}
+			key++;
+		}
+		batcher.putAll(allLongNames, grid.getMap(MapNames.names));
+		
+		AgentManager am = sess.getMap(MapNames.Index).getAgentManager();
+
+		Set<String> allSymbols = index.keySet();
+		Map<String, UpdateSymbolSetAgent> batchAgents = new HashMap<String, UpdateSymbolSetAgent>();
+		for(String symbol : allSymbols)
+		{
+			Set<Long> keys = index.get(symbol);
+			UpdateSymbolSetAgent agent = new UpdateSymbolSetAgent();
+			agent.nameKeys = new long[keys.size()];
+			int idx = 0;
+			for(Long k : keys)
+			{
+				agent.nameKeys[idx++] = k;
+			}
+			agent.isAddOperation = true;
+			batchAgents.put(symbol, agent);
+		}
+		batcher.callMapAgentAll(batchAgents, grid.getMap(MapNames.Index));
+	}
+
+	static Collection<String> emptyList = new LinkedList<String>();
+
+	/**
+	 * This returns the list of names containing a symbol
+	 * @param grid
+	 * @param symbol
+	 * @return
+	 * @throws ObjectGridException
+	 */
+	static Collection<String> getNamesContaining(ObjectGrid grid, String symbol)
+		throws ObjectGridException
+	{
+		Session sess = grid.getSession();
+		ObjectMap indexMap = sess.getMap(MapNames.Index);
+		ObjectMap badSymbolMap = sess.getMap(MapNames.BadSymbol);
+		ObjectMap namesMap = sess.getMap(MapNames.names);
+		
+		if(badSymbolMap.containsKey(symbol))
+			return emptyList;
+
+		long[] keys = (long[])indexMap.get(symbol);
+		if(keys == null)
+			return emptyList;
+		String[] names = new String[keys.length];
+		int i = 0;
+		ArrayList<Long> listKeys = new ArrayList<Long>(keys.length);
+		for(long k : keys)
+		{
+			listKeys.add(k);
+		}
+		WXSUtils batch = new WXSUtils(grid, pool);
+		
+		Map<Long, String> all = batch.getAll(listKeys,grid.getMap(MapNames.names));
+		return all.values();
+	}
+
+	static String[] names = {"Billy Newport", "Laura Newport", "Sophia Newport", 
+		"Tamy Bockhold", "John Stecher", "Lindsey Stecher", "Robert Wisniewski", "Joe Bockhold",
+		"Larry Clarke", "Kyle Brown", "Patricia Dudek", "Craig Hayman", "Harry Kerr"};
+
+	static public void main(String[] args)
+		throws ObjectGridException, Exception
+	{
+		ObjectGrid client = startTestServer("/objectgrid.xml", "/deployment.xml");
+
+		InputStream is = CreateAllSubstrings.class.getResourceAsStream("/malenames.txt");
+		BufferedReader fr = new BufferedReader(new InputStreamReader(is));
+		ArrayList<String> nameBuffer = new ArrayList<String>();
+		long start = System.currentTimeMillis();
+		while(true)
+		{
+			String firstname = fr.readLine();
+			if(firstname == null)
+				break;
+			InputStream sis = CreateAllSubstrings.class.getResourceAsStream("/surnames.txt");
+			BufferedReader sr = new BufferedReader(new InputStreamReader(sis));
+			while(true)
+			{
+				String surname = sr.readLine();
+				if(surname == null)
+					break;
+				String s = firstname + " " + surname;
+				nameBuffer.add(s);
+				if(nameBuffer.size() > 1000)
+				{
+					addNames(client, nameBuffer);
+					nameBuffer.clear();
+				}
+			}
+			break;
+		}
+		if(nameBuffer.size() > 0)
+		{
+			addNames(client, nameBuffer);
+			nameBuffer.clear();
+		}
+		long duration = (System.currentTimeMillis() - start) / 1000;
+		System.out.println("Names added in " + duration);
+		
+		while(true)
+		{
+			Collection<String> matches = null;
+			long st_time = System.currentTimeMillis();
+			for(int i = 0; i < 1; ++i)
+			{
+				matches = getNamesContaining(client, "EN");
+			}
+			double d = (System.currentTimeMillis() - st_time) / 1000.0;
+			System.out.println("Throughput is " + d / 100000.0);
+			System.out.println("Found " + matches.size());
+			for(String s : matches)
+			{
+				System.out.println(s);
+			}
+		}
+	}
+	
+	static public void mainSE(String []args)
+		throws Exception
+	{
+		HashMap<Long, String> allNames = new HashMap<Long,String>();
+		HashMap<String, Set<Long>> index = new HashMap<String, Set<Long>>();
+		HashSet<String> uselessSubstrings = new HashSet<String>();
+
+		// auto inc key for allNames map
+		int counter = 0;
+		InputStream is = CreateAllSubstrings.class.getResourceAsStream("/malenames.txt");
+		BufferedReader fr = new BufferedReader(new InputStreamReader(is));
+		while(true)
+		{
+			String firstname = fr.readLine();
+			if(firstname == null)
+				break;
+			InputStream sis = CreateAllSubstrings.class.getResourceAsStream("/surnames.txt");
+			BufferedReader sr = new BufferedReader(new InputStreamReader(sis));
+			while(true)
+			{
+				String surname = sr.readLine();
+				if(surname == null)
+					break;
+				long k = counter++;
+				String s = firstname + " " + surname;
+				allNames.put(k, s);
+	
+				// generate combinations
+				Set<String> rc = generate(s);
+				for(String a : rc)
+				{
+					// add this name key for every substring in index
+					if(!uselessSubstrings.contains(a))
+					{
+						Set<Long> names = index.get(a);
+						if(names == null || names.size() < maxUsefulMatches) // more than this makes no sense
+						{
+							if(names == null)
+								names = new HashSet<Long>();
+							names.add(k);
+							index.put(a, names);
+						}
+						else
+						{
+							uselessSubstrings.add(a);
+							index.remove(a);
+						}
+					}
+				}
+			}
+		}
+		System.out.println("Index Size is " + index.size());
+		System.out.println("Names size is " + allNames.size());
+
+		// Find all names with the substring below
+		String key = "ON STEV";
+		if(uselessSubstrings.contains(key))
+		{
+			System.out.println("Too many");
+		}
+		else
+		{
+			Set<Long> values = index.get(key);
+			for(Long k : values)
+			{
+				System.out.println(allNames.get(k));
+			}
+		}
+	}
+}

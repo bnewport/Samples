@@ -22,7 +22,6 @@ import com.devwebsphere.wxsutils.jmx.TabularKey;
 public final class LoaderMBeanImpl implements LoaderMBean
 {
 	int avgBatchUpdateListSize;
-	static final double TIME_SCALE_NS_MS = 1000000.0;
 	String mapName;
 	
 	MinMaxAvgMetric getMetrics = new MinMaxAvgMetric();
@@ -46,12 +45,12 @@ public final class LoaderMBeanImpl implements LoaderMBean
 
 	@TabularAttribute
 	public Double getBatchUpdateTimeAvgMS() {
-		return new Double(batchUpdateMetrics.getAvgTimeNS() / TIME_SCALE_NS_MS);
+		return new Double(batchUpdateMetrics.getAvgTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 
 	@TabularAttribute
 	public Double getGetTimeAvgMS() {
-		return new Double(getMetrics.getAvgTimeNS() / TIME_SCALE_NS_MS);
+		return new Double(getMetrics.getAvgTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
@@ -108,12 +107,12 @@ public final class LoaderMBeanImpl implements LoaderMBean
 	@TabularAttribute
 	public Double getBatchUpdateTimeMaxMS() 
 	{
-		return new Double(batchUpdateMetrics.getMaxTimeNS() / TIME_SCALE_NS_MS);
+		return new Double(batchUpdateMetrics.getMaxTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 
 	@TabularAttribute
 	public Double getGetTimeMaxMS() {
-		return new Double(getMetrics.getMaxTimeNS() / TIME_SCALE_NS_MS);
+		return new Double(getMetrics.getMaxTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 
 	@TabularAttribute
@@ -123,12 +122,12 @@ public final class LoaderMBeanImpl implements LoaderMBean
 
 	@TabularAttribute
 	public Double getBatchUpdateTimeMinMS() {
-		return new Double(batchUpdateMetrics.getMinTimeNS() / TIME_SCALE_NS_MS);
+		return new Double(batchUpdateMetrics.getMinTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 
 	@TabularAttribute
 	public Double getGetTimeMinMS() {
-		return new Double(getMetrics.getAvgTimeNS() / TIME_SCALE_NS_MS);
+		return new Double(getMetrics.getAvgTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 
 	public void resetStatistics() 
@@ -189,13 +188,13 @@ public final class LoaderMBeanImpl implements LoaderMBean
 
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
 	public Double getBatchUpdateTimeTotalMS() {
-		return new Double(batchUpdateMetrics.getTotalTimeNS() / TIME_SCALE_NS_MS);
+		return new Double(batchUpdateMetrics.getTotalTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
 	public Double getGetTotalTimeMS() 
 	{
-		return new Double(getMetrics.getTotalTimeNS() / TIME_SCALE_NS_MS);
+		return new Double(getMetrics.getTotalTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 
 	@TabularKey

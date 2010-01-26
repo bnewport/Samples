@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.Hashtable;
 import java.util.Map;
 
+import com.devwebsphere.wxsutils.jmx.wxsmap.WXSMapMBeanImpl;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
@@ -63,12 +64,17 @@ public class WXSMap
 	 */
 	public <K,V> V get(K k)
 	{
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(mapName);
+		long start = System.nanoTime();
 		try
 		{
-			return (V)tls.getMap(mapName).get(k);
+			V rc = (V)tls.getMap(mapName).get(k);
+			mbean.getGetMetrics().logTime(System.nanoTime() - start);
+			return rc;
 		}
 		catch(Exception e)
 		{
+			mbean.getGetMetrics().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
@@ -83,7 +89,11 @@ public class WXSMap
 	 */
 	public <K,V> Map<K,V> getAll(Collection<K> keys)
 	{
-		return utils.getAll(keys, bmap);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(mapName);
+		long start = System.nanoTime();
+		Map<K,V> rc =  utils.getAll(keys, bmap);
+		mbean.getGetMetrics().logTime(System.nanoTime() - start);
+		return rc;
 	}
 
 	/**
@@ -96,15 +106,19 @@ public class WXSMap
 	 */
 	public <K,V> void put(K k, V v)
 	{
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(mapName);
+		long start = System.nanoTime();
 		try
 		{
 			InsertAgent<K, V> a = new InsertAgent<K, V>();
 			a.batch = new Hashtable<K, V>();
 			a.batch.put(k, v);
 			tls.getMap(mapName).getAgentManager().callReduceAgent(a, Collections.singletonList(k));
+			mbean.getPutMetrics().logTime(System.nanoTime() - start);
 		}
 		catch(Exception e)
 		{
+			mbean.getPutMetrics().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
@@ -117,7 +131,10 @@ public class WXSMap
 	 */
 	public <K,V> void putAll(Map<K,V> batch)
 	{
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(mapName);
+		long start = System.nanoTime();
 		utils.putAll(batch, bmap);
+		mbean.getPutMetrics().logTime(System.nanoTime() - start);
 	}
 
 	/**
@@ -129,12 +146,17 @@ public class WXSMap
 	 */
 	public <K,V> V remove(K k)
 	{
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(mapName);
+		long start = System.nanoTime();
 		try
 		{
-			return (V)tls.getMap(mapName).remove(k);
+			V rc = (V)tls.getMap(mapName).remove(k);
+			mbean.getRemoveMetrics().logTime(System.nanoTime() - start);
+			return rc;
 		}
 		catch(Exception e)
 		{
+			mbean.getRemoveMetrics().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
@@ -146,7 +168,10 @@ public class WXSMap
 	 */
 	public <K> void removeAll(Collection<K> keys)
 	{
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(mapName);
+		long start = System.nanoTime();
 		utils.removeAll(keys, bmap);
+		mbean.getRemoveMetrics().logTime(System.nanoTime() - start);
 	}
 
 	/**
@@ -157,12 +182,17 @@ public class WXSMap
 	 */
 	public <K> boolean contains(K k)
 	{
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(mapName);
+		long start = System.nanoTime();
 		try
 		{
-			return tls.getMap(mapName).containsKey(k);
+			boolean rc = tls.getMap(mapName).containsKey(k);
+			mbean.getContainsMetrics().logTime(System.nanoTime() - start);
+			return rc;
 		}
 		catch(Exception e)
 		{
+			mbean.getContainsMetrics().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}

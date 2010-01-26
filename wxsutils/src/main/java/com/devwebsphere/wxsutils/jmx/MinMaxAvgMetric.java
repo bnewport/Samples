@@ -21,6 +21,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class MinMaxAvgMetric 
 {
+	static public final double TIME_SCALE_NS_MS = 1000000.0;
+	
 	AtomicInteger count = new AtomicInteger();
 	AtomicInteger exceptionCount = new AtomicInteger();
 	volatile Throwable lastException;
