@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import com.devwebsphere.wxssearch.Index;
 import com.devwebsphere.wxssearch.IndexManager;
+import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 
@@ -32,6 +33,7 @@ public class TestSubstringIndex
 	static WXSUtils utils;
 	static IndexManager indexManager;
 	static Index<Long> nameIndex;
+	static WXSMap realRecordsMap;
 	
 	@BeforeClass
 	static public void initGrid()
@@ -47,6 +49,9 @@ public class TestSubstringIndex
 		indexManager = new IndexManager(utils);
 		// create the name index. Looking it up creates it.
 		nameIndex = indexManager.getIndex("Name");
+		
+		// create a map for the real records
+		realRecordsMap = utils.getCache("RealRecords");
 	}
 
 	@Test
@@ -77,7 +82,7 @@ public class TestSubstringIndex
                 if (entries.size() > 1000)
                 {
                 	// insert the real records using a Long key
-                	utils.putAll(entries, utils.getObjectGrid().getMap("RealRecords"));
+                	realRecordsMap.putAll(entries);
                 	
                 	// update the index for each record also. The index just keeps
                 	// a reference to the key in RealRecords
@@ -95,7 +100,7 @@ public class TestSubstringIndex
         if (entries.size() > 0)
         {
         	nameIndex.insert(entries);
-        	utils.putAll(entries, utils.getObjectGrid().getMap("RealRecords"));
+        	realRecordsMap.putAll(entries);
         	entries = new HashMap<Long, String>();
         }
         long duration = (System.currentTimeMillis() - start) / 1000;
@@ -106,7 +111,7 @@ public class TestSubstringIndex
 	public void testLookup()
 	{
         Collection<Long> matches = null;
-		for(int loop = 0; loop < 1000; ++loop)
+		for(int loop = 0; loop < 10; ++loop)
         {
             long st_time = System.nanoTime();
             int numIterations = 1000;
@@ -120,7 +125,7 @@ public class TestSubstringIndex
             System.out.println("Found " + matches.size());
         }
 		// print out the records that matches
-	    Map<Long, String> names = utils.getAll(matches, utils.getObjectGrid().getMap("RealRecords"));
+	    Map<Long, String> names = realRecordsMap.getAll(matches);
 	    for (String name : names.values())
 	    {
 	        System.out.println(name);

@@ -27,6 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.devwebsphere.wxssearch.jmx.TextIndexMBeanManager;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
 import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanManager;
 import com.devwebsphere.wxsutils.jmx.wxsmap.WXSMapMBeanManager;
@@ -72,6 +73,7 @@ public class WXSUtils
 	static AtomicReference<AgentMBeanManager> agentMBeanManager = new AtomicReference<AgentMBeanManager>();
 	static AtomicReference<LoaderMBeanManager> loaderMBeanManager = new AtomicReference<LoaderMBeanManager>();
 	static AtomicReference<WXSMapMBeanManager> wxsMapMBeanManager = new AtomicReference<WXSMapMBeanManager>();
+	static AtomicReference<TextIndexMBeanManager> indexMBeanManager = new AtomicReference<TextIndexMBeanManager>();
 
 	/**
 	 * Returns a static MBean Manager. Hack until I get DI using Aries
@@ -85,6 +87,20 @@ public class WXSUtils
 			agentMBeanManager.compareAndSet(null, m);
 		}
 		return agentMBeanManager.get();
+	}
+	
+	/**
+	 * Returns a static MBean Manager. Hack until I get DI using Aries
+	 * @return
+	 */
+	public static TextIndexMBeanManager getIndexMBeanManager()
+	{
+		if(indexMBeanManager.get() == null)
+		{
+			TextIndexMBeanManager m = new TextIndexMBeanManager("Grid");
+			indexMBeanManager.compareAndSet(null, m);
+		}
+		return indexMBeanManager.get();
 	}
 	
 	/**

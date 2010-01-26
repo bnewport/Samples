@@ -21,6 +21,8 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxssearch.jmx.TextIndexMBeanImpl;
+import com.devwebsphere.wxsutils.WXSUtils;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
@@ -50,6 +52,8 @@ public class Index<RK>
 	String attributeIndexMapName;
 	String indexMapName;
 	String badSymbolMapName;
+	
+	TextIndexMBeanImpl mbean;
 
 	/**
 	 * This should only be called indirectly by this framework
@@ -65,6 +69,8 @@ public class Index<RK>
         attributeIndexMapName = indexName + "_" + DYN_INDEX_MAP_SUFFIX;
 		indexMapName = indexName + "_" + DYN_INDEX_MAP_SUFFIX;
 		badSymbolMapName = indexName + "_" + DYN_BAD_SYMBOL_MAP_SUFFIX;
+		
+		mbean = WXSUtils.getIndexMBeanManager().getBean(indexName);
 		
 		try
 		{
@@ -92,6 +98,7 @@ public class Index<RK>
 	 */
     public void insert(Map<RK, String> entries)
     {
+    	long start = System.nanoTime();
     	try
     	{
 	    	ObjectGrid grid = manager.utils.getObjectGrid();
@@ -140,9 +147,11 @@ public class Index<RK>
 	            batchAgents.put(symbol, agent);
 	        }
 	        manager.utils.callMapAgentAll(batchAgents, grid.getMap(attributeIndexMapName));
+	        mbean.getInsertMetrics().logTime(System.nanoTime() - start);
     	}
     	catch(Exception e)
     	{
+    		mbean.getInsertMetrics().logException(e);
     		logger.log(Level.SEVERE, "Exception inserting index entries", e);
     		throw new ObjectGridRuntimeException(e);
     	}
@@ -156,6 +165,7 @@ public class Index<RK>
      */
     public Collection<RK> contains(String symbol)
 	{
+    	long start = System.nanoTime();
     	try
     	{
 			ObjectGrid grid = manager.utils.getObjectGrid();
@@ -163,23 +173,29 @@ public class Index<RK>
 			ObjectMap indexMap = sess.getMap(indexMapName);
 			ObjectMap badSymbolMap = sess.getMap(badSymbolMapName);
 			
-			if (badSymbolMap.containsKey(symbol))
-			    return (Collection<RK>)Collections.EMPTY_LIST;
+			Collection<RK> rc = (Collection<RK>)Collections.EMPTY_LIST;
 			
-			long[] keys = (long[]) indexMap.get(symbol);
-			if (keys == null)
-			    return (Collection<RK>)Collections.EMPTY_LIST;
-			ArrayList<Long> listKeys = new ArrayList<Long>(keys.length);
-			for (long k : keys)
+			if (!badSymbolMap.containsKey(symbol))
 			{
-			    listKeys.add(k);
+				long[] keys = (long[]) indexMap.get(symbol);
+				if (keys != null)
+				{
+					ArrayList<Long> listKeys = new ArrayList<Long>(keys.length);
+					for (long k : keys)
+					{
+					    listKeys.add(k);
+					}
+					
+					Map<Long, RK> all = manager.utils.getAll(listKeys, grid.getMap(attributeMapName));
+					rc = all.values();
+				}
 			}
-			
-			Map<Long, RK> all = manager.utils.getAll(listKeys, grid.getMap(attributeMapName));
-			return all.values();
+			mbean.getContainsMetrics().logTime(System.nanoTime() - start);
+			return rc;
     	}
     	catch(ObjectGridException e)
     	{
+    		mbean.getContainsMetrics().logException(e);
     		logger.log(Level.SEVERE, "Exception looking up substrings", e);
     		throw new ObjectGridRuntimeException(e);
     	}
@@ -193,6 +209,7 @@ public class Index<RK>
      */
     public void remove(RK key, String attributeValue)
     {
+    	long start = System.nanoTime();
     	try
     	{
 	    	ObjectGrid grid = manager.utils.getObjectGrid();
@@ -207,84 +224,75 @@ public class Index<RK>
 	    	// 1) Find the entry for attributeValue. If the attributevalue is in BadSymbol map, do nothing. 
 	    	Session sess = grid.getSession();
 	    	ObjectMap badSymbolMap = sess.getMap(badSymbolMapName);
-	    	if (badSymbolMap.containsKey(key))
+	    	if (!badSymbolMap.containsKey(key))
 	    	{
-	    		logger.finest("removeAttribute - the attributeValue '" + attributeValue + "' matches to too many values. "
-	    				+ "There is no need to remove from the Index map.");
-	    		return;
+		
+		    	// 2) Retrieve all the matched entries from Names map. 
+		    	// Find out which long id represents key. 
+		
+		    	// Get the ObjectMap representing the attribute index map
+		    	ObjectMap indexMap = grid.getSession().getMap(indexMapName);
+		
+		    	long[] keys = (long[]) indexMap.get(attributeValue);
+		    	if (keys != null)
+		    	{
+			    	logger.finest("removeAttribute - total " + keys.length + " matches for attribute value'" + attributeValue
+			    			+ "'.");
+			
+			    	List<Long> listKeys = new ArrayList<Long>(keys.length);
+			    	for (long k : keys)
+			    	{
+			    		listKeys.add(k);
+			    	}
+			
+			    	ObjectMap attributeMap = grid.getSession().getMap(indexMapName);
+			    	Map<Long, RK> all = manager.utils.getAll(listKeys, grid.getMap(attributeMapName));
+			
+			    	long id = 0;
+			    	boolean found = false;
+			    	for (Map.Entry<Long, RK> entry : all.entrySet())
+			    	{
+			    		if (entry.getValue().equals(key))
+			    		{
+			    			found = true;
+			    			id = entry.getKey();
+			    			break;
+			    		}
+			    	}
+			
+			    	if (found)
+			    	{
+				    	logger.finest("removeAttribute - Found the long id for attribute value'" + attributeValue + "': " + id);
+				    	// 3) Remove the long id from Attribute map.
+				    	attributeMap.remove(new Long(id));
+				
+				    	// 4) Remove the long id for all the symbol genreated by the attribute name in Index map.  
+				
+				    	Set<String> symbols = generate(attributeValue);
+				
+				    	ObjectMap names = sess.getMap(attributeMapName);
+				    	names.remove(key);
+				
+				    	AgentManager am = sess.getMap(indexMapName).getAgentManager();
+				
+				    	for (String symbol : symbols)
+				    	{
+				    		IndexEntryUpdateAgent agent = new IndexEntryUpdateAgent();
+				    		agent.nameKeys = new long[1];
+				    		agent.nameKeys[0] = id;
+				    		agent.isAddOperation = false;
+				    		agent.indexName = indexName;
+				    		agent.gridName = manager.utils.getObjectGrid().getName();
+				    		am.callMapAgent(agent, Collections.singletonList(symbol));
+				    	}
+			    	}
+		    	}
 	    	}
-	
-	    	// 2) Retrieve all the matched entries from Names map. 
-	    	// Find out which long id represents key. 
-	
-	    	// Get the ObjectMap representing the attribute index map
-	    	ObjectMap indexMap = grid.getSession().getMap(indexMapName);
-	
-	    	long[] keys = (long[]) indexMap.get(attributeValue);
-	    	if (keys == null)
-	    	{
-	    		logger.warning("removeAttribute - the attributeValue '" + attributeValue
-	    				+ "' cannot be found in Index map. This should not happen.");
-	    		return;
-	    	}
-	
-	    	logger.finest("removeAttribute - total " + keys.length + " matches for attribute value'" + attributeValue
-	    			+ "'.");
-	
-	    	List<Long> listKeys = new ArrayList<Long>(keys.length);
-	    	for (long k : keys)
-	    	{
-	    		listKeys.add(k);
-	    	}
-	
-	    	ObjectMap attributeMap = grid.getSession().getMap(indexMapName);
-	    	Map<Long, RK> all = manager.utils.getAll(listKeys, grid.getMap(attributeMapName));
-	
-	    	long id = 0;
-	    	boolean found = false;
-	    	for (Map.Entry<Long, RK> entry : all.entrySet())
-	    	{
-	    		if (entry.getValue().equals(key))
-	    		{
-	    			found = true;
-	    			id = entry.getKey();
-	    			break;
-	    		}
-	    	}
-	
-	    	if (!found)
-	    	{
-	    		logger.warning("removeAttribute - the attributeValue '" + attributeValue + "' cannot be found in the "
-	    				+ attributeMapName + " map. This should not happen.");
-	    		return;
-	    	}
-	
-	    	logger.finest("removeAttribute - Found the long id for attribute value'" + attributeValue + "': " + id);
-	    	// 3) Remove the long id from Attribute map.
-	    	attributeMap.remove(new Long(id));
-	
-	    	// 4) Remove the long id for all the symbol genreated by the attribute name in Index map.  
-	
-	    	Set<String> symbols = generate(attributeValue);
-	
-	    	ObjectMap names = sess.getMap(attributeMapName);
-	    	names.remove(key);
-	
-	    	AgentManager am = sess.getMap(indexMapName).getAgentManager();
-	
-	    	for (String symbol : symbols)
-	    	{
-	    		IndexEntryUpdateAgent agent = new IndexEntryUpdateAgent();
-	    		agent.nameKeys = new long[1];
-	    		agent.nameKeys[0] = id;
-	    		agent.isAddOperation = false;
-	    		agent.indexName = indexName;
-	    		agent.gridName = manager.utils.getObjectGrid().getName();
-	    		am.callMapAgent(agent, Collections.singletonList(symbol));
-	    	}
+	    	mbean.getRemoveMetrics().logTime(System.nanoTime() - start);
     	}
     	catch(ObjectGridException e)
     	{
+    		mbean.getRemoveMetrics().logException(e);
     		logger.log(Level.SEVERE, "Exception removing entries", e);
     		throw new ObjectGridRuntimeException(e);
     	}
