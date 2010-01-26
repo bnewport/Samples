@@ -187,18 +187,23 @@ public class WXSUtils
 	 */
 	public <K,V> Map<K,V> getAll(Collection<K> keys, BackingMap bmap)
 	{
-		Map<Integer, List<K>> pmap = convertToPartitionEntryMap(bmap, keys);
-		
-		Map<K, GetAllAgent<K, V>> agents = new HashMap<K, GetAllAgent<K,V>>();
-		for(Map.Entry<Integer, List<K>> e : pmap.entrySet())
+		if(keys.size() > 0)
 		{
-			GetAllAgent<K, V> a = new GetAllAgent<K, V>();
-			a.batch = e.getValue();
-			agents.put(a.batch.get(0), a);
+			Map<Integer, List<K>> pmap = convertToPartitionEntryMap(bmap, keys);
+			
+			Map<K, GetAllAgent<K, V>> agents = new HashMap<K, GetAllAgent<K,V>>();
+			for(Map.Entry<Integer, List<K>> e : pmap.entrySet())
+			{
+				GetAllAgent<K, V> a = new GetAllAgent<K, V>();
+				a.batch = e.getValue();
+				agents.put(a.batch.get(0), a);
+			}
+			
+			Map<K,V> r = callReduceAgentAll(agents, bmap);
+			return r;
 		}
-		
-		Map<K,V> r = callReduceAgentAll(agents, bmap);
-		return r;
+		else
+			return Collections.EMPTY_MAP;
 	}
 	
 	/**
@@ -211,18 +216,25 @@ public class WXSUtils
 	 */
 	public <K> Map<K,Boolean> containsAll(Collection<K> keys, BackingMap bmap)
 	{
-		Map<Integer, List<K>> pmap = convertToPartitionEntryMap(bmap, keys);
-		
-		Map<K, ContainsAllAgent<K>> agents = new HashMap<K, ContainsAllAgent<K>>();
-		for(Map.Entry<Integer, List<K>> e : pmap.entrySet())
+		if(keys.size() > 0)
 		{
-			ContainsAllAgent<K> a = new ContainsAllAgent<K>();
-			a.batch = e.getValue();
-			agents.put(a.batch.get(0), a);
+			Map<Integer, List<K>> pmap = convertToPartitionEntryMap(bmap, keys);
+			
+			Map<K, ContainsAllAgent<K>> agents = new HashMap<K, ContainsAllAgent<K>>();
+			for(Map.Entry<Integer, List<K>> e : pmap.entrySet())
+			{
+				ContainsAllAgent<K> a = new ContainsAllAgent<K>();
+				a.batch = e.getValue();
+				agents.put(a.batch.get(0), a);
+			}
+			
+			Map<K,Boolean> r = callReduceAgentAll(agents, bmap);
+			return r;
 		}
-		
-		Map<K,Boolean> r = callReduceAgentAll(agents, bmap);
-		return r;
+		else
+		{
+			return Collections.EMPTY_MAP;
+		}
 	}
 	
 	/**
@@ -235,27 +247,30 @@ public class WXSUtils
 	 */
 	public <K,V> void putAll(Map<K,V> batch, BackingMap bmap)
 	{
-		Map<Integer, Map<K,V>> pmap = convertToPartitionEntryMap(bmap, batch);
-		Iterator<Map<K,V>> items = pmap.values().iterator();
-		ArrayList<Future<?>> results = new ArrayList<Future<?>>();
-		while(items.hasNext())
+		if(batch.size() > 0)
 		{
-			Map<K,V> perPartitionEntries = items.next();
-			// we need one key for partition routing
-			// so get the first one
-			K key = perPartitionEntries.keySet().iterator().next();
-			
-			// invoke the agent to add the batch of records to the grid
-			InsertAgent<K,V> ia = new InsertAgent<K,V>();
-			ia.batch = perPartitionEntries;
-			// Insert all keys for one partition using the first key as a routing key
-			Future<?> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ia));
-			results.add(fv);
+			Map<Integer, Map<K,V>> pmap = convertToPartitionEntryMap(bmap, batch);
+			Iterator<Map<K,V>> items = pmap.values().iterator();
+			ArrayList<Future<?>> results = new ArrayList<Future<?>>();
+			while(items.hasNext())
+			{
+				Map<K,V> perPartitionEntries = items.next();
+				// we need one key for partition routing
+				// so get the first one
+				K key = perPartitionEntries.keySet().iterator().next();
+				
+				// invoke the agent to add the batch of records to the grid
+				InsertAgent<K,V> ia = new InsertAgent<K,V>();
+				ia.batch = perPartitionEntries;
+				// Insert all keys for one partition using the first key as a routing key
+				Future<?> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ia));
+				results.add(fv);
+			}
+	
+			blockForAllFuturesToFinish(results);
+			if(!areAllFuturesTRUE(results))
+				throw new ObjectGridRuntimeException("putAll failed");
 		}
-
-		blockForAllFuturesToFinish(results);
-		if(!areAllFuturesTRUE(results))
-			throw new ObjectGridRuntimeException("putAll failed");
 	}
 
 	/**
@@ -296,26 +311,29 @@ public class WXSUtils
 	 */
 	public <K> void removeAll(Collection<K> batch, BackingMap bmap)
 	{
-		Map<Integer, List<K>> pmap = convertToPartitionEntryMap(bmap, batch);
-		Iterator<List<K>> items = pmap.values().iterator();
-		ArrayList<Future<?>> results = new ArrayList<Future<?>>();
-		while(items.hasNext())
+		if(batch.size() > 0)
 		{
-			List<K> perPartitionEntries = items.next();
-			// we need one key for partition routing
-			// so get the first one
-			K key = perPartitionEntries.iterator().next();
-			
-			// invoke the agent to add the batch of records to the grid
-			RemoveAgent<K> ra = new RemoveAgent<K>();
-			ra.batch = perPartitionEntries;
-			Future<?> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ra));
-			results.add(fv);
+			Map<Integer, List<K>> pmap = convertToPartitionEntryMap(bmap, batch);
+			Iterator<List<K>> items = pmap.values().iterator();
+			ArrayList<Future<?>> results = new ArrayList<Future<?>>();
+			while(items.hasNext())
+			{
+				List<K> perPartitionEntries = items.next();
+				// we need one key for partition routing
+				// so get the first one
+				K key = perPartitionEntries.iterator().next();
+				
+				// invoke the agent to add the batch of records to the grid
+				RemoveAgent<K> ra = new RemoveAgent<K>();
+				ra.batch = perPartitionEntries;
+				Future<?> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ra));
+				results.add(fv);
+			}
+	
+			blockForAllFuturesToFinish(results);
+			if(!areAllFuturesTRUE(results))
+				throw new ObjectGridRuntimeException("removeAll failed");
 		}
-
-		blockForAllFuturesToFinish(results);
-		if(!areAllFuturesTRUE(results))
-			throw new ObjectGridRuntimeException("removeAll failed");
 	}
 	/**
 	 * This takes a Map of key/MapAgent pairs and then invokes the agent for each key as efficiently
@@ -329,37 +347,42 @@ public class WXSUtils
 	 */
 	public <K, A extends MapGridAgent, X> Map<K,X> callMapAgentAll(Map<K,A> batch, BackingMap bmap)
 	{
-		try
+		if(batch.size() > 0)
 		{
-			Map<Integer, Map<K,A>> pmap = convertToPartitionEntryMap(bmap, batch);
-			Iterator<Map<K,A>> items = pmap.values().iterator();
-			ArrayList<Future<Map<K,X>>> results = new ArrayList<Future<Map<K,X>>>();
-			while(items.hasNext())
+			try
 			{
-				Map<K,A> perPartitionEntries = items.next();
-				// we need one key for partition routing
-				// so get the first one
-				K key = perPartitionEntries.keySet().iterator().next();
-				
-				// invoke the agent to add the batch of records to the grid
-				MapAgentExecutor<K,A,X> ia = new MapAgentExecutor<K,A,X>();
-				ia.batch = perPartitionEntries;
-				Future<Map<K,X>> fv = threadPool.submit(new CallReduceAgentThread<K,Map<K,X>>(bmap.getName(), key, ia));
-				results.add(fv);
+				Map<Integer, Map<K,A>> pmap = convertToPartitionEntryMap(bmap, batch);
+				Iterator<Map<K,A>> items = pmap.values().iterator();
+				ArrayList<Future<Map<K,X>>> results = new ArrayList<Future<Map<K,X>>>();
+				while(items.hasNext())
+				{
+					Map<K,A> perPartitionEntries = items.next();
+					// we need one key for partition routing
+					// so get the first one
+					K key = perPartitionEntries.keySet().iterator().next();
+					
+					// invoke the agent to add the batch of records to the grid
+					MapAgentExecutor<K,A,X> ia = new MapAgentExecutor<K,A,X>();
+					ia.batch = perPartitionEntries;
+					Future<Map<K,X>> fv = threadPool.submit(new CallReduceAgentThread<K,Map<K,X>>(bmap.getName(), key, ia));
+					results.add(fv);
+				}
+				Map<K,X> result = new HashMap<K, X>();
+				Iterator<Future<Map<K,X>>> iter = results.iterator();
+				while(iter.hasNext())
+				{
+					Future<Map<K,X>> fv = iter.next();
+					result.putAll(fv.get());
+				}
+				return result;
 			}
-			Map<K,X> result = new HashMap<K, X>();
-			Iterator<Future<Map<K,X>>> iter = results.iterator();
-			while(iter.hasNext())
+			catch(Exception e)
 			{
-				Future<Map<K,X>> fv = iter.next();
-				result.putAll(fv.get());
+				throw new ObjectGridRuntimeException(e);
 			}
-			return result;
 		}
-		catch(Exception e)
-		{
-			throw new ObjectGridRuntimeException(e);
-		}
+		else
+			return Collections.EMPTY_MAP;
 	}
 	
 	/**
@@ -373,41 +396,46 @@ public class WXSUtils
 	 */
 	public <K, A extends ReduceGridAgent,X> X callReduceAgentAll(Map<K,A> batch, BackingMap bmap)
 	{
-		try
+		if(batch.size() > 0)
 		{
-			Map<Integer, Map<K,A>> pmap = convertToPartitionEntryMap(bmap, batch);
-			Iterator<Map<K,A>> items = pmap.values().iterator();
-			ArrayList<Future<X>> results = new ArrayList<Future<X>>();
-			if(batch.size() > 0)
+			try
 			{
-				while(items.hasNext())
+				Map<Integer, Map<K,A>> pmap = convertToPartitionEntryMap(bmap, batch);
+				Iterator<Map<K,A>> items = pmap.values().iterator();
+				ArrayList<Future<X>> results = new ArrayList<Future<X>>();
+				if(batch.size() > 0)
 				{
-					Map<K,A> perPartitionEntries = items.next();
-					// we need one key for partition routing
-					// so get the first one
-					K key = perPartitionEntries.keySet().iterator().next();
-					
-					// invoke the agent to add the batch of records to the grid
-					ReduceAgentExecutor<K,A> ia = new ReduceAgentExecutor<K,A>();
-					ia.batch = perPartitionEntries;
-					Future<X> fv = threadPool.submit(new CallReduceAgentThread<K,X>(bmap.getName(), key, ia));
-					results.add(fv);
+					while(items.hasNext())
+					{
+						Map<K,A> perPartitionEntries = items.next();
+						// we need one key for partition routing
+						// so get the first one
+						K key = perPartitionEntries.keySet().iterator().next();
+						
+						// invoke the agent to add the batch of records to the grid
+						ReduceAgentExecutor<K,A> ia = new ReduceAgentExecutor<K,A>();
+						ia.batch = perPartitionEntries;
+						Future<X> fv = threadPool.submit(new CallReduceAgentThread<K,X>(bmap.getName(), key, ia));
+						results.add(fv);
+					}
+					Iterator<Future<X>> iter = results.iterator();
+					A agent = batch.get(batch.keySet().iterator().next());
+					ArrayList<X> tempList = new ArrayList<X>();
+					while(iter.hasNext())
+						tempList.add(iter.next().get());
+					X r = (X)agent.reduceResults(tempList);
+					return r;
 				}
-				Iterator<Future<X>> iter = results.iterator();
-				A agent = batch.get(batch.keySet().iterator().next());
-				ArrayList<X> tempList = new ArrayList<X>();
-				while(iter.hasNext())
-					tempList.add(iter.next().get());
-				X r = (X)agent.reduceResults(tempList);
-				return r;
+				else
+					return null;
 			}
-			else
-				return null;
+			catch(Exception e)
+			{
+				throw new ObjectGridRuntimeException(e);
+			}
 		}
-		catch(Exception e)
-		{
-			throw new ObjectGridRuntimeException(e);
-		}
+		else
+			return null;
 	}
 	
 	/**

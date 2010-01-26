@@ -91,7 +91,8 @@ public class TestSubstringIndex
                 }
                 count++;
             }
-            break;
+            if(count > 5000)
+            	break;
         }
         
         // flush any remaining entries, above loop just does every 1000
