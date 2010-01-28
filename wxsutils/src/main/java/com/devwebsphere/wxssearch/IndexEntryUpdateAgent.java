@@ -40,7 +40,7 @@ public class IndexEntryUpdateAgent implements MapGridAgent, Runnable {
      * its more than this then the symbol is added to the bad symbol map and
      * no entries are tracked for it.
      */
-	static final int MAXMATCHES = 200;
+	int maxMatches;
 	
 	/**
 	 * 
@@ -73,7 +73,7 @@ public class IndexEntryUpdateAgent implements MapGridAgent, Runnable {
 		throws ObjectGridException
 	{
 		long[] keys = (long[])indexMap.getForUpdate(indexKey);
-		if(keys != null && keys.length > MAXMATCHES)
+		if(keys != null && keys.length > maxMatches)
 		{
 			// too many records to be useful for this symbol
 			// remove and add key to not useful symbol map

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite failures="0" time="40.554" errors="0" skipped="0" tests="5" name="com.devwebsphere.wxsutils.TestBloomFilter">
+<testsuite failures="0" time="42.619" errors="0" skipped="0" tests="5" name="com.devwebsphere.wxsutils.TestBloomFilter">
   <properties>
     <property name="java.runtime.name" value="Java(TM) 2 Runtime Environment, Standard Edition"/>
     <property name="sun.boot.library.path" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Libraries"/>
@@ -71,9 +71,9 @@
     <property name="ftp.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="sun.cpu.isalist" value=""/>
   </properties>
-  <testcase time="0.001" classname="com.devwebsphere.wxsutils.TestBloomFilter" name="testPowersOfTwo"/>
+  <testcase time="0.052" classname="com.devwebsphere.wxsutils.TestBloomFilter" name="testPowersOfTwo"/>
   <testcase time="0" classname="com.devwebsphere.wxsutils.TestBloomFilter" name="testBitSet"/>
   <testcase time="0" classname="com.devwebsphere.wxsutils.TestBloomFilter" name="testUnsigned"/>
-  <testcase time="2.385" classname="com.devwebsphere.wxsutils.TestBloomFilter" name="testBloomFilterAddAndContains"/>
-  <testcase time="38.165" classname="com.devwebsphere.wxsutils.TestBloomFilter" name="testSpeed"/>
+  <testcase time="3.368" classname="com.devwebsphere.wxsutils.TestBloomFilter" name="testBloomFilterAddAndContains"/>
+  <testcase time="39.166" classname="com.devwebsphere.wxsutils.TestBloomFilter" name="testSpeed"/>
 </testsuite>

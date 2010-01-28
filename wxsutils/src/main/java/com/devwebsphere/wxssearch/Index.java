@@ -36,7 +36,7 @@ import com.ibm.websphere.objectgrid.datagrid.AgentManager;
  *
  * @param <RK> The actual key of the entities being indexed.
  */
-public class Index<RK> 
+public abstract class Index<C, RK> 
 {
 
 	static String DYN_INDEX_MAP_SUFFIX = "Index";
@@ -45,7 +45,7 @@ public class Index<RK>
 	static String DYN_COUNTER_MAP_SUFFIX = "Counter";
 	
 	static Logger logger = Logger.getLogger(Index.class.getName());
-	IndexManager manager;
+	IndexManager<C, RK> manager;
 	
 	String indexName;
 	String attributeMapName;
@@ -53,16 +53,20 @@ public class Index<RK>
 	String indexMapName;
 	String badSymbolMapName;
 	
+	int maxMatches;
+	
 	TextIndexMBeanImpl mbean;
 
 	/**
-	 * This should only be called indirectly by this framework
-	 * @see IndexManager#getIndex(String)
+	 * Creates an index wrapper which only tracks entries with
+	 * less than maxMatches duplicates.
 	 * @param im
 	 * @param indexName
+	 * @param maxMatches
 	 */
-	Index(IndexManager im, String indexName)
+	Index(IndexManager<C,RK> im, String indexName, int maxMatches)
 	{
+		this.maxMatches = maxMatches;
 		this.manager = im;
 		this.indexName = indexName;
         attributeMapName = indexName + "_" + DYN_ATTRIBUTES_MAP_SUFFIX;
@@ -135,6 +139,7 @@ public class Index<RK>
 	        {
 	            Set<Long> keys = indexMap.get(symbol);
 	            IndexEntryUpdateAgent agent = new IndexEntryUpdateAgent();
+	            agent.maxMatches = maxMatches;
 	            agent.nameKeys = new long[keys.size()];
 	            agent.gridName = manager.utils.getObjectGrid().getName();
 	            int idx = 0;
@@ -278,6 +283,7 @@ public class Index<RK>
 				    	for (String symbol : symbols)
 				    	{
 				    		IndexEntryUpdateAgent agent = new IndexEntryUpdateAgent();
+				    		agent.maxMatches = maxMatches;
 				    		agent.nameKeys = new long[1];
 				    		agent.nameKeys[0] = id;
 				    		agent.isAddOperation = false;
@@ -328,29 +334,5 @@ public class Index<RK>
         return key;
     }
 
-    /**
-     * Generate all possible substrings for a string
-     * @param str
-     * @return
-     */
-    static public Set<String> generate(String str)
-    {
-        HashSet<String> rc = new HashSet<String>();
-
-        if (str != null)
-        {
-            String s = str.toUpperCase();
-
-            for (int i = 0; i < s.length(); ++i)
-            {
-                for (int j = i; j <= s.length(); ++j)
-                {
-                    String v = s.substring(i, j);
-                    rc.add(v);
-                }
-            }
-        }
-        return rc;
-    }
-
+    abstract Set<String> generate(String str);
 }

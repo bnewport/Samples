@@ -16,13 +16,18 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
+import junit.framework.Assert;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.devwebsphere.wxssearch.Index;
 import com.devwebsphere.wxssearch.IndexManager;
+import com.devwebsphere.wxssearch.PrefixIndexImpl;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.ibm.websphere.objectgrid.ObjectGrid;
@@ -31,8 +36,10 @@ public class TestSubstringIndex
 {
 	static ObjectGrid clientOG;
 	static WXSUtils utils;
-	static IndexManager indexManager;
-	static Index<Long> nameIndex;
+	static IndexManager<TestBusinessObject, Long> indexManager;
+	static Index<TestBusinessObject,Long> firstNameIndex;
+	static Index<TestBusinessObject,Long> middleNameIndex;
+	static Index<TestBusinessObject,Long> surnameIndex;
 	static WXSMap realRecordsMap;
 	
 	@BeforeClass
@@ -46,14 +53,37 @@ public class TestSubstringIndex
 		utils = new WXSUtils(clientOG);
 		
 		// this should be placed in a static or similar device
-		indexManager = new IndexManager(utils);
+		indexManager = new IndexManager(utils, TestBusinessObject.class);
 		// create the name index. Looking it up creates it.
-		nameIndex = indexManager.getIndex("Name");
-		
+		firstNameIndex = indexManager.getIndex("firstName");
+		Assert.assertNotNull(firstNameIndex);
+		middleNameIndex = indexManager.getIndex("middleName");
+		Assert.assertNotNull(middleNameIndex);
+		surnameIndex = indexManager.getIndex("surname");
+		Assert.assertNotNull(surnameIndex);
 		// create a map for the real records
 		realRecordsMap = utils.getCache("RealRecords");
 	}
 
+	@Test
+	public void testGeneratePrefix()
+	{
+		Set<String> results = PrefixIndexImpl.sgenerate("Billy");
+		
+		Set<String> correct = new HashSet<String>();
+		correct.add("B"); correct.add("BI"); correct.add("BIL"); correct.add("BILL"); correct.add("BILLY");
+		
+		Assert.assertEquals(correct, results);
+		
+		results = PrefixIndexImpl.sgenerate("");
+		Assert.assertTrue(results.isEmpty());
+		
+		results = PrefixIndexImpl.sgenerate("A");
+		correct.clear();
+		correct.add("A");
+		Assert.assertEquals(correct, results);
+	}
+	
 	@Test
 	public void preloadGrid()
 		throws IOException
@@ -64,7 +94,7 @@ public class TestSubstringIndex
         long start = System.currentTimeMillis();
         long count = 0;
         
-        Map<Long, String> entries = new HashMap<Long, String>();
+        Map<Long, TestBusinessObject> entries = new HashMap<Long, TestBusinessObject>();
         while (true)
         {
             String firstname = fr.readLine();
@@ -77,8 +107,12 @@ public class TestSubstringIndex
                 String surname = sr.readLine();
                 if (surname == null)
                     break;
-                String s = firstname + " " + surname;
-                entries.put(count, s);
+                
+                TestBusinessObject bo = new TestBusinessObject();
+                bo.firstName = firstname;
+                bo.middleName = "";
+                bo.surname = surname;
+                entries.put(count, bo);
                 if (entries.size() > 1000)
                 {
                 	// insert the real records using a Long key
@@ -86,12 +120,12 @@ public class TestSubstringIndex
                 	
                 	// update the index for each record also. The index just keeps
                 	// a reference to the key in RealRecords
-                	nameIndex.insert(entries);
-                	entries = new HashMap<Long, String>();
+                	indexManager.indexAll(entries);
+                	entries = new HashMap<Long, TestBusinessObject>();
                 }
                 count++;
             }
-            if(count > 5000)
+            if(count > 1000)
             	break;
         }
         
@@ -100,9 +134,9 @@ public class TestSubstringIndex
         // be a multiple of a 1000 names, it's unlikely.
         if (entries.size() > 0)
         {
-        	nameIndex.insert(entries);
+        	indexManager.indexAll(entries);
         	realRecordsMap.putAll(entries);
-        	entries = new HashMap<Long, String>();
+        	entries = new HashMap<Long, TestBusinessObject>();
         }
         long duration = (System.currentTimeMillis() - start) / 1000;
         System.out.println(Long.toString(count) + " names inserted and indexed in " + duration + " seconds");
@@ -115,21 +149,25 @@ public class TestSubstringIndex
 		for(int loop = 0; loop < 10; ++loop)
         {
             long st_time = System.nanoTime();
-            int numIterations = 1000;
+            int numIterations = 10;
             for (int i = 0; i < numIterations; ++i)
             {
             	// get the keys for the records whose 'name' contains EN
-                matches = nameIndex.contains("EN");
+            	TestBusinessObject criteria = new TestBusinessObject();
+            	criteria.firstName = "MES"; // anywhere
+            	criteria.surname = "ALLEN"; // exact
+
+            	matches = indexManager.searchMultipleIndexes(criteria, true);
             }
             double d = (System.nanoTime() - st_time) / 1000000000.0;
             System.out.println("Throughput is " + Double.toString(numIterations / d) + "/sec");
             System.out.println("Found " + matches.size());
         }
 		// print out the records that matches
-	    Map<Long, String> names = realRecordsMap.getAll(matches);
-	    for (String name : names.values())
+	    Map<Long, TestBusinessObject> bos = realRecordsMap.getAll(matches);
+	    for (TestBusinessObject bo : bos.values())
 	    {
-	        System.out.println(name);
+	        System.out.println(bo.firstName + " " + bo.middleName + " " + bo.surname);
 	    }
 	}
 }

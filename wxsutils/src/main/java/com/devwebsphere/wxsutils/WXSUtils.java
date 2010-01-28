@@ -34,6 +34,7 @@ import com.devwebsphere.wxsutils.jmx.wxsmap.WXSMapMBeanManager;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ClientClusterContext;
 import com.ibm.websphere.objectgrid.ObjectGrid;
+import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridManagerFactory;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.Session;
@@ -153,8 +154,20 @@ public class WXSUtils
 		WXSMap rc = maps.get(mapName);
 		if(rc == null)
 		{
-			rc = new WXSMap(this, mapName);
-			maps.put(mapName, rc);
+			try
+			{
+				if(grid.getSession().getMap(mapName) != null)
+				{
+					rc = new WXSMap(this, mapName);
+					maps.put(mapName, rc);
+				}
+				else
+					throw new ObjectGridRuntimeException("Unknown map:" + mapName);
+			}
+			catch(ObjectGridException e)
+			{
+				throw new ObjectGridRuntimeException(e);
+			}
 		}
 		return rc;
 	}
