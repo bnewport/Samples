@@ -30,4 +30,10 @@ public @interface PrefixIndex
 	 * @return
 	 */
 	int maxMatches() default 200;
+
+	/**
+	 * Only prefixes at least this long are indexed
+	 * @return
+	 */
+	int minSize() default 2;
 }

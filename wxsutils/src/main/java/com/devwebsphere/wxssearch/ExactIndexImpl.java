@@ -13,10 +13,12 @@ package com.devwebsphere.wxssearch;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.devwebsphere.wxssearch.type.ExactIndex;
+
 public class ExactIndexImpl<C,RK> extends Index<C,RK> {
 
-	ExactIndexImpl(IndexManager<C,RK> im, String indexName, int maxMatches) {
-		super(im, indexName, maxMatches);
+	ExactIndexImpl(IndexManager<C,RK> im, String indexName, ExactIndex e) {
+		super(im, indexName, e.maxMatches());
 	}
 
 	@Override

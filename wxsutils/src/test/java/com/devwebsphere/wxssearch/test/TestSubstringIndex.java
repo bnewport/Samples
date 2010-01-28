@@ -28,6 +28,7 @@ import org.junit.Test;
 import com.devwebsphere.wxssearch.Index;
 import com.devwebsphere.wxssearch.IndexManager;
 import com.devwebsphere.wxssearch.PrefixIndexImpl;
+import com.devwebsphere.wxssearch.type.PrefixIndex;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.ibm.websphere.objectgrid.ObjectGrid;
@@ -67,21 +68,19 @@ public class TestSubstringIndex
 
 	@Test
 	public void testGeneratePrefix()
+		throws IllegalAccessException, NoSuchFieldException
 	{
-		Set<String> results = PrefixIndexImpl.sgenerate("Billy");
+		PrefixIndex p = TestBusinessObject.class.getDeclaredField("middleName").getAnnotation(PrefixIndex.class);
+		Assert.assertNotNull(p);
+		Set<String> results = PrefixIndexImpl.sgenerate(p, "Billy");
 		
 		Set<String> correct = new HashSet<String>();
-		correct.add("B"); correct.add("BI"); correct.add("BIL"); correct.add("BILL"); correct.add("BILLY");
+		correct.add("BI"); correct.add("BIL"); correct.add("BILL"); correct.add("BILLY");
 		
 		Assert.assertEquals(correct, results);
 		
-		results = PrefixIndexImpl.sgenerate("");
+		results = PrefixIndexImpl.sgenerate(p, "");
 		Assert.assertTrue(results.isEmpty());
-		
-		results = PrefixIndexImpl.sgenerate("A");
-		correct.clear();
-		correct.add("A");
-		Assert.assertEquals(correct, results);
 	}
 	
 	@Test
@@ -149,15 +148,15 @@ public class TestSubstringIndex
 		for(int loop = 0; loop < 10; ++loop)
         {
             long st_time = System.nanoTime();
-            int numIterations = 10;
+            int numIterations = 1000;
             for (int i = 0; i < numIterations; ++i)
             {
             	// get the keys for the records whose 'name' contains EN
-            	TestBusinessObject criteria = new TestBusinessObject();
-            	criteria.firstName = "MES"; // anywhere
-            	criteria.surname = "ALLEN"; // exact
-
-            	matches = indexManager.searchMultipleIndexes(criteria, true);
+//            	TestBusinessObject criteria = new TestBusinessObject();
+//            	criteria.firstName = "JAMES"; // anywhere
+//            	criteria.surname = "ALLEN"; // exact
+//            	matches = indexManager.searchMultipleIndexes(criteria, true);
+            	matches = firstNameIndex.contains("JAMES");
             }
             double d = (System.nanoTime() - st_time) / 1000000000.0;
             System.out.println("Throughput is " + Double.toString(numIterations / d) + "/sec");

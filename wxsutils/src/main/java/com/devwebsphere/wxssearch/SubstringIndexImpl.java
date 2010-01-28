@@ -13,10 +13,12 @@ package com.devwebsphere.wxssearch;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.devwebsphere.wxssearch.type.SubstringIndex;
+
 public class SubstringIndexImpl<C, RK> extends Index<C, RK> 
 {
-	SubstringIndexImpl(IndexManager<C,RK> im, String indexName, int maxMatches) {
-		super(im, indexName, maxMatches);
+	SubstringIndexImpl(IndexManager<C,RK> im, String indexName, SubstringIndex s) {
+		super(im, indexName, s.maxMatches());
 	}
 
 	static public Set<String> sgenerate(String str)

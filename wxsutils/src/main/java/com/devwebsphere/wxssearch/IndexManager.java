@@ -20,7 +20,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxssearch.type.ExactIndex;
@@ -45,8 +47,14 @@ public class IndexManager<A,RK>
     
     /**
      * Create a WXSUtils and provide this. This is used for all bulk
-     * operations.
-     * @param utils
+     * operations. The indexClass should be the Map value being indexed
+     * and should have annotations to indicate which fields
+     * are being indexed.
+     * @param utils The client connection wrapped with utils
+     * @param indexClass The value class to 'index'
+     * @See ExactIndex
+     * @See SubstringIndex
+     * @See PrefixIndex
      */
     public IndexManager(WXSUtils utils, Class<A> indexClass)
     {
@@ -69,15 +77,15 @@ public class IndexManager<A,RK>
     		String indexName = indexClass.getSimpleName() + "_" + f.getName();
     		if(s != null)
     		{
-    			index = new SubstringIndexImpl<A,RK>(this, indexName, s.maxMatches());
+    			index = new SubstringIndexImpl<A,RK>(this, indexName, s);
     		}
     		if(e != null)
     		{
-    			index = new ExactIndexImpl<A,RK>(this, indexName, e.maxMatches());
+    			index = new ExactIndexImpl<A,RK>(this, indexName, e);
     		}
     		if(p != null)
     		{
-    			index = new PrefixIndexImpl<A,RK>(this, indexName, p.maxMatches());
+    			index = new PrefixIndexImpl<A,RK>(this, indexName, p);
     		}
     		if(index != null)
     		{
@@ -117,39 +125,57 @@ public class IndexManager<A,RK>
     	try
     	{
 	    	Set<RK> result = null;
+	    	// first run the individual queries for each attribute in parallel
+	    	Collection<Future<Collection<RK>>> threads = new ArrayList<Future<Collection<RK>>>();
 	    	for(Field f : indexedFields)
 	    	{
-	    		String value = (String)f.get(criteria); // non null field means it's in the query
+	    		final String value = (String)f.get(criteria); // non null field means it's in the query
 	    		if(value != null)
 	    		{
-	        		Index<A,RK> index = getIndex(f.getName());
-	    			
-		    		Collection<RK> r = index.contains(value);
-		    		if(result == null)
-		    			result = new HashSet<RK>(r);
-		    		else if(isAND)
-		    		{
-		    			// AND this index match with the current running results
-		    			LinkedList<RK> removeList = new LinkedList<RK>();
-		    			for(RK k : r)
-		    			{
-		    				if(!result.contains(k))
-		    					removeList.add(k);
-		    			}
-		    			for(RK k : result)
-		    			{
-		    				if(!r.contains(k))
-		    					removeList.add(k);
-		    			}
-		    			result.removeAll(removeList);
-		    		}
-		    		else
-		    			result.addAll(r);
+	        		final Index<A,RK> index = getIndex(f.getName());
+	        		
+	        		Callable<Collection<RK>> c = new Callable<Collection<RK>>()
+	        		{
+	        			public Collection<RK> call()
+	        			{
+	        				Collection<RK> r = index.contains(value);
+	        				return r;
+	        			}
+	        		};
+	        		
+	        		Future<Collection<RK>> future = utils.getExecutorService().submit(c);
+	        		threads.add(future);
 	    		}
+	    	}
+	    	// the collect the results and AND/OR them
+	    	for(Future<Collection<RK>> future : threads)
+	    	{
+	    		Collection<RK> r = future.get();
+	    		if(result == null)
+	    			result = new HashSet<RK>(r);
+	    		else if(isAND)
+	    		{
+	    			// AND this index match with the current running results
+	    			LinkedList<RK> removeList = new LinkedList<RK>();
+	    			for(RK k : r)
+	    			{
+	    				if(!result.contains(k))
+	    					removeList.add(k);
+	    			}
+	    			for(RK k : result)
+	    			{
+	    				if(!r.contains(k))
+	    					removeList.add(k);
+	    			}
+	    			result.removeAll(removeList);
+	    		}
+	    		else
+	    			result.addAll(r);
+	    		
 	    	}
 	    	return (result != null) ? result : (Collection<RK>)(Collections.EMPTY_LIST);
     	}
-    	catch(IllegalAccessException e)
+    	catch(Exception e)
     	{
     		throw new ObjectGridRuntimeException(e);
     	}

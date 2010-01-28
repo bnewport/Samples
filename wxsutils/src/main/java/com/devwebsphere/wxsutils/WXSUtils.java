@@ -648,4 +648,13 @@ public class WXSUtils
 	{
 		return grid;
 	}
+
+	/**
+	 * This returns the thread pool in use by this instance.
+	 * @return
+	 */
+	public ExecutorService getExecutorService()
+	{
+		return threadPool;
+	}
 }

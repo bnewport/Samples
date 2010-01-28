@@ -18,7 +18,6 @@ import java.lang.annotation.Target;
 /**
  * Annotate fields with this for an index which matches
  * any where, e.g. LIKE '%XXX%'
- * @author ibm
  *
  */
 @Target(ElementType.FIELD)

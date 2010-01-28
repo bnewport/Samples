@@ -13,14 +13,18 @@ package com.devwebsphere.wxssearch;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PrefixIndexImpl<C,RK> extends Index<C,RK> {
+import com.devwebsphere.wxssearch.type.PrefixIndex;
 
-	PrefixIndexImpl(IndexManager<C,RK> im, String indexName, int maxMatches) {
-		super(im, indexName, maxMatches);
-		// TODO Auto-generated constructor stub
+public class PrefixIndexImpl<C,RK> extends Index<C,RK> 
+{
+	PrefixIndex config;
+
+	PrefixIndexImpl(IndexManager<C,RK> im, String indexName, PrefixIndex p) {
+		super(im, indexName, p.maxMatches());
+		config = p;
 	}
 
-	static public Set<String> sgenerate(String str)
+	static public Set<String> sgenerate(PrefixIndex p, String str)
 	{
         HashSet<String> rc = new HashSet<String>();
 
@@ -28,7 +32,7 @@ public class PrefixIndexImpl<C,RK> extends Index<C,RK> {
         {
             String s = str.toUpperCase();
 
-            for (int i = 1; i <= s.length(); ++i)
+            for (int i = p.minSize(); i <= s.length(); ++i)
             {
                 String v = s.substring(0, i);
                 rc.add(v);
@@ -40,7 +44,7 @@ public class PrefixIndexImpl<C,RK> extends Index<C,RK> {
 	@Override
 	public Set<String> generate(String str) 
 	{
-		return sgenerate(str);
+		return sgenerate(config, str);
 	}
 
 }
