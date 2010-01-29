@@ -39,7 +39,7 @@ public class TestSubstringIndex
 	static WXSUtils utils;
 	static IndexManager<TestBusinessObject, Long> indexManager;
 	static Index<TestBusinessObject,Long> firstNameIndex;
-	static Index<TestBusinessObject,Long> middleNameIndex;
+//	static Index<TestBusinessObject,Long> middleNameIndex;
 	static Index<TestBusinessObject,Long> surnameIndex;
 	static WXSMap realRecordsMap;
 	
@@ -58,15 +58,15 @@ public class TestSubstringIndex
 		// create the name index. Looking it up creates it.
 		firstNameIndex = indexManager.getIndex("firstName");
 		Assert.assertNotNull(firstNameIndex);
-		middleNameIndex = indexManager.getIndex("middleName");
-		Assert.assertNotNull(middleNameIndex);
+//		middleNameIndex = indexManager.getIndex("middleName");
+//		Assert.assertNotNull(middleNameIndex);
 		surnameIndex = indexManager.getIndex("surname");
 		Assert.assertNotNull(surnameIndex);
 		// create a map for the real records
 		realRecordsMap = utils.getCache("RealRecords");
 	}
 
-	@Test
+//	@Test
 	public void testGeneratePrefix()
 		throws IllegalAccessException, NoSuchFieldException
 	{
@@ -124,7 +124,7 @@ public class TestSubstringIndex
                 }
                 count++;
             }
-            if(count > 1000)
+            if(count > 100000)
             	break;
         }
         
@@ -152,11 +152,11 @@ public class TestSubstringIndex
             for (int i = 0; i < numIterations; ++i)
             {
             	// get the keys for the records whose 'name' contains EN
-//            	TestBusinessObject criteria = new TestBusinessObject();
-//            	criteria.firstName = "JAMES"; // anywhere
-//            	criteria.surname = "ALLEN"; // exact
-//            	matches = indexManager.searchMultipleIndexes(criteria, true);
-            	matches = firstNameIndex.contains("JAMES");
+            	TestBusinessObject criteria = new TestBusinessObject();
+            	criteria.firstName = "JAM"; // anywhere
+            	criteria.surname = "ALLEN"; // exact
+            	matches = indexManager.searchMultipleIndexes(criteria, true);
+//            	matches = firstNameIndex.contains("JAMES");
             }
             double d = (System.nanoTime() - st_time) / 1000000000.0;
             System.out.println("Throughput is " + Double.toString(numIterations / d) + "/sec");

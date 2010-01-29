@@ -27,20 +27,17 @@ public class TestBusinessObject implements Serializable
 	 */
 	private static final long serialVersionUID = 6204599238843897028L;
 	
-	/**
-	 * Index firstName using a LIKE %XXX% style index
-	 */
-	@SubstringIndex
+	@PrefixIndex
 	String firstName;
 	/**
 	 * Index middle name using a LIKE XXXX% style index
 	 */
-	@PrefixIndex
+//	@PrefixIndex
 	String middleName;
 	/**
 	 * Index surname using an exact index. Only track surnames
 	 * with < 100 matches
 	 */
-	@ExactIndex(maxMatches=100)
+	@PrefixIndex(maxMatches=200)
 	String surname;
 }
