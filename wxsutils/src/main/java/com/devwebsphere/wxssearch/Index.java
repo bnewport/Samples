@@ -10,6 +10,11 @@
 //
 package com.devwebsphere.wxssearch;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,6 +27,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxssearch.jmx.TextIndexMBeanImpl;
+import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
@@ -29,7 +35,6 @@ import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
-import com.ibm.websphere.objectgrid.datagrid.AgentManager;
 
 /**
  * Each index uses 4 dynamic maps named after the index.
@@ -41,14 +46,11 @@ public abstract class Index<C, RK>
 
 	static String DYN_INDEX_MAP_SUFFIX = "Index";
 	static String DYN_BAD_SYMBOL_MAP_SUFFIX = "BadSymbol";
-	static String DYN_ATTRIBUTES_MAP_SUFFIX = "Attributes";
-	static String DYN_COUNTER_MAP_SUFFIX = "Counter";
 	
 	static Logger logger = Logger.getLogger(Index.class.getName());
 	IndexManager<C, RK> manager;
 	
 	String indexName;
-	String attributeMapName;
 	String attributeIndexMapName;
 	String indexMapName;
 	String badSymbolMapName;
@@ -69,7 +71,6 @@ public abstract class Index<C, RK>
 		this.maxMatches = maxMatches;
 		this.manager = im;
 		this.indexName = indexName;
-        attributeMapName = indexName + "_" + DYN_ATTRIBUTES_MAP_SUFFIX;
         attributeIndexMapName = indexName + "_" + DYN_INDEX_MAP_SUFFIX;
 		indexMapName = indexName + "_" + DYN_INDEX_MAP_SUFFIX;
 		badSymbolMapName = indexName + "_" + DYN_BAD_SYMBOL_MAP_SUFFIX;
@@ -82,7 +83,7 @@ public abstract class Index<C, RK>
 			// a Dynamic Map won't exist unless a client calls Session#getMap using
 			// the dynamic map name.
 			Session s = manager.utils.getObjectGrid().getSession();
-			ObjectMap m = s.getMap(attributeMapName);
+			ObjectMap m = s.getMap(manager.getInternalKeyToRealKeyMapName());
 			m = s.getMap(attributeIndexMapName);
 			m = s.getMap(indexMapName);
 			m = s.getMap(badSymbolMapName);
@@ -107,46 +108,42 @@ public abstract class Index<C, RK>
     	{
 	    	ObjectGrid grid = manager.utils.getObjectGrid();
 	
-	        Session sess = grid.getSession();
-	
-	        int size = entries.size();
-	        long longKey = getNameCounterRange(sess, size);
-	
-	        HashMap<Long, RK> allLongNames = new HashMap<Long, RK>();
-	        HashMap<String, Set<Long>> indexMap = new HashMap<String, Set<Long>>();
+	        HashMap<ByteArrayKey, RK> ik2rk = new HashMap<ByteArrayKey, RK>();
+	        HashMap<String, Set<byte[]>> symbolToHashMap = new HashMap<String, Set<byte[]>>();
 
 	        for(Map.Entry<RK, String> e : entries.entrySet())
 	        {
-	            allLongNames.put(longKey, e.getKey());
+	        	byte[] hash = calculateHash(e.getKey());
+	        	// need to wrap a byte[] to work with WXS
+	        	ByteArrayKey hashKey = new ByteArrayKey(hash);
+	            ik2rk.put(hashKey, e.getKey());
 	            Set<String> symbols = generate(e.getValue());
 	
 	            for (String a : symbols)
 	            {
-	                Set<Long> list = indexMap.get(a);
+	                Set<byte[]> list = symbolToHashMap.get(a);
 	                if (list == null)
-	                    list = new HashSet<Long>();
-	                list.add(longKey);
-	                indexMap.put(a, list);
+	                {
+	                    list = new HashSet<byte[]>();
+		                symbolToHashMap.put(a, list);
+	                }
+	                list.add(hash);
 	            }
-	            longKey++;
 	        }
-	        BackingMap bmap = grid.getMap(attributeMapName);
-	        manager.utils.putAll(allLongNames, bmap);
+	        BackingMap bmap = grid.getMap(manager.getInternalKeyToRealKeyMapName());
+	        // store hash, real key pairs in the grid
+	        manager.utils.putAll(ik2rk, bmap);
 	
-	        Set<String> allSymbols = indexMap.keySet();
+	        Set<String> allSymbols = symbolToHashMap.keySet();
 	        Map<String, IndexEntryUpdateAgent> batchAgents = new HashMap<String, IndexEntryUpdateAgent>();
 	        for (String symbol : allSymbols)
 	        {
-	            Set<Long> keys = indexMap.get(symbol);
+	            Set<byte[]> keys = symbolToHashMap.get(symbol);
 	            IndexEntryUpdateAgent agent = new IndexEntryUpdateAgent();
 	            agent.maxMatches = maxMatches;
-	            agent.nameKeys = new long[keys.size()];
+	            agent.internalKeyList = new ArrayList<byte[]>(keys.size());
+	            agent.internalKeyList.addAll(keys);
 	            agent.gridName = manager.utils.getObjectGrid().getName();
-	            int idx = 0;
-	            for (Long k : keys)
-	            {
-	                agent.nameKeys[idx++] = k;
-	            }
 	            agent.isAddOperation = true;
 	            agent.indexName = indexName;
 	            batchAgents.put(symbol, agent);
@@ -168,39 +165,70 @@ public abstract class Index<C, RK>
      * @param symbol
      * @return
      */
-    public Collection<RK> contains(String symbol)
+    public SearchResult<RK> contains(String symbol)
 	{
     	long start = System.nanoTime();
+    	try
+    	{
+    		SearchResult<RK> rc = null;
+			SearchResult<byte[]> rawSR = rawContains(symbol);
+			if(!rawSR.tooManyMatches)
+			{
+				List<byte[]> keys = rawSR.getResults();
+				
+				if (keys != null)
+				{
+					rc = new SearchResult<RK>(fetchKeysForInternalByteKeys(keys));
+				}
+			}
+			
+			mbean.getContainsMetrics().logTime(System.nanoTime() - start);
+			return rc;
+    	}
+    	catch(Exception e)
+    	{
+    		mbean.getContainsMetrics().logException(e);
+    		logger.log(Level.SEVERE, "Exception looking up substrings", e);
+    		throw new ObjectGridRuntimeException(e);
+    	}
+	}
+
+    public List<RK> fetchKeysForInternalKeys(List<ByteArrayKey> keys)
+    {
+		ObjectGrid grid = manager.utils.getObjectGrid();
+		
+		Map<ByteArrayKey, RK> all = manager.utils.getAll(keys, grid.getMap(manager.getInternalKeyToRealKeyMapName()));
+		List<RK> rc = new ArrayList<RK>(all.values());
+		return rc;
+    }
+    
+    public List<RK> fetchKeysForInternalByteKeys(List<byte[]> keys)
+    {
+    	List<ByteArrayKey> k = IndexManager.convertToKeys(keys);
+    	return fetchKeysForInternalKeys(k);
+    }
+    
+    public SearchResult<byte[]> rawContains(String symbol)
+	{
     	try
     	{
 			ObjectGrid grid = manager.utils.getObjectGrid();
 			Session sess = grid.getSession();
 			ObjectMap indexMap = sess.getMap(indexMapName);
 			ObjectMap badSymbolMap = sess.getMap(badSymbolMapName);
-			
-			Collection<RK> rc = (Collection<RK>)Collections.EMPTY_LIST;
-			
+
+			SearchResult<byte[]> rc = null;
 			if (!badSymbolMap.containsKey(symbol))
 			{
-				long[] keys = (long[]) indexMap.get(symbol);
-				if (keys != null)
-				{
-					ArrayList<Long> listKeys = new ArrayList<Long>(keys.length);
-					for (long k : keys)
-					{
-					    listKeys.add(k);
-					}
-					
-					Map<Long, RK> all = manager.utils.getAll(listKeys, grid.getMap(attributeMapName));
-					rc = all.values();
-				}
+				List<byte[]> rl = (List<byte[]>) indexMap.get(symbol);
+				rc = new SearchResult<byte[]>(rl);
 			}
-			mbean.getContainsMetrics().logTime(System.nanoTime() - start);
+			else
+				rc = new SearchResult<byte[]>();
 			return rc;
     	}
     	catch(ObjectGridException e)
     	{
-    		mbean.getContainsMetrics().logException(e);
     		logger.log(Level.SEVERE, "Exception looking up substrings", e);
     		throw new ObjectGridRuntimeException(e);
     	}
@@ -217,83 +245,39 @@ public abstract class Index<C, RK>
     	long start = System.nanoTime();
     	try
     	{
-	    	ObjectGrid grid = manager.utils.getObjectGrid();
-	    	/*
-	    	 * 1) Find the entry for attributeValue. If the attributevalue is in BadSymbol map, do nothing. 
-	    	 * 2) Retrieve all the matched entries from Names map. 
-	    	 *    Find out which long id represents the key ". 
-	    	 * 3) Remove the long id from Attribute map.
-	    	 * 4) Remove the long id for all the symbol genreated by the attribute name in Index map.  
-	    	 */
-	
-	    	// 1) Find the entry for attributeValue. If the attributevalue is in BadSymbol map, do nothing. 
+	    	WXSUtils utils = manager.utils;
+	    	WXSMap badSymbolMap = utils.getCache(indexMapName);
+	    	ObjectGrid grid = utils.getObjectGrid();
 	    	Session sess = grid.getSession();
-	    	ObjectMap badSymbolMap = sess.getMap(badSymbolMapName);
-	    	if (!badSymbolMap.containsKey(key))
+	    	byte[] hash = calculateHash(key);
+	    	ByteArrayKey hashKey = new ByteArrayKey(hash);
+	    	Set<String> symbols = generate(attributeValue);
+	    	Map<String, IndexEntryUpdateAgent> agentList = new HashMap<String, IndexEntryUpdateAgent>();
+	    	ObjectMap names = sess.getMap(manager.getInternalKeyToRealKeyMapName());
+	    	// remove the int key -> real key record
+	    	names.remove(hashKey);
+	    	// for each possible index key
+	    	for(String s : symbols)
 	    	{
-		
-		    	// 2) Retrieve all the matched entries from Names map. 
-		    	// Find out which long id represents key. 
-		
-		    	// Get the ObjectMap representing the attribute index map
-		    	ObjectMap indexMap = grid.getSession().getMap(indexMapName);
-		
-		    	long[] keys = (long[]) indexMap.get(attributeValue);
-		    	if (keys != null)
+	    		// if key was useful
+		    	if (!badSymbolMap.contains(s)) // RPC
 		    	{
-			    	logger.finest("removeAttribute - total " + keys.length + " matches for attribute value'" + attributeValue
-			    			+ "'.");
-			
-			    	List<Long> listKeys = new ArrayList<Long>(keys.length);
-			    	for (long k : keys)
-			    	{
-			    		listKeys.add(k);
-			    	}
-			
-			    	ObjectMap attributeMap = grid.getSession().getMap(indexMapName);
-			    	Map<Long, RK> all = manager.utils.getAll(listKeys, grid.getMap(attributeMapName));
-			
-			    	long id = 0;
-			    	boolean found = false;
-			    	for (Map.Entry<Long, RK> entry : all.entrySet())
-			    	{
-			    		if (entry.getValue().equals(key))
-			    		{
-			    			found = true;
-			    			id = entry.getKey();
-			    			break;
-			    		}
-			    	}
-			
-			    	if (found)
-			    	{
-				    	logger.finest("removeAttribute - Found the long id for attribute value'" + attributeValue + "': " + id);
-				    	// 3) Remove the long id from Attribute map.
-				    	attributeMap.remove(new Long(id));
-				
-				    	// 4) Remove the long id for all the symbol genreated by the attribute name in Index map.  
-				
-				    	Set<String> symbols = generate(attributeValue);
-				
-				    	ObjectMap names = sess.getMap(attributeMapName);
-				    	names.remove(key);
-				
-				    	AgentManager am = sess.getMap(indexMapName).getAgentManager();
-				
-				    	for (String symbol : symbols)
-				    	{
-				    		IndexEntryUpdateAgent agent = new IndexEntryUpdateAgent();
-				    		agent.maxMatches = maxMatches;
-				    		agent.nameKeys = new long[1];
-				    		agent.nameKeys[0] = id;
-				    		agent.isAddOperation = false;
-				    		agent.indexName = indexName;
-				    		agent.gridName = manager.utils.getObjectGrid().getName();
-				    		am.callMapAgent(agent, Collections.singletonList(symbol));
-				    	}
-			    	}
+		    		// remove this records hash from the list of matches
+		    		// the agent avoids pulling the whole list to here and
+		    		// then writing it back
+		    		IndexEntryUpdateAgent agent = new IndexEntryUpdateAgent();
+		    		agent.maxMatches = maxMatches;
+		    		agent.internalKeyList = Collections.singletonList(hash);
+		    		agent.isAddOperation = false;
+		    		agent.indexName = indexName;
+		    		agent.gridName = grid.getName();
+		    		agentList.put(s, agent);
 		    	}
 	    	}
+	    	BackingMap bmap = grid.getMap(indexMapName);
+	    	// invoke all agents as efficiently as we can
+	    	// this minimizes RPCs
+	    	utils.callMapAgentAll(agentList, bmap);
 	    	mbean.getRemoveMetrics().logTime(System.nanoTime() - start);
     	}
     	catch(ObjectGridException e)
@@ -304,35 +288,39 @@ public abstract class Index<C, RK>
     	}
     }
 
-    /**
-     * This is an internal method for allocating contiguous
-     * ranges of longs.
-     * @param sess
-     * @param numKeys
-     * @return
-     * @throws ObjectGridException
-     */
-    long getNameCounterRange(Session sess, long numKeys) throws ObjectGridException
-    {
-        String counterKey = indexName + "_counter";
-
-        sess.begin();
-        ObjectMap counter = sess.getMap(DYN_COUNTER_MAP_SUFFIX);
-        Long key = (Long) counter.getForUpdate(counterKey);
-        Long next = null;
-        if (key == null)
-        {
-            key = new Long(Long.MIN_VALUE);
-            next = new Long(Long.MIN_VALUE + numKeys);
-            counter.insert(counterKey, next);
-        } else
-        {
-            next = new Long(key.longValue() + numKeys);
-            counter.update(counterKey, next);
-        }
-        sess.commit();
-        return key;
-    }
-
     abstract Set<String> generate(String str);
+    
+    /**
+     * Optimized get hash for object. It uses a message digest on the byte[] for the
+     * object. Worst case, the RK o is serialized to a byte[]
+     * @param o
+     * @return
+     */
+    byte[] calculateHash(RK o)
+    {
+    	try
+    	{
+	    	MessageDigest digest = IndexManager.getDigest();
+	    	if(o instanceof String)
+	    	{
+	    		String s = (String)o;
+	    		return digest.digest(s.getBytes());
+	    	}
+	    	else if(o instanceof Serializable)
+	    	{
+	    		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+	    		ObjectOutputStream oos = new ObjectOutputStream(bos);
+	    		oos.writeObject(o);
+	    		oos.flush();
+	    		oos.close();
+	    		byte[] b = bos.toByteArray();
+	    		return digest.digest(b);
+	    	} else
+	    		return null;
+    	}
+    	catch(IOException e)
+    	{
+    		throw new ObjectGridRuntimeException(e);
+    	}
+    }
 }

@@ -17,6 +17,7 @@ import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,9 +29,11 @@ import org.junit.Test;
 import com.devwebsphere.wxssearch.Index;
 import com.devwebsphere.wxssearch.IndexManager;
 import com.devwebsphere.wxssearch.PrefixIndexImpl;
+import com.devwebsphere.wxssearch.SearchResult;
 import com.devwebsphere.wxssearch.type.PrefixIndex;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
+import com.devwebsphere.wxsutils.jmx.MinMaxAvgMetric;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 
 public class TestSubstringIndex
@@ -82,14 +85,14 @@ public class TestSubstringIndex
 		results = PrefixIndexImpl.sgenerate(p, "");
 		Assert.assertTrue(results.isEmpty());
 	}
-	
+
 	@Test
 	public void preloadGrid()
 		throws IOException
 	{
         InputStream is = IndexManager.class.getResourceAsStream("/search/malenames.txt");
         BufferedReader fr = new BufferedReader(new InputStreamReader(is));
-
+        
         long start = System.currentTimeMillis();
         long count = 0;
         
@@ -144,29 +147,47 @@ public class TestSubstringIndex
 	@Test
 	public void testLookup()
 	{
-        Collection<Long> matches = null;
+        SearchResult<Long> matches = null;
+        List<byte[]> rawMatches = null;
 		for(int loop = 0; loop < 10; ++loop)
         {
             long st_time = System.nanoTime();
             int numIterations = 1000;
+            MinMaxAvgMetric m = new MinMaxAvgMetric();
             for (int i = 0; i < numIterations; ++i)
             {
+            	long start = System.nanoTime();
             	// get the keys for the records whose 'name' contains EN
             	TestBusinessObject criteria = new TestBusinessObject();
             	criteria.firstName = "JAM"; // anywhere
             	criteria.surname = "ALLEN"; // exact
             	matches = indexManager.searchMultipleIndexes(criteria, true);
 //            	matches = firstNameIndex.contains("JAMES");
+//            	rawMatches = firstNameIndex.rawContains("JAMES");
+            	m.logTime(System.nanoTime() - start);
             }
+//            matches = firstNameIndex.fetchKeysForInternalKeys(IndexManager.convertToKeys(rawMatches));
+            System.out.println(m.toString());
             double d = (System.nanoTime() - st_time) / 1000000000.0;
             System.out.println("Throughput is " + Double.toString(numIterations / d) + "/sec");
-            System.out.println("Found " + matches.size());
+            m.dumpResponseTimes();
+            if(matches.isTooManyMatches())
+            	System.out.println("Too many matches found");
+            else
+            	System.out.println("Found " + matches.getResults().size());
         }
 		// print out the records that matches
-	    Map<Long, TestBusinessObject> bos = realRecordsMap.getAll(matches);
-	    for (TestBusinessObject bo : bos.values())
-	    {
-	        System.out.println(bo.firstName + " " + bo.middleName + " " + bo.surname);
-	    }
+		if(matches.isTooManyMatches())
+		{
+			System.out.println("Too many matches");
+		}
+		else
+		{
+		    Map<Long, TestBusinessObject> bos = realRecordsMap.getAll(matches.getResults());
+		    for (TestBusinessObject bo : bos.values())
+		    {
+		        System.out.println(bo.firstName + " " + bo.middleName + " " + bo.surname);
+		    }
+		}
 	}
 }

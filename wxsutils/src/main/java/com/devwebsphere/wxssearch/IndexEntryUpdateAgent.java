@@ -11,8 +11,11 @@
 
 package com.devwebsphere.wxssearch;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
@@ -28,7 +31,7 @@ import com.ibm.websphere.objectgrid.datagrid.AgentManager;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
 public class IndexEntryUpdateAgent implements MapGridAgent, Runnable {
-	long[] nameKeys;
+	Collection<byte[]> internalKeyList;
 	boolean isAddOperation;
     String indexName;
     String gridName;
@@ -72,8 +75,8 @@ public class IndexEntryUpdateAgent implements MapGridAgent, Runnable {
 	void add(Session sess, ObjectMap indexMap, Object indexKey, String indexName)
 		throws ObjectGridException
 	{
-		long[] keys = (long[])indexMap.getForUpdate(indexKey);
-		if(keys != null && keys.length > maxMatches)
+		List<byte[]> keys = (List<byte[]>)indexMap.getForUpdate(indexKey);
+		if(keys != null && keys.size() > maxMatches)
 		{
 			// too many records to be useful for this symbol
 			// remove and add key to not useful symbol map
@@ -93,14 +96,14 @@ public class IndexEntryUpdateAgent implements MapGridAgent, Runnable {
 		else
 		{
 			// keep list of keys not already in the list
-			LinkedList<Long> delta = new LinkedList<Long>();
-			for(long nameKey : nameKeys)
+			LinkedList<byte[]> delta = new LinkedList<byte[]>();
+			for(byte[] nameKey : internalKeyList)
 			{
-				keys = (long[])indexMap.getForUpdate(indexKey);
+				keys = (List<byte[]>)indexMap.getForUpdate(indexKey);
 				boolean found = false;
-				for(int i = 0; !found && keys != null && i < keys.length; ++i)
+				for(int i = 0; !found && keys != null && i < keys.size(); ++i)
 				{
-					if(keys[i] == nameKey)
+					if(keys.get(i).equals(nameKey))
 						found = true;
 				}
 				if(!found)
@@ -109,23 +112,16 @@ public class IndexEntryUpdateAgent implements MapGridAgent, Runnable {
 				}
 			}
 			// add non dup keys to end of list
-			long[] newKeys = null;
 			if(keys == null)
 			{
-				newKeys = new long[delta.size()];
-				int c = 0;
-				for(Long l : delta)
-					newKeys[c++] = l;
-				indexMap.insert(indexKey, newKeys);
+				keys = new ArrayList<byte[]>();
+				keys.addAll(delta);
+				indexMap.insert(indexKey, keys);
 			}
 			else
 			{
-				newKeys = new long[keys.length + delta.size()];
-				System.arraycopy(keys, 0, newKeys, 0, keys.length);
-				int c = keys.length;
-				for(Long l : delta)
-					newKeys[c++] = l;
-				indexMap.update(indexKey, newKeys);
+				keys.addAll(delta);
+				indexMap.update(indexKey, keys);
 			}
 		}
 	}
@@ -133,38 +129,33 @@ public class IndexEntryUpdateAgent implements MapGridAgent, Runnable {
 	void remove(Session sess, ObjectMap indexMap, Object indexKey)
 		throws ObjectGridException
 	{
-		long[] keys = (long[])indexMap.getForUpdate(indexKey);
-		for(long nameKey: nameKeys)
+		List<byte[]> keys = (List<byte[]>)indexMap.getForUpdate(indexKey);
+		if(keys != null)
 		{
-			boolean found = false;
-			int pos;
-			for(pos = 0; !found && keys != null && pos < keys.length; ++pos)
+			for(byte[] nameKey: internalKeyList)
 			{
-				if(keys[pos] == nameKey)
-					found = true;
-			}
-			if(found)
-			{
-				// if only one entry, delete whole key and stop
-				if(keys.length == 1)
+				boolean found = false;
+				int pos;
+				for(pos = 0; !found && keys != null && pos < keys.size(); ++pos)
 				{
-					indexMap.remove(indexKey);
-					break;
+					if(keys.get(pos).equals(nameKey))
+						found = true;
 				}
-				else
+				if(found)
 				{
-					// copy array excluding the key
-					long[] newKeys = new long[keys.length - 1];
-					int c = 0;
-					for(int i =0; i < keys.length; ++i)
+					// if only one entry, delete whole key and stop
+					if(keys.size() == 1)
 					{
-						if(i != pos)
-							newKeys[c++] = keys[i];
-						
+						indexMap.remove(indexKey);
+						break;
 					}
-					// mark as updated
-					indexMap.update(indexKey, newKeys);
-					keys = newKeys;
+					else
+					{
+						// copy array excluding the key
+						keys.remove(pos);
+						// mark as updated
+						indexMap.update(indexKey, keys);
+					}
 				}
 			}
 		}

@@ -11,6 +11,8 @@
 package com.devwebsphere.wxssearch;
 
 import java.lang.reflect.Field;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,13 +40,17 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
  */
 public class IndexManager<A,RK>
 {
+	static String DYN_ATTRIBUTES_MAP_SUFFIX = "Attributes";
+	
     static Logger logger = Logger.getLogger(IndexManager.class.getName());
 
     WXSUtils utils;
     Class<A> indexClass;
     ConcurrentHashMap<String, Index<A,RK>> indices = new ConcurrentHashMap<String, Index<A,RK>>();
     List<Field> indexedFields;
-    
+
+	String internalKeyToRealKeyMapName;
+
     /**
      * Create a WXSUtils and provide this. This is used for all bulk
      * operations. The indexClass should be the Map value being indexed
@@ -60,6 +66,9 @@ public class IndexManager<A,RK>
     {
     	this.utils = utils;
     	this.indexClass = indexClass;
+		// hash to RK map is shared between indexes for atttributes on
+		// the same class
+        internalKeyToRealKeyMapName = getIndexClass().getName() + "_" + DYN_ATTRIBUTES_MAP_SUFFIX;
     	initIndexes(indexClass);
     }
 
@@ -120,13 +129,13 @@ public class IndexManager<A,RK>
      * @return The list of keys for the matching entries
      * @See TestSubstringIndex
      */
-    public Collection<RK> searchMultipleIndexes(A criteria, boolean isAND)
+    public SearchResult<RK> searchMultipleIndexes(A criteria, boolean isAND)
     {
     	try
     	{
-	    	Set<RK> result = null;
+	    	Set<ByteArrayKey> result = null;
 	    	// first run the individual queries for each attribute in parallel
-	    	Collection<Future<Collection<RK>>> threads = new ArrayList<Future<Collection<RK>>>();
+	    	Collection<Future<SearchResult<byte[]>>> threads = new ArrayList<Future<SearchResult<byte[]>>>();
 	    	for(Field f : indexedFields)
 	    	{
 	    		final String value = (String)f.get(criteria); // non null field means it's in the query
@@ -134,51 +143,68 @@ public class IndexManager<A,RK>
 	    		{
 	        		final Index<A,RK> index = getIndex(f.getName());
 	        		
-	        		Callable<Collection<RK>> c = new Callable<Collection<RK>>()
+	        		Callable<SearchResult<byte[]>> c = new Callable<SearchResult<byte[]>>()
 	        		{
-	        			public Collection<RK> call()
+	        			public SearchResult<byte[]> call()
 	        			{
-	        				Collection<RK> r = index.contains(value);
+	        				SearchResult<byte[]> r = index.rawContains(value);
 	        				return r;
 	        			}
 	        		};
 	        		
-	        		Future<Collection<RK>> future = utils.getExecutorService().submit(c);
+	        		Future<SearchResult<byte[]>> future = utils.getExecutorService().submit(c);
 	        		threads.add(future);
 	    		}
 	    	}
 	    	// the collect the results and AND/OR them
-	    	for(Future<Collection<RK>> future : threads)
+	    	for(Future<SearchResult<byte[]>> future : threads)
 	    	{
-	    		Collection<RK> r = future.get();
-	    		if(result == null)
-	    			result = new HashSet<RK>(r);
-	    		else if(isAND)
+	    		SearchResult<byte[]> r = future.get();
+	    		if(!r.isTooManyMatches())
 	    		{
-	    			// AND this index match with the current running results
-	    			LinkedList<RK> removeList = new LinkedList<RK>();
-	    			for(RK k : r)
-	    			{
-	    				if(!result.contains(k))
-	    					removeList.add(k);
-	    			}
-	    			for(RK k : result)
-	    			{
-	    				if(!r.contains(k))
-	    					removeList.add(k);
-	    			}
-	    			result.removeAll(removeList);
+		    		Collection<ByteArrayKey> rr = convertToKeys(r.getResults());
+		    		if(result == null)
+		    			result = new HashSet<ByteArrayKey>(rr);
+		    		else if(isAND)
+		    		{
+		    			// AND this index match with the current running results
+		    			LinkedList<ByteArrayKey> removeList = new LinkedList<ByteArrayKey>();
+		    			for(ByteArrayKey k : rr)
+		    			{
+		    				if(!result.contains(k))
+		    					removeList.add(k);
+		    			}
+		    			for(ByteArrayKey k : result)
+		    			{
+		    				if(!rr.contains(k))
+		    					removeList.add(k);
+		    			}
+		    			result.removeAll(removeList);
+		    		}
+		    		else
+		    			result.addAll(rr);
 	    		}
-	    		else
-	    			result.addAll(r);
 	    		
 	    	}
-	    	return (result != null) ? result : (Collection<RK>)(Collections.EMPTY_LIST);
+	    	if(result != null)
+	    	{
+	    		Map<ByteArrayKey, RK> rc = utils.getAll(result, utils.getObjectGrid().getMap(internalKeyToRealKeyMapName));
+	    		return new SearchResult<RK>(new ArrayList<RK>(rc.values()));
+	    	}
+	    	else
+	    		return new SearchResult<RK>();
     	}
     	catch(Exception e)
     	{
     		throw new ObjectGridRuntimeException(e);
     	}
+    }
+    
+    public static List<ByteArrayKey> convertToKeys(Collection<byte[]> keys)
+    {
+    	ArrayList<ByteArrayKey> k = new ArrayList<ByteArrayKey>(keys.size());
+    	for(byte[] b : keys) k.add(new ByteArrayKey(b));
+    	return k;
     }
     
     /**
@@ -224,4 +250,30 @@ public class IndexManager<A,RK>
 	    	}
     	}
     }
+    
+	/**
+	 * This just returns the digest we will use to generate hashes. SHA and MD5 are very good
+	 * hash functions. MD5 is about 40% faster than SHA so we'll use MD5
+	 * @return
+	 */
+	public static MessageDigest getDigest()
+	{
+		try
+		{
+			MessageDigest digest = MessageDigest.getInstance("MD5");
+			return digest;
+		}
+		catch(NoSuchAlgorithmException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+
+	public final Class<A> getIndexClass() {
+		return indexClass;
+	}
+
+	public final String getInternalKeyToRealKeyMapName() {
+		return internalKeyToRealKeyMapName;
+	}
 }

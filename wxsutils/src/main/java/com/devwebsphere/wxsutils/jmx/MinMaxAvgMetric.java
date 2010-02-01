@@ -11,12 +11,14 @@
 package com.devwebsphere.wxsutils.jmx;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This is a helper class to track timings. It tracks the minimum/avg and maximum
  * time. It's designed to be thread safe but I attempted to try
- * to avoid any synchronization to avoid it being a bottleneck.
+ * to avoid any synchronization to avoid it being a bottleneck. It also tracks the response times using
+ * a graph to see how many timings were of x ms and so on.
  *
  */
 public final class MinMaxAvgMetric 
@@ -32,9 +34,11 @@ public final class MinMaxAvgMetric
 	AtomicLong lastTimeNS = new AtomicLong();
 	
 	AtomicLong totalTimeNS = new AtomicLong();
+	AtomicIntegerArray responseTimeArray;
 
 	public MinMaxAvgMetric()
 	{
+		responseTimeArray = new AtomicIntegerArray(1000);
 		reset();
 	}
 
@@ -52,6 +56,10 @@ public final class MinMaxAvgMetric
 		
 		totalTimeNS.set(0);
 		lastException = null;
+		for(int i = 0; i < responseTimeArray.length(); ++i)
+		{
+			responseTimeArray.set(i, 0);
+		}
 	}
 
 	/**
@@ -63,6 +71,9 @@ public final class MinMaxAvgMetric
 		lastTimeNS.set(durationNS);
 		int c = count.incrementAndGet();
 		totalTimeNS.addAndGet(durationNS);
+		int durationMS = (int)(durationNS / 1000000L);
+		
+		responseTimeArray.incrementAndGet((durationMS < 1000) ? durationMS : 999);
 		if(c == 1)
 		{
 			// make sure in the window between fetch count
@@ -164,5 +175,38 @@ public final class MinMaxAvgMetric
 	public long getLastOperationTimeNS()
 	{
 		return lastTimeNS.get();
+	}
+	
+	public String toString()
+	{
+		return "<Min: " + (getMinTimeNS() / TIME_SCALE_NS_MS) + "ms, Max:" + (getMaxTimeNS() / TIME_SCALE_NS_MS) + "ms, Avg: " + (getAvgTimeNS() / TIME_SCALE_NS_MS) + "ms>";
+	}
+	
+	/**
+	 * This prints to System.out a bar graph of the response times seen so far.
+	 */
+	public void dumpResponseTimes()
+	{
+		String bar = "**************************************************";
+		int maxCount = 0;
+		int total = 0;
+		for(int i = 0; i < responseTimeArray.length(); ++i)
+		{
+			int c = responseTimeArray.get(i);
+			maxCount = Math.max(c, maxCount);
+			total += c;
+		}
+			
+		for(int i = 0; i < responseTimeArray.length(); ++i)
+		{
+			int count = Math.min(maxCount, responseTimeArray.get(i));
+			if(count > 0)
+			{
+				int numChars = bar.length() * count / maxCount;
+				int percentageMax = (count * 100 / total);
+				if(numChars >= 1)
+					System.out.println("R " + i + "ms : " + bar.substring(0, numChars) + " (" + percentageMax + "%)");
+			}
+		}
 	}
 }

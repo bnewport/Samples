@@ -28,5 +28,5 @@ public @interface ExactIndex
 	 * Only track this many entries matching a particular index key
 	 * @return
 	 */
-	int maxMatches() default 200;
+	int maxMatches() default Integer.MAX_VALUE;
 }
