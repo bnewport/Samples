@@ -16,7 +16,6 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -75,7 +74,7 @@ public abstract class Index<C, RK>
 		indexMapName = indexName + "_" + DYN_INDEX_MAP_SUFFIX;
 		badSymbolMapName = indexName + "_" + DYN_BAD_SYMBOL_MAP_SUFFIX;
 		
-		mbean = WXSUtils.getIndexMBeanManager().getBean(indexName);
+		mbean = WXSUtils.getIndexMBeanManager().getBean(im.utils.getObjectGrid(), indexName);
 		
 		try
 		{
@@ -246,7 +245,7 @@ public abstract class Index<C, RK>
     	try
     	{
 	    	WXSUtils utils = manager.utils;
-	    	WXSMap badSymbolMap = utils.getCache(indexMapName);
+	    	WXSMap<String, RK> badSymbolMap = utils.getCache(indexMapName);
 	    	ObjectGrid grid = utils.getObjectGrid();
 	    	Session sess = grid.getSession();
 	    	byte[] hash = calculateHash(key);

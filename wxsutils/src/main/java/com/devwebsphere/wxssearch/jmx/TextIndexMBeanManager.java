@@ -10,17 +10,21 @@
 //
 package com.devwebsphere.wxssearch.jmx;
 
+import javax.management.InstanceAlreadyExistsException;
+
 import com.devwebsphere.wxsutils.jmx.MBeanGroupManager;
 
 public class TextIndexMBeanManager extends MBeanGroupManager<TextIndexMBeanImpl> 
 {
-	public TextIndexMBeanManager(String gridName) {
-		super(TextIndexMBeanImpl.class, TextIndexMBean.class, gridName, "TextIndex", "IndexName");
+	public TextIndexMBeanManager() 
+		throws InstanceAlreadyExistsException
+	{
+		super(TextIndexMBeanImpl.class, TextIndexMBean.class, "TextIndex", "IndexName");
 	}
 
 	@Override
 	public TextIndexMBeanImpl createMBean(String gridName, String indexName) 
 	{
-		return new TextIndexMBeanImpl(indexName);
+		return new TextIndexMBeanImpl(gridName, indexName);
 	}
 }

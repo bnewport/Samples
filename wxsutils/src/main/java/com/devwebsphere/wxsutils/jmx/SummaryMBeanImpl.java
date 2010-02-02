@@ -11,7 +11,12 @@
 package com.devwebsphere.wxsutils.jmx;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Hashtable;
 
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.TabularData;
 
@@ -27,12 +32,12 @@ public class SummaryMBeanImpl<T> implements SummaryMBean
 	 */
 	final public static String MONITOR_MBEAN = "monitor";
 	
-	public SummaryMBeanImpl(MBeanGroupManager<T> beanSource, Class<T> sourceClass, String indexName, String typePrefix)
+	public SummaryMBeanImpl(MBeanGroupManager<T> beanSource, Class<T> sourceClass, String typePrefix)
 		throws OpenDataException
 	{
 		this.typePrefix = typePrefix;
-		general = new TabularDataMetaData<T>(beanSource, indexName, sourceClass, TabularAttribute.defaultMBean, typePrefix + "Detail", typePrefix+"DetailItemNames");
-		monitor = new TabularDataMetaData<T>(beanSource, indexName, sourceClass, MONITOR_MBEAN, typePrefix+"MonitorDetail", typePrefix+" Statistics for monitors");
+		general = new TabularDataMetaData<T>(beanSource, sourceClass, TabularAttribute.defaultMBean, typePrefix + "Detail", typePrefix+"DetailItemNames");
+		monitor = new TabularDataMetaData<T>(beanSource, sourceClass, MONITOR_MBEAN, typePrefix+"MonitorDetail", typePrefix+" Statistics for monitors");
 	}
 	
 	public TabularData getAllData()
@@ -48,4 +53,23 @@ public class SummaryMBeanImpl<T> implements SummaryMBean
 		TabularData rc = monitor.getData("all" + typePrefix + "MonitorDetails", typePrefix + " details for Monitors");
 		return rc;
 	}
+
+	public ObjectName makeObjectName(Object source, String type)
+		throws MalformedObjectNameException, InvocationTargetException, IllegalAccessException
+	{
+		Hashtable<String, String> props = new Hashtable<String, String>();
+		
+		ArrayList<Method> keyMethods = general.getKeyColumnGetters();
+		ArrayList<String> keyNames = general.getKeyColumnNames();
+		Object[] args = new Object[0];
+		for(int i = 0; i < keyMethods.size(); ++i)
+		{
+			Method m = keyMethods.get(i);
+			String value = (String)m.invoke(source, args);
+			props.put(keyNames.get(i), value);
+		}
+		props.put("type", type);
+		return new ObjectName("com.devwebsphere.wxs", props);
+	}
+
 }

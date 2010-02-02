@@ -10,12 +10,16 @@
 //
 package com.devwebsphere.wxsutils.jmx.loader;
 
+import javax.management.InstanceAlreadyExistsException;
+
 import com.devwebsphere.wxsutils.jmx.MBeanGroupManager;
 
 public final class LoaderMBeanManager extends MBeanGroupManager<LoaderMBeanImpl>
 {
-	public LoaderMBeanManager(String gridName) {
-		super(LoaderMBeanImpl.class, LoaderMBean.class, gridName, "Loader", "MapName");
+	public LoaderMBeanManager() 
+		throws InstanceAlreadyExistsException
+	{
+		super(LoaderMBeanImpl.class, LoaderMBean.class, "Loader", "MapName");
 		// TODO Auto-generated constructor stub
 	}
 
@@ -24,7 +28,7 @@ public final class LoaderMBeanManager extends MBeanGroupManager<LoaderMBeanImpl>
 	@Override
 	public LoaderMBeanImpl createMBean(String gridName, String mapName) 
 	{
-		return new LoaderMBeanImpl(mapName);
+		return new LoaderMBeanImpl(gridName, mapName);
 	}
 	
 }

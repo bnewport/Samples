@@ -10,6 +10,8 @@ package com.devwebsphere.wxsutils.jmx.agent;
 //5724-J34 (C) COPYRIGHT International Business Machines Corp. 2005
 //All Rights Reserved * Licensed Materials - Property of IBM
 //
+import javax.management.InstanceAlreadyExistsException;
+
 import com.devwebsphere.wxsutils.jmx.MBeanGroupManager;
 
 /**
@@ -18,14 +20,16 @@ import com.devwebsphere.wxsutils.jmx.MBeanGroupManager;
  */
 public final class AgentMBeanManager extends MBeanGroupManager<AgentMBeanImpl>
 {
-	public AgentMBeanManager(String gridName) {
-		super(AgentMBeanImpl.class, AgentMBean.class, gridName, "Agent", "ClassName");
+	public AgentMBeanManager()
+		throws InstanceAlreadyExistsException
+	{
+		super(AgentMBeanImpl.class, AgentMBean.class, "Agent", "ClassName");
 	}
 
 	@Override
 	public AgentMBeanImpl createMBean(String gridName, String className) 
 	{
-		return new AgentMBeanImpl(className);
+		return new AgentMBeanImpl(gridName, className);
 	}
 	
 }

@@ -10,12 +10,16 @@
 //
 package com.devwebsphere.wxsutils.jmx.wxsmap;
 
+import javax.management.InstanceAlreadyExistsException;
+
 import com.devwebsphere.wxsutils.jmx.MBeanGroupManager;
 
 public final class WXSMapMBeanManager extends MBeanGroupManager<WXSMapMBeanImpl>
 {
-	public WXSMapMBeanManager(String gridName) {
-		super(WXSMapMBeanImpl.class, WXSMapMBean.class, gridName, "WXSMap", "MapName");
+	public WXSMapMBeanManager() 
+		throws InstanceAlreadyExistsException
+	{
+		super(WXSMapMBeanImpl.class, WXSMapMBean.class, "WXSMap", "MapName");
 		// TODO Auto-generated constructor stub
 	}
 
@@ -24,7 +28,7 @@ public final class WXSMapMBeanManager extends MBeanGroupManager<WXSMapMBeanImpl>
 	@Override
 	public WXSMapMBeanImpl createMBean(String gridName, String mapName) 
 	{
-		return new WXSMapMBeanImpl(mapName);
+		return new WXSMapMBeanImpl(gridName, mapName);
 	}
 	
 }

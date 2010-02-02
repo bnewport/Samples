@@ -9,23 +9,25 @@ either for customer's own internal use or for redistribution by customer, as par
 application, in customer's own products.
 Licensed Materials - Property of IBM
 5724-J34 (C) COPYRIGHT International Business Machines Corp. 2009
+
 -->
+
+<!--  copyMode="COPY_TO_BYTES" -->
 
 <objectGridConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
  xsi:schemaLocation="http://ibm.com/ws/objectgrid/config ../objectGrid.xsd"
  xmlns="http://ibm.com/ws/objectgrid/config">
     <objectGrids>
         <objectGrid name="Grid" txTimeout="45">
-            <backingMap name=".*_Attributes" lockStrategy="PESSIMISTIC" template="true" />
-            <backingMap name=".*_Index" lockStrategy="PESSIMISTIC" template="true" />
+        	<!-- Key is hash, value is actual real key of record -->
+            <backingMap name=".*_Attributes" lockStrategy="PESSIMISTIC" template="true"/>
+            <!-- Key is symbol, value is list of hashes for the matching records -->
+            <backingMap name=".*_Index" lockStrategy="PESSIMISTIC" template="true"/>
+            <!--  Key is symbols whose are not useful for matching, too many records with the key -->
             <backingMap name=".*_BadSymbol" lockStrategy="PESSIMISTIC" template="true" />
-            <backingMap name="Counter" lockStrategy="PESSIMISTIC"/>
             
             <backingMap name="RealRecords" lockStrategy="PESSIMISTIC"/>
         </objectGrid>
     </objectGrids>
-
-
-
 </objectGridConfig>
 

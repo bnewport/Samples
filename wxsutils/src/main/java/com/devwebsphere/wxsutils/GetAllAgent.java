@@ -40,7 +40,7 @@ public class GetAllAgent<K,V> implements ReduceGridAgent
 
 	public Object reduce(Session sess, ObjectMap map, Collection arg2) 
 	{
-		AgentMBeanImpl bean = WXSUtils.getAgentMBeanManager().getBean(this.getClass().getName());
+		AgentMBeanImpl bean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid(), this.getClass().getName());
 		long startNS = System.nanoTime();
 		try
 		{

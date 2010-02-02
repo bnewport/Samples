@@ -18,24 +18,26 @@ import com.devwebsphere.wxsutils.jmx.TabularKey;
 public class WXSMapMBeanImpl implements WXSMapMBean 
 {
 	String mapName;
+	String gridName;
 	MinMaxAvgMetric getMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric putMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric removeMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric containsMetric = new MinMaxAvgMetric();
 	
-	/* (non-Javadoc)
-	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.WXSMapMBean#getMapName()
-	 */
-	/* (non-Javadoc)
-	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getMapName()
-	 */
 	@TabularKey
 	public final String getMapName() {
 		return mapName;
 	}
 
-	public WXSMapMBeanImpl(String mapName)
+	@TabularKey
+	public String getGridName()
 	{
+		return gridName;
+	}
+	
+	public WXSMapMBeanImpl(String gridName, String mapName)
+	{
+		this.gridName = gridName;
 		this.mapName = mapName;
 	}
 	

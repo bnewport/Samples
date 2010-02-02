@@ -23,6 +23,7 @@ public final class LoaderMBeanImpl implements LoaderMBean
 {
 	int avgBatchUpdateListSize;
 	String mapName;
+	String gridName;
 	
 	MinMaxAvgMetric getMetrics = new MinMaxAvgMetric();
 	MinMaxAvgMetric batchUpdateMetrics = new MinMaxAvgMetric();
@@ -32,8 +33,9 @@ public final class LoaderMBeanImpl implements LoaderMBean
 	AtomicLong updateCounter = new AtomicLong();
 	AtomicLong deleteCounter = new AtomicLong();
 
-	public LoaderMBeanImpl(String name)
+	public LoaderMBeanImpl(String gridName, String name)
 	{
+		this.gridName = gridName;
 		mapName = name;
 	}
 	
@@ -201,5 +203,11 @@ public final class LoaderMBeanImpl implements LoaderMBean
 	public String getMapName() 
 	{
 		return mapName;
+	}
+	
+	@TabularKey
+	public String getGridName()
+	{
+		return gridName;
 	}
 }

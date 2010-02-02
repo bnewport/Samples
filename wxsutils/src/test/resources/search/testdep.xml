@@ -19,7 +19,6 @@ Licensed Materials - Property of IBM
             <map ref=".*_Attributes"/>
             <map ref=".*_Index"/>
             <map ref=".*_BadSymbol"/>
-            <map ref="Counter"/>
             
             <map ref="RealRecords"/>
         </mapSet>

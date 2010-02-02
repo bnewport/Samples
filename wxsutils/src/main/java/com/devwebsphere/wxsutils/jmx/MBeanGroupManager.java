@@ -11,11 +11,12 @@
 package com.devwebsphere.wxsutils.jmx;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
@@ -23,6 +24,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.StandardMBean;
 
+import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
 /**
@@ -52,14 +54,11 @@ public abstract class MBeanGroupManager <M>
 	 */
 	String typeName;
 	/**
-	 * The name of the grid owning these MBeans
-	 */
-	String gridName;
-	/**
 	 * The name of the MBean attribute thats the unique key for this group.
 	 * Example: Map MBeans then MapName would be the key
 	 */
 	String keyAttributeName;
+	SummaryMBeanImpl<M> summaryMBean;
 	
 	volatile MBeanServer mbeanServer;
 	
@@ -77,22 +76,48 @@ public abstract class MBeanGroupManager <M>
 	 * Construct a manager.
 	 * @param clazz The MBeanImpl class file
 	 * @param clazzI The JMX interface implemented by clazz
-	 * @param gridName The name of the grid
 	 * @param typeName The name of the attribute (agentClass or mapName...)
 	 * @param keyName The attribute value attribute
 	 */
-	public MBeanGroupManager(Class<M> clazz, Class clazzI, String gridName, String typeName, String keyName)
+	public MBeanGroupManager(Class<M> clazz, Class clazzI, String typeName, String keyName)
+		throws InstanceAlreadyExistsException
 	{
 		mbeanClass = clazz;
 		mbeanInterface = clazzI;
 		this.typeName = typeName;
-		this.gridName = gridName;
 		this.keyAttributeName = keyName;
+		init();
 	}
 	
-	public List<String> getCurrentBeanNames()
+	public Collection<M> getAllBeans()
 	{
-		return new ArrayList<String>(beans.keySet());
+		return beans.values();
+	}
+	
+	void init()
+		throws InstanceAlreadyExistsException
+	{
+		ArrayList<MBeanServer> mBeanServers = MBeanServerFactory.findMBeanServer(null);
+        mbeanServer = (MBeanServer) mBeanServers.get(0);
+        try
+        {
+	        summaryMBean = new SummaryMBeanImpl<M>(this, mbeanClass, typeName);
+	        
+			Hashtable<String, String> props = new Hashtable<String, String>();
+			props.put("type", typeName + "Summary");
+			ObjectName on = new ObjectName("com.devwebsphere.wxs", props);
+			StandardMBean realMBean = new StandardMBean(summaryMBean, SummaryMBean.class);
+			mbeanServer.registerMBean(realMBean, on);
+        }
+        catch(InstanceAlreadyExistsException e)
+        {
+        	throw e;
+        }
+        catch(Exception e)
+        {
+        	System.out.println(e.toString());
+        	e.printStackTrace();
+        }
 	}
 	
 	/**
@@ -102,27 +127,6 @@ public abstract class MBeanGroupManager <M>
 	 */
 	public MBeanServer getServer()
 	{
-		if(mbeanServer == null)
-		{
-			ArrayList<MBeanServer> mBeanServers = MBeanServerFactory.findMBeanServer(null);
-	        mbeanServer = (MBeanServer) mBeanServers.get(0);
-	        try
-	        {
-		        SummaryMBeanImpl<M> mb = new SummaryMBeanImpl<M>(this, mbeanClass, keyAttributeName, typeName);
-		        
-				Hashtable<String, String> props = new Hashtable<String, String>();
-				props.put("grid", gridName);
-				props.put("type", typeName + "Summary");
-				ObjectName on = new ObjectName("com.devwebsphere.wxs", props);
-				StandardMBean realMBean = new StandardMBean(mb, SummaryMBean.class);
-				mbeanServer.registerMBean(realMBean, on);
-	        }
-	        catch(Exception e)
-	        {
-	        	System.out.println(e.toString());
-	        	e.printStackTrace();
-	        }
-		}
 		return mbeanServer;
 	}
 	
@@ -138,7 +142,7 @@ public abstract class MBeanGroupManager <M>
 	 * This is called to fetch the MBeanImpl for a given key. The bean
 	 * is created if it didn't already exist.
 	 */
-	public M getBean(String keyValue)
+	public M getBean(ObjectGrid grid, String keyValue)
 	{
 		M bean = beans.get(keyValue);
 		if(bean == null)
@@ -148,7 +152,7 @@ public abstract class MBeanGroupManager <M>
 				bean = beans.get(keyValue);
 				if(bean == null)
 				{
-					bean = createMBean(gridName, keyValue);
+					bean = createMBean(grid.getName(), keyValue);
 					try
 					{
 						MBeanServer server = getServer();
@@ -156,15 +160,15 @@ public abstract class MBeanGroupManager <M>
 						{
 							StandardMBean mbean = new StandardMBean(bean, mbeanInterface);
 							MBeanInfo info = mbean.getMBeanInfo();
-							ObjectName on = makeObjectName(gridName, keyValue);
+							ObjectName on = summaryMBean.makeObjectName(bean, typeName);
 							server.registerMBean(mbean, on);
 						}
+						beans.put(keyValue, bean);
 					}
 					catch(Exception e)
 					{
 						throw new ObjectGridRuntimeException(e);
 					}
-					beans.put(keyValue, bean);
 				}
 			}
 		}

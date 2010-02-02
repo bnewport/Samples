@@ -21,13 +21,15 @@ public class TextIndexMBeanImpl implements TextIndexMBean
 	MinMaxAvgMetric containsMetrics = new MinMaxAvgMetric();
 	MinMaxAvgMetric removeMetrics = new MinMaxAvgMetric();
 	String indexName;
+	String gridName;
 	
 	public MinMaxAvgMetric getInsertMetrics() { return insertMetrics; }
 	public MinMaxAvgMetric getContainsMetrics() { return containsMetrics; }
 	public MinMaxAvgMetric getRemoveMetrics() { return removeMetrics; }
 
-	public TextIndexMBeanImpl(String indexName)
+	public TextIndexMBeanImpl(String gridName, String indexName)
 	{
+		this.gridName = gridName;
 		this.indexName = indexName;
 	}
 	
@@ -41,6 +43,12 @@ public class TextIndexMBeanImpl implements TextIndexMBean
 		removeMetrics.reset();
 	}
 
+	@TabularKey
+	public String getGridName()
+	{
+		return gridName;
+	}
+	
 	/* (non-Javadoc)
 	 * @see com.devwebsphere.wxssearch.jmx.IndexMBean#getIndexName()
 	 */

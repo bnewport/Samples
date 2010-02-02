@@ -25,12 +25,20 @@ public class AgentMBeanImpl implements AgentMBean
 {
 	
 	String className;
+	String gridName;
 	MinMaxAvgMetric partitionMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric keysMetric = new MinMaxAvgMetric();
 	
-	public AgentMBeanImpl(String className)
+	public AgentMBeanImpl(String gridName, String className)
 	{
+		this.gridName = gridName;
 		this.className = className;
+	}
+
+	@TabularKey
+	public String getGridName()
+	{
+		return gridName;
 	}
 	
 	@TabularKey

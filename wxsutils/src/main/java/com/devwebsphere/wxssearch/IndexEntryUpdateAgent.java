@@ -67,7 +67,7 @@ public class IndexEntryUpdateAgent implements MapGridAgent, Runnable {
     /** 
      * Add an symbol/indexKey with it's associated name key longs. 
      * If the  keys length is great than MAXMATCHES, then we remove it from the index map,
-     * and insert the symbo/indexKey into the bad map.
+     * and insert the symbol/indexKey into the bad map.
      * Otherwise, we iterate the current name longs see if the new name is included in it. 
      * If not, we store it in delta; otherwise it is ignored.
      * Finally, we combine the delta with the current name key longs.

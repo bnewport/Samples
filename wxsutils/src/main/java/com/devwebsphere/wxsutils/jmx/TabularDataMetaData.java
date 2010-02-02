@@ -13,6 +13,7 @@ package com.devwebsphere.wxsutils.jmx;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -25,6 +26,8 @@ import javax.management.openmbean.SimpleType;
 import javax.management.openmbean.TabularData;
 import javax.management.openmbean.TabularDataSupport;
 import javax.management.openmbean.TabularType;
+
+import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
 /**
  * This is used to track attribute meta data for a specific TabularData type. It also
@@ -39,7 +42,10 @@ public class TabularDataMetaData<T>
 	/**
 	 * All tables have one column as a key column. This names the attribute in this role.
 	 */
-	String idColumnName;
+	ArrayList<String> keyColumnNames;
+	ArrayList<Method> keyColumnGetters;
+
+	ArrayList<SimpleType> keyColumnTypes;
 	
 	static HashMap<Class, SimpleType> typeConversion;
 	static {
@@ -83,18 +89,20 @@ public class TabularDataMetaData<T>
 	 * name "mbean" then all attributes are included. If a different name is specified then only the attributes
 	 * annotated with that name using TabularAttribute are included.
 	 * @param bs The collection of MBeans to summarise as a table
-	 * @param idColumnName The attribute name of the key column for the table
 	 * @param source The Class of the MBeanImpl
 	 * @param name Only attributes annotated using TabularAttribute with this name are included
 	 * @param typeName The JMX type name to use for the composite
 	 * @param typeDescription 
 	 * @throws OpenDataException
 	 */
-	public TabularDataMetaData(MBeanGroupManager<T> bs, String idColumnName, Class<T> source, String name, String typeName, String typeDescription)
+	public TabularDataMetaData(MBeanGroupManager<T> bs, Class<T> source, String name, String typeName, String typeDescription)
 		throws OpenDataException
 	{
 		beanSource = bs;
-		this.idColumnName = idColumnName;
+		keyColumnNames = new ArrayList<String>();
+		keyColumnTypes = new ArrayList<SimpleType>();
+		keyColumnGetters = new ArrayList<Method>();
+		
 		attributes = new ArrayList<TabularDataColumnMetaData>();
 		Method[] allMethods = source.getDeclaredMethods();
 		
@@ -103,7 +111,13 @@ public class TabularDataMetaData<T>
 			TabularKey keyAttr = m.getAnnotation(TabularKey.class);
 			if(keyAttr != null)
 			{
-//				this.idColumnName = getAttributeFromMethod(m);
+				keyColumnNames.add(getAttributeFromMethod(m));
+				if(!m.getReturnType().equals(String.class))
+				{
+					throw new RuntimeException("Key attributes MUST be Strings");
+				}
+				keyColumnTypes.add(typeConversion.get(m.getReturnType()));
+				keyColumnGetters.add(m);
 			}
 			TabularAttribute attr = m.getAnnotation(TabularAttribute.class);
 			if(attr != null)
@@ -119,6 +133,8 @@ public class TabularDataMetaData<T>
 					attributes.add(new TabularDataColumnMetaData(description, atype, m));
 				}
 			}
+			if(keyAttr != null && attr != null)
+				throw new ObjectGridRuntimeException("Attribute <" + getAttributeFromMethod(m) + "> has both TabularKey and TabularAttribute annotations, you can have one");
 		}
 		jmxType = getCompositeType(typeName, typeDescription);
 	}
@@ -141,21 +157,24 @@ public class TabularDataMetaData<T>
 	public TabularData getData(String typeName, String description)
 		throws OpenDataException, InvocationTargetException, IllegalAccessException
 	{
-		String[] indexNames = {idColumnName};
+		String[] indexNames = new String[keyColumnNames.size()];
+		keyColumnNames.toArray(indexNames);
 		TabularType ttype = new TabularType(typeName, description, jmxType, indexNames);
 		TabularDataSupport table = new TabularDataSupport(ttype);
 		
-		List<String> names = beanSource.getCurrentBeanNames();
+		Collection<T> beans = beanSource.getAllBeans();
 
 		String[] colNames = getItemNames();
 		Object[] params = new Object[0];
 		
-		for(String mapName : names)
+		for(T mbean : beans)
 		{
-			Object[] values = new Object[attributes.size() + 1];
-			values[0] = mapName;
-			T mbean = beanSource.getBean(mapName);
-			int i = 1;
+			Object[] values = new Object[attributes.size() + keyColumnNames.size()];
+			int i = 0;
+			for(; i < keyColumnGetters.size(); ++i)
+			{
+				values[i] = (String)keyColumnGetters.get(i).invoke(mbean, params);
+			}
 			for(TabularDataColumnMetaData a : attributes)
 			{
 				Object r = a.method.invoke(mbean, params);
@@ -173,9 +192,10 @@ public class TabularDataMetaData<T>
 	{
 		if(itemNames.get() == null)
 		{
-			String[] values = new String[attributes.size() + 1];
-			int i = 1;
-			values[0] = idColumnName;
+			String[] values = new String[attributes.size() + keyColumnNames.size()];
+			int i = keyColumnNames.size();
+			for(int j = 0; j < keyColumnNames.size(); ++j)
+				values[j] = keyColumnNames.get(j);
 			for(TabularDataColumnMetaData a : attributes) values[i++] = a.name;
 			itemNames.compareAndSet(null, values);
 		}
@@ -188,9 +208,10 @@ public class TabularDataMetaData<T>
 	{
 		if(itemDescriptions.get() == null)
 		{
-			String[] values = new String[attributes.size() + 1];
-			int i = 1;
-			values[0] = "Key";
+			String[] values = new String[attributes.size() + keyColumnNames.size()];
+			int i = keyColumnNames.size();
+			for(int j = 0; j < keyColumnNames.size(); ++j)
+				values[j] = "Key_"+keyColumnNames.get(j);
 			for(TabularDataColumnMetaData a : attributes) values[i++] = a.description;
 			itemDescriptions.compareAndSet(null, values);
 		}
@@ -203,12 +224,25 @@ public class TabularDataMetaData<T>
 	{
 		if(itemTypes.get() == null)
 		{
-			SimpleType[] values = new SimpleType[attributes.size() + 1];
-			int i = 1;
-			values[0] = SimpleType.STRING;
+			SimpleType[] values = new SimpleType[attributes.size() + keyColumnNames.size()];
+			int i = keyColumnNames.size();
+			for(int j = 0; j < keyColumnNames.size(); ++j)
+				values[j] = keyColumnTypes.get(j);
 			for(TabularDataColumnMetaData a : attributes) values[i++] = a.type;
 			itemTypes.compareAndSet(null, values);
 		}
 		return itemTypes.get();
+	}
+
+	public final ArrayList<String> getKeyColumnNames() {
+		return keyColumnNames;
+	}
+
+	public final ArrayList<Method> getKeyColumnGetters() {
+		return keyColumnGetters;
+	}
+
+	public final ArrayList<SimpleType> getKeyColumnTypes() {
+		return keyColumnTypes;
 	}
 }

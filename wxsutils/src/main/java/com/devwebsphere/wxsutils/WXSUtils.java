@@ -27,6 +27,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.management.InstanceAlreadyExistsException;
+
 import com.devwebsphere.wxssearch.jmx.TextIndexMBeanManager;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
 import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanManager;
@@ -69,7 +71,7 @@ public class WXSUtils
 	static AtomicReference<ExecutorService> globalThreadPool = new AtomicReference<ExecutorService>();
 	ExecutorService threadPool;
 	
-	Map<String, WXSMap> maps = new ConcurrentHashMap<String, WXSMap>();
+	Map<String, WXSMap<?,?>> maps = new ConcurrentHashMap<String, WXSMap<?,?>>();
 
 	static AtomicReference<AgentMBeanManager> agentMBeanManager = new AtomicReference<AgentMBeanManager>();
 	static AtomicReference<LoaderMBeanManager> loaderMBeanManager = new AtomicReference<LoaderMBeanManager>();
@@ -84,8 +86,15 @@ public class WXSUtils
 	{
 		if(agentMBeanManager.get() == null)
 		{
-			AgentMBeanManager m = new AgentMBeanManager("Grid");
-			agentMBeanManager.compareAndSet(null, m);
+			try
+			{
+				AgentMBeanManager m = new AgentMBeanManager();
+				agentMBeanManager.compareAndSet(null, m);
+			}
+			catch(InstanceAlreadyExistsException e)
+			{
+				// normal exception if two threads head through here at once
+			}
 		}
 		return agentMBeanManager.get();
 	}
@@ -98,8 +107,15 @@ public class WXSUtils
 	{
 		if(indexMBeanManager.get() == null)
 		{
-			TextIndexMBeanManager m = new TextIndexMBeanManager("Grid");
-			indexMBeanManager.compareAndSet(null, m);
+			try
+			{
+				TextIndexMBeanManager m = new TextIndexMBeanManager();
+				indexMBeanManager.compareAndSet(null, m);
+			}
+			catch(InstanceAlreadyExistsException e)
+			{
+				
+			}
 		}
 		return indexMBeanManager.get();
 	}
@@ -112,8 +128,15 @@ public class WXSUtils
 	{
 		if(loaderMBeanManager.get() == null)
 		{
-			LoaderMBeanManager m = new LoaderMBeanManager("Grid");
-			loaderMBeanManager.compareAndSet(null, m);
+			try
+			{
+				LoaderMBeanManager m = new LoaderMBeanManager();
+				loaderMBeanManager.compareAndSet(null, m);
+			}
+			catch(InstanceAlreadyExistsException e)
+			{
+				
+			}
 		}
 		return loaderMBeanManager.get();
 	}
@@ -126,8 +149,15 @@ public class WXSUtils
 	{
 		if(wxsMapMBeanManager.get() == null)
 		{
-			WXSMapMBeanManager m = new WXSMapMBeanManager("Grid");
-			wxsMapMBeanManager.compareAndSet(null, m);
+			try
+			{
+				WXSMapMBeanManager m = new WXSMapMBeanManager();
+				wxsMapMBeanManager.compareAndSet(null, m);
+			}
+			catch(InstanceAlreadyExistsException e)
+			{
+				
+			}
 		}
 		return wxsMapMBeanManager.get();
 	}
@@ -149,16 +179,16 @@ public class WXSUtils
 	 * @param mapName
 	 * @return
 	 */
-	public WXSMap getCache(String mapName)
+	public <K,V> WXSMap<K,V> getCache(String mapName)
 	{
-		WXSMap rc = maps.get(mapName);
+		WXSMap<K,V> rc = (WXSMap<K,V>)maps.get(mapName);
 		if(rc == null)
 		{
 			try
 			{
 				if(grid.getSession().getMap(mapName) != null)
 				{
-					rc = new WXSMap(this, mapName);
+					rc = new WXSMap<K,V>(this, mapName);
 					maps.put(mapName, rc);
 				}
 				else

@@ -17,6 +17,7 @@ import java.util.Map;
 
 import com.devwebsphere.wxsutils.jmx.wxsmap.WXSMapMBeanImpl;
 import com.ibm.websphere.objectgrid.BackingMap;
+import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
 /**
@@ -25,17 +26,19 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
  * Map methods like put, bulk methods and so on.
  *
  */
-public class WXSMap 
+public class WXSMap <K,V>
 {
 	BackingMap bmap;
 	ThreadLocalSession tls;
 	WXSUtils utils;
 	String mapName;
+	ObjectGrid grid;
 	
 	WXSMap(WXSUtils utils, String mapName)
 	{
 		this.mapName = mapName;
 		this.utils = utils;
+		grid = utils.getObjectGrid();
 		bmap = utils.grid.getMap(mapName);
 		tls = new ThreadLocalSession(utils);
 	}
@@ -57,14 +60,12 @@ public class WXSMap
 
 	/**
 	 * Fetch a value from the Map
-	 * @param <K>
-	 * @param <V>
 	 * @param k
 	 * @return
 	 */
-	public <K,V> V get(K k)
+	public V get(K k)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
 		long start = System.nanoTime();
 		try
 		{
@@ -82,14 +83,12 @@ public class WXSMap
 	/**
 	 * Fetch all the values for the specified keys. Null is returned if the key
 	 * isn't found.
-	 * @param <K>
-	 * @param <V>
 	 * @param keys
 	 * @return
 	 */
-	public <K,V> Map<K,V> getAll(Collection<K> keys)
+	public Map<K,V> getAll(Collection<K> keys)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
 		long start = System.nanoTime();
 		Map<K,V> rc =  utils.getAll(keys, bmap);
 		mbean.getGetMetrics().logTime(System.nanoTime() - start);
@@ -99,14 +98,12 @@ public class WXSMap
 	/**
 	 * Set the value for the key. If the entry doesn't exist then it
 	 * is inserted otherwise it's updated.
-	 * @param <K>
-	 * @param <V>
 	 * @param k
 	 * @param v
 	 */
-	public <K,V> void put(K k, V v)
+	public void put(K k, V v)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
 		long start = System.nanoTime();
 		try
 		{
@@ -125,13 +122,11 @@ public class WXSMap
 
 	/**
 	 * Parallel put all the entries.
-	 * @param <K>
-	 * @param <V>
 	 * @param batch
 	 */
-	public <K,V> void putAll(Map<K,V> batch)
+	public void putAll(Map<K,V> batch)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
 		long start = System.nanoTime();
 		utils.putAll(batch, bmap);
 		mbean.getPutMetrics().logTime(System.nanoTime() - start);
@@ -139,14 +134,12 @@ public class WXSMap
 
 	/**
 	 * Remove the entry from the Map
-	 * @param <K>
-	 * @param <V>
 	 * @param k
 	 * @return The last value otherwise null
 	 */
-	public <K,V> V remove(K k)
+	public V remove(K k)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
 		long start = System.nanoTime();
 		try
 		{
@@ -163,12 +156,11 @@ public class WXSMap
 
 	/**
 	 * Remove all entries with these keys
-	 * @param <K>
 	 * @param keys
 	 */
-	public <K> void removeAll(Collection<K> keys)
+	public void removeAll(Collection<K> keys)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
 		long start = System.nanoTime();
 		utils.removeAll(keys, bmap);
 		mbean.getRemoveMetrics().logTime(System.nanoTime() - start);
@@ -176,13 +168,12 @@ public class WXSMap
 
 	/**
 	 * Check if the entry exists for the key
-	 * @param <K>
 	 * @param k
 	 * @return
 	 */
-	public <K> boolean contains(K k)
+	public boolean contains(K k)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
 		long start = System.nanoTime();
 		try
 		{

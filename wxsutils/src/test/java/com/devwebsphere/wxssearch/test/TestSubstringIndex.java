@@ -14,7 +14,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,7 +43,7 @@ public class TestSubstringIndex
 	static Index<TestBusinessObject,Long> firstNameIndex;
 //	static Index<TestBusinessObject,Long> middleNameIndex;
 	static Index<TestBusinessObject,Long> surnameIndex;
-	static WXSMap realRecordsMap;
+	static WXSMap<Long, TestBusinessObject> realRecordsMap;
 	
 	@BeforeClass
 	static public void initGrid()
@@ -146,10 +145,11 @@ public class TestSubstringIndex
 	
 	@Test
 	public void testLookup()
+		throws InterruptedException
 	{
         SearchResult<Long> matches = null;
         List<byte[]> rawMatches = null;
-		for(int loop = 0; loop < 10; ++loop)
+		for(int loop = 0; loop < 1; ++loop)
         {
             long st_time = System.nanoTime();
             int numIterations = 1000;
@@ -160,7 +160,7 @@ public class TestSubstringIndex
             	// get the keys for the records whose 'name' contains EN
             	TestBusinessObject criteria = new TestBusinessObject();
             	criteria.firstName = "JAM"; // anywhere
-            	criteria.surname = "ALLEN"; // exact
+            	criteria.surname = "ALL"; // exact
             	matches = indexManager.searchMultipleIndexes(criteria, true);
 //            	matches = firstNameIndex.contains("JAMES");
 //            	rawMatches = firstNameIndex.rawContains("JAMES");
@@ -189,5 +189,6 @@ public class TestSubstringIndex
 		        System.out.println(bo.firstName + " " + bo.middleName + " " + bo.surname);
 		    }
 		}
+//		Thread.sleep(60*60*1000L); // uncomment to keep JVM running
 	}
 }
