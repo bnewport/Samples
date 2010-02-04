@@ -42,6 +42,7 @@ import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridManagerFactory;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
+import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.TransactionException;
 import com.ibm.websphere.objectgrid.datagrid.AgentManager;
@@ -84,6 +85,8 @@ public class WXSUtils
 	static AtomicReference<WXSMapMBeanManager> wxsMapMBeanManager = new AtomicReference<WXSMapMBeanManager>();
 	static AtomicReference<TextIndexMBeanManager> indexMBeanManager = new AtomicReference<TextIndexMBeanManager>();
 
+	ThreadLocalSession tls;
+	
 	/**
 	 * Returns a static MBean Manager. Hack until I get DI using Aries
 	 * @return
@@ -177,6 +180,7 @@ public class WXSUtils
 	{
 		this.grid = grid;
 		threadPool = pool;
+		tls = new ThreadLocalSession(this);
 	}
 
 	/**
@@ -753,5 +757,55 @@ public class WXSUtils
 		if(logger.isLoggable(Level.FINE))
 			logger.fine("returning retryable code: "+rc);
 		return rc;
+	}
+
+	/**
+	 * This returns the next atomically incremented long at the entry for K. The VALUE type
+	 * MUST be a Long for this to work.
+	 * @param k
+	 * @return
+	 */
+	public <K> long atomic_increment(String mapName, K k)
+	{
+		try
+		{
+			Session sess = tls.getSession();
+			while(true)
+			{
+				try
+				{
+					sess.begin();
+					ObjectMap map = sess.getMap(mapName);
+					Long partitionIdValue = (Long)map.getForUpdate(k);
+					if(partitionIdValue == null)
+					{
+						partitionIdValue = new Long(Long.MIN_VALUE);
+						map.insert(k, partitionIdValue);
+					}
+					else
+					{
+						partitionIdValue=new Long(partitionIdValue.longValue() + 1);//rk changed
+						map.update(k, partitionIdValue);
+					}
+					sess.commit();
+					return partitionIdValue;
+				}
+				catch(Exception e)
+				{
+					if(sess.isTransactionActive())
+					{
+						sess.rollback();
+					}
+					if(WXSUtils.isRetryable(e))
+					{							
+						continue;
+					}
+				}
+			}
+		}
+		catch(ObjectGridException e)
+		{
+			throw new ObjectGridRuntimeException(e);
+		}
 	}
 }

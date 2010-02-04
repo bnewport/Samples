@@ -18,11 +18,8 @@ import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.ibm.websphere.objectgrid.BackingMap;
-import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
-import com.ibm.websphere.objectgrid.ObjectMap;
-import com.ibm.websphere.objectgrid.Session;
 
 /**
  * This generates unique string identifiers in a grid. These are guaranteed unique
@@ -46,67 +43,36 @@ public class WXSUUID
 	 * @param mapName
 	 * @throws ObjectGridException
 	 */
-	public WXSUUID(ObjectGrid grid, String mapName)
+	public WXSUUID(WXSUtils utils, String mapName)
 		throws ObjectGridException
 	{
-		initPrefix(grid, mapName);
+		initPrefix(utils, mapName);
 	}
 
-	void initPrefix(ObjectGrid grid, String mapName)
-		throws ObjectGridException
+	void initPrefix(WXSUtils utils, String mapName)
 	{
 		if(logger.isLoggable(Level.FINE))
 		{
 			logger.fine( "Pulling prefix from grid");
 		}
-		Session sess = grid.getSession();
-		while(true)
+		
+		// use a key for random partition
+		Random r = new Random(System.currentTimeMillis());
+		BackingMap bmap = utils.getObjectGrid().getMap(mapName);
+		partitionId = new Integer(r.nextInt(bmap.getPartitionManager().getNumOfPartitions()));
+		
+		// increment the long in that partition using partition id as key
+		Long partitionIdValue = utils.atomic_increment(mapName, partitionId);
+
+		// initialize global unique prefix
+		assignedClusterId = partitionIdValue.longValue();
+		prefix = Long.toString(partitionId) + ":" + Long.toString(assignedClusterId) + ":";
+		if(logger.isLoggable(Level.FINE))
 		{
-			try
-			{
-				BackingMap bmap = grid.getMap(mapName);
-				Random r = new Random(System.currentTimeMillis());
-				partitionId = new Integer(r.nextInt(bmap.getPartitionManager().getNumOfPartitions()));
-				sess.begin();
-				ObjectMap map = sess.getMap(mapName);
-				Long partitionIdValue = (Long)map.getForUpdate(partitionId);
-				if(partitionIdValue == null)
-				{
-					partitionIdValue = new Long(Long.MIN_VALUE);
-					map.insert(partitionId, partitionIdValue);
-				}
-				else
-				{
-					partitionIdValue=new Long(partitionIdValue.longValue() + 1);//rk changed
-					map.update(partitionId, partitionIdValue);
-				}
-				assignedClusterId = partitionIdValue.longValue();
-				sess.commit();
-				prefix = Long.toString(partitionId) + ":" + Long.toString(assignedClusterId) + ":";
-				//System.out.println("Prefix for cluster uuid is " + prefix);
-				if(logger.isLoggable(Level.FINE))
-				{
-				   logger.fine( "Prefix for cluster uuid is " + prefix);						   
-				}
-				break;
-			}
-			catch(Exception e)
-			{
-				if(sess.isTransactionActive())
-				{
-					sess.rollback();
-				}
-				if(WXSUtils.isRetryable(e))
-				{							
-					continue;
-				}
-				else
-				{
-					logger.log(Level.SEVERE, "getNextClusterID exception", e);
-				}
-			}
+		   logger.fine( "Prefix for cluster uuid is " + prefix);						   
 		}
 	}
+
 	/**
 	 * This returns a grid wide UUID.
 	 */
