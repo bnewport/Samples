@@ -26,6 +26,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.management.InstanceAlreadyExistsException;
 
@@ -35,11 +37,13 @@ import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanManager;
 import com.devwebsphere.wxsutils.jmx.wxsmap.WXSMapMBeanManager;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ClientClusterContext;
+import com.ibm.websphere.objectgrid.ClientServerLoaderException;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridManagerFactory;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.Session;
+import com.ibm.websphere.objectgrid.TransactionException;
 import com.ibm.websphere.objectgrid.datagrid.AgentManager;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
@@ -47,6 +51,7 @@ import com.ibm.websphere.objectgrid.deployment.DeploymentPolicy;
 import com.ibm.websphere.objectgrid.deployment.DeploymentPolicyFactory;
 import com.ibm.websphere.objectgrid.server.Container;
 import com.ibm.websphere.objectgrid.server.ServerFactory;
+import com.ibm.ws.objectgrid.cluster.ServiceUnavailableException;
 
 /**
  * This is a utility class. Each instance is associated with a thread pool
@@ -59,6 +64,7 @@ import com.ibm.websphere.objectgrid.server.ServerFactory;
  */
 public class WXSUtils
 {
+	static Logger logger = Logger.getLogger(WXSUtils.class.getName());
 	/**
 	 * A client grid reference for this instance. All operations use this grid
 	 */
@@ -686,5 +692,66 @@ public class WXSUtils
 	public ExecutorService getExecutorService()
 	{
 		return threadPool;
+	}
+	
+	/**
+	 * This checks if a WXS exception is retryable, i.e. recoverable or the exception
+	 * is fatal
+	 * @param e
+	 * @return
+	 */
+    static public boolean isRetryable(Throwable e) 
+    {
+		Throwable theCause = null;
+		if (e != null) {
+			theCause=e.getCause();
+			logger.fine("isRetryable Main: " + e.getMessage());
+			logger.fine("isRetryable cause: " + theCause.getMessage());
+			e.printStackTrace(System.out);
+		} else {
+			logger.fine("isRetryable Main: null");
+			return false;
+		}
+
+		boolean firstAttempt = isRetryable2(e);
+		boolean secondAttempt = false;
+
+		if (firstAttempt) {
+			return true;
+		} else {
+			// check cause
+			secondAttempt = isRetryable2(theCause);	
+
+		}
+
+		if (secondAttempt) {
+			return true;
+		} else {			
+			if(theCause==null) {
+				return false;
+			} else { 
+			 return (isRetryable(theCause.getCause()));
+			}
+		}
+	}
+	
+	public static boolean isRetryable2(Throwable e) {
+		boolean rc = false;
+		if (e == null) {
+			if(logger.isLoggable(Level.FINE))
+				logger.fine( "isRetryable: e is null.");
+			rc = false;
+		} else {
+			logger.fine("is Exeption Retryable: " + e );
+			if ((e instanceof ObjectGridException) && (e instanceof ClientServerLoaderException|| 
+					                                   e instanceof TransactionException	|| 
+					                                   e instanceof com.ibm.websphere.objectgrid.ReplicationVotedToRollbackTransactionException	|| 
+					                                   e instanceof ServiceUnavailableException)) {
+				rc = true;
+			}
+		}
+		if(logger.isLoggable(Level.FINE))
+			logger.fine("returning retryable code: "+rc);
+		return rc;
 	}
 }

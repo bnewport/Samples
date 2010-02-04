@@ -16,9 +16,9 @@ Licensed Materials - Property of IBM
 
     <objectGrids>
         <objectGrid name="Grid">
-            <backingMap name="Map1" />
-            <backingMap name="Map2" />
-            <backingMap name="FarMap3" lockStrategy="PESSIMISTIC" />
+            <backingMap name="Map1"  copyMode="COPY_TO_BYTES"/>
+            <backingMap name="Map2"  copyMode="COPY_TO_BYTES"/>
+            <backingMap name="FarMap3" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES"/>
         </objectGrid>
     </objectGrids>
 

@@ -20,13 +20,13 @@ Licensed Materials - Property of IBM
     <objectGrids>
         <objectGrid name="Grid" txTimeout="45">
         	<!-- Key is hash, value is actual real key of record -->
-            <backingMap name=".*_Attributes" lockStrategy="PESSIMISTIC" template="true"/>
+            <backingMap name=".*_Attributes" lockStrategy="PESSIMISTIC" template="true" copyMode="COPY_TO_BYTES"/>
             <!-- Key is symbol, value is list of hashes for the matching records -->
-            <backingMap name=".*_Index" lockStrategy="PESSIMISTIC" template="true"/>
+            <backingMap name=".*_Index" lockStrategy="PESSIMISTIC" template="true" copyMode="COPY_TO_BYTES"/>
             <!--  Key is symbols whose are not useful for matching, too many records with the key -->
             <backingMap name=".*_BadSymbol" lockStrategy="PESSIMISTIC" template="true" />
             
-            <backingMap name="RealRecords" lockStrategy="PESSIMISTIC"/>
+            <backingMap name="RealRecords" lockStrategy="PESSIMISTIC" copyMode="COPY_TO_BYTES"/>
         </objectGrid>
     </objectGrids>
 </objectGridConfig>
