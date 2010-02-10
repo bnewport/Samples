@@ -108,6 +108,7 @@ public class WXSMap <K,V>
 		try
 		{
 			InsertAgent<K, V> a = new InsertAgent<K, V>();
+			a.doGet = true;
 			a.batch = new Hashtable<K, V>();
 			a.batch.put(k, v);
 			tls.getMap(mapName).getAgentManager().callReduceAgent(a, Collections.singletonList(k));
@@ -116,6 +117,27 @@ public class WXSMap <K,V>
 		catch(Exception e)
 		{
 			mbean.getPutMetrics().logException(e);
+			throw new ObjectGridRuntimeException(e);
+		}
+	}
+
+	/**
+	 * This does a single entry insert. If the key already exists then an exception is thrown.
+	 * @param k
+	 * @param v
+	 */
+	public void insert(K k, V v)
+	{
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
+		long start = System.nanoTime();
+		try
+		{
+			tls.getMap(mapName).insert(k, v);
+			mbean.getInsertMetrics().logTime(System.nanoTime() - start);
+		}
+		catch(Exception e)
+		{
+			mbean.getInsertMetrics().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
@@ -132,6 +154,18 @@ public class WXSMap <K,V>
 		mbean.getPutMetrics().logTime(System.nanoTime() - start);
 	}
 
+	/**
+	 * Parallel insert all the entries. This does a real insert, not a put (get/update)
+	 * @param batch
+	 */
+	public void insertAll(Map<K,V> batch)
+	{
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
+		long start = System.nanoTime();
+		utils.insertAll(batch, bmap);
+		mbean.getInsertMetrics().logTime(System.nanoTime() - start);
+	}
+	
 	/**
 	 * Remove the entry from the Map
 	 * @param k

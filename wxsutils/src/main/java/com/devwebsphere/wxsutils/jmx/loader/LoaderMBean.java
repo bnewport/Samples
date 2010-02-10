@@ -23,6 +23,10 @@ public interface LoaderMBean
 	Integer getGetExceptionCount();
 	String getGetLastExceptionString();
 	
+	Long getGetSizeMinRecords();
+	Long getGetSizeMaxRecords();
+	Long getGetSizeAvgRecords();
+	
 	Integer getBatchUpdateCount();
 	Double getBatchUpdateTimeMinMS();
 	Double getBatchUpdateTimeMaxMS();

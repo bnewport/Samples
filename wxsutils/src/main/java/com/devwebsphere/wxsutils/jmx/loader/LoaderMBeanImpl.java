@@ -10,12 +10,15 @@
 //
 package com.devwebsphere.wxsutils.jmx.loader;
 
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.devwebsphere.wxsutils.jmx.MinMaxAvgMetric;
 import com.devwebsphere.wxsutils.jmx.SummaryMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.TabularAttribute;
 import com.devwebsphere.wxsutils.jmx.TabularKey;
+import com.ibm.websphere.objectgrid.plugins.LogElement;
+import com.ibm.websphere.objectgrid.plugins.LogSequence;
 
 
 
@@ -159,6 +162,24 @@ public final class LoaderMBeanImpl implements LoaderMBean
 		return getSizeMetrics;
 	}
 
+	@TabularAttribute
+	public Long getGetSizeMinRecords()
+	{
+		return new Long(getSizeMetrics.getMinTimeNS());
+	}
+
+	@TabularAttribute
+	public Long getGetSizeMaxRecords()
+	{
+		return new Long(getSizeMetrics.getMaxTimeNS());
+	}
+	
+	@TabularAttribute
+	public Long getGetSizeAvgRecords()
+	{
+		return new Long(getSizeMetrics.getAvgTimeNS());
+	}
+	
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
 	public Long getRowDeleteCounter() 
 	{
@@ -180,6 +201,25 @@ public final class LoaderMBeanImpl implements LoaderMBean
 		insertCounter.addAndGet(numInserts);
 		updateCounter.addAndGet(numUpdates);
 		deleteCounter.addAndGet(numDeletes);
+	}
+	
+	public void recordOperationRows(LogSequence ls)
+	{
+		int insertCount = 0;
+		int updateCount = 0;
+		int deleteCount = 0;
+		Iterator<LogElement> iter = ls.getPendingChanges();
+		while(iter.hasNext())
+		{
+			LogElement le = iter.next();
+			if(le.getType().equals(LogElement.CODE_INSERT))
+				insertCount++;
+			if(le.getType().equals(LogElement.CODE_UPDATE))
+				updateCount++;
+			if(le.getType().equals(LogElement.CODE_DELETE))
+				deleteCount++;
+		}
+		recordOperationRows(insertCount, updateCount, deleteCount);
 	}
 
 	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)

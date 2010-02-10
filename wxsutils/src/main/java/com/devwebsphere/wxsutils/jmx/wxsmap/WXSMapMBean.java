@@ -62,4 +62,15 @@ public interface WXSMapMBean {
 
 	public Double getContainsTotalTimeMS();
 
+	public Integer getInsertExceptionCount();
+
+	public String getInsertLastExceptionString();
+
+	public Double getInsertTimeAvgMS();
+
+	public Double getInsertTimeMaxMS();
+
+	public Double getInsertTimeMinMS();
+
+	public Double getInsertTotalTimeMS();
 }

@@ -20,7 +20,18 @@ import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 
 /**
  * This is used to insert a chunk of records for a given partition using a single hop.
- * It returns TRUE if the operation succeeded
+ * It returns TRUE if the operation succeeded. It works two ways. An insert style 
+ * and a put style. The insert style just does an insert. It doesn't check if the
+ * record existed already. The put style always does a get first and if it exists then
+ * do an update, if it didn't exist then do an insert. A Put is especially expensive when
+ * a Loader is plugged in to the Map as the get may trigger a SQL SELECT for each key
+ * potentially.
+ * 
+ * Applications preloading data from a database in to the grid should use insertAll. The grid
+ * maps need to be empty in this case so the application should do a clear on the grid first
+ * 
+ * @see WXSUtils#insertAll(java.util.Map, com.ibm.websphere.objectgrid.BackingMap)
+ * @see WXSUtils#putAll(java.util.Map, com.ibm.websphere.objectgrid.BackingMap)
  */
 public class InsertAgent<K,V> implements ReduceGridAgent 
 {
@@ -30,6 +41,11 @@ public class InsertAgent<K,V> implements ReduceGridAgent
 	private static final long serialVersionUID = 6568906743945108310L;
 	
 	java.util.Map<K,V> batch;
+	
+	/**
+	 * For a preload especially with a Loader plugged in then we don't want to do a get
+	 */
+	boolean doGet;
 
 	public Object reduce(Session sess, ObjectMap map) 
 	{
@@ -45,8 +61,11 @@ public class InsertAgent<K,V> implements ReduceGridAgent
 			ObjectMap m = s.getMap(map.getName());
 			s.beginNoWriteThrough();
 			ArrayList keys = new ArrayList(batch.keySet());
-			// do a get first
-			m.getAll(keys);
+			if(doGet)
+			{
+				// do a get first
+				m.getAll(keys);
+			}
 			// then do a put. Just a put won't work as it will treat
 			// all entries as inserts.
 			m.putAll(batch);

@@ -29,8 +29,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.management.InstanceAlreadyExistsException;
-
 import com.devwebsphere.wxssearch.jmx.TextIndexMBeanManager;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
 import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanManager;
@@ -80,10 +78,10 @@ public class WXSUtils
 	
 	Map<String, WXSMap<?,?>> maps = new ConcurrentHashMap<String, WXSMap<?,?>>();
 
-	static AtomicReference<AgentMBeanManager> agentMBeanManager = new AtomicReference<AgentMBeanManager>();
-	static AtomicReference<LoaderMBeanManager> loaderMBeanManager = new AtomicReference<LoaderMBeanManager>();
-	static AtomicReference<WXSMapMBeanManager> wxsMapMBeanManager = new AtomicReference<WXSMapMBeanManager>();
-	static AtomicReference<TextIndexMBeanManager> indexMBeanManager = new AtomicReference<TextIndexMBeanManager>();
+	static LazyMBeanManagerAtomicReference<AgentMBeanManager> agentMBeanManager = new LazyMBeanManagerAtomicReference<AgentMBeanManager>(AgentMBeanManager.class);
+	static LazyMBeanManagerAtomicReference<LoaderMBeanManager> loaderMBeanManager = new LazyMBeanManagerAtomicReference<LoaderMBeanManager>(LoaderMBeanManager.class);
+	static LazyMBeanManagerAtomicReference<WXSMapMBeanManager> wxsMapMBeanManager = new LazyMBeanManagerAtomicReference<WXSMapMBeanManager>(WXSMapMBeanManager.class);
+	static LazyMBeanManagerAtomicReference<TextIndexMBeanManager> indexMBeanManager = new LazyMBeanManagerAtomicReference<TextIndexMBeanManager>(TextIndexMBeanManager.class);
 
 	ThreadLocalSession tls;
 	
@@ -93,19 +91,7 @@ public class WXSUtils
 	 */
 	public static AgentMBeanManager getAgentMBeanManager()
 	{
-		if(agentMBeanManager.get() == null)
-		{
-			try
-			{
-				AgentMBeanManager m = new AgentMBeanManager();
-				agentMBeanManager.compareAndSet(null, m);
-			}
-			catch(InstanceAlreadyExistsException e)
-			{
-				// normal exception if two threads head through here at once
-			}
-		}
-		return agentMBeanManager.get();
+		return agentMBeanManager.getLazyRef();
 	}
 	
 	/**
@@ -114,19 +100,7 @@ public class WXSUtils
 	 */
 	public static TextIndexMBeanManager getIndexMBeanManager()
 	{
-		if(indexMBeanManager.get() == null)
-		{
-			try
-			{
-				TextIndexMBeanManager m = new TextIndexMBeanManager();
-				indexMBeanManager.compareAndSet(null, m);
-			}
-			catch(InstanceAlreadyExistsException e)
-			{
-				
-			}
-		}
-		return indexMBeanManager.get();
+		return indexMBeanManager.getLazyRef();
 	}
 	
 	/**
@@ -135,19 +109,7 @@ public class WXSUtils
 	 */
 	public static LoaderMBeanManager getLoaderMBeanManager()
 	{
-		if(loaderMBeanManager.get() == null)
-		{
-			try
-			{
-				LoaderMBeanManager m = new LoaderMBeanManager();
-				loaderMBeanManager.compareAndSet(null, m);
-			}
-			catch(InstanceAlreadyExistsException e)
-			{
-				
-			}
-		}
-		return loaderMBeanManager.get();
+		return loaderMBeanManager.getLazyRef();
 	}
 	
 	/**
@@ -156,19 +118,7 @@ public class WXSUtils
 	 */
 	public static WXSMapMBeanManager getWXSMapMBeanManager()
 	{
-		if(wxsMapMBeanManager.get() == null)
-		{
-			try
-			{
-				WXSMapMBeanManager m = new WXSMapMBeanManager();
-				wxsMapMBeanManager.compareAndSet(null, m);
-			}
-			catch(InstanceAlreadyExistsException e)
-			{
-				
-			}
-		}
-		return wxsMapMBeanManager.get();
+		return wxsMapMBeanManager.getLazyRef();
 	}
 	
 	/**
@@ -292,13 +242,33 @@ public class WXSUtils
 	
 	/**
 	 * This puts the K/V pairs in to the grid in parallel as efficiently as possible. Any existing values
-	 * for any K are over written.
+	 * for any K are over written. This does a get before the put on the server side. Use insertAll for
+	 * a preload type scenario. If a Loader is used with the Map then this will trigger
+	 * Loader.get calls for each record.
 	 * @param <K> The key type to use
 	 * @param <V> The value type to use
 	 * @param batch The KV pairs to put in the grid
 	 * @param bmap The map to store them in.
 	 */
 	public <K,V> void putAll(Map<K,V> batch, BackingMap bmap)
+	{
+		internalPutAll(batch, bmap, true);
+	}
+
+	/**
+	 * This inserts the entries in the map. If the entries exist already then
+	 * this method will fail.
+	 * @param <K>
+	 * @param <V>
+	 * @param batch
+	 * @param bmap
+	 */
+	public <K,V> void insertAll(Map<K,V> batch, BackingMap bmap)
+	{
+		internalPutAll(batch, bmap, false);
+	}
+	
+	<K,V> void internalPutAll(Map<K,V> batch, BackingMap bmap, boolean doGet)
 	{
 		if(batch.size() > 0)
 		{
@@ -314,6 +284,7 @@ public class WXSUtils
 				
 				// invoke the agent to add the batch of records to the grid
 				InsertAgent<K,V> ia = new InsertAgent<K,V>();
+				ia.doGet = doGet;
 				ia.batch = perPartitionEntries;
 				// Insert all keys for one partition using the first key as a routing key
 				Future<?> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ia));

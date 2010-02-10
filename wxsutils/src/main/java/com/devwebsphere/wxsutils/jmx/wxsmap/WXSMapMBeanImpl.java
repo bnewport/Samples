@@ -21,6 +21,7 @@ public class WXSMapMBeanImpl implements WXSMapMBean
 	String gridName;
 	MinMaxAvgMetric getMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric putMetric = new MinMaxAvgMetric();
+	MinMaxAvgMetric insertMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric removeMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric containsMetric = new MinMaxAvgMetric();
 	
@@ -59,6 +60,11 @@ public class WXSMapMBeanImpl implements WXSMapMBean
 	public MinMaxAvgMetric getContainsMetrics()
 	{
 		return containsMetric;
+	}
+
+	public MinMaxAvgMetric getInsertMetrics()
+	{
+		return insertMetric;
 	}
 	
 	/* (non-Javadoc)
@@ -114,6 +120,59 @@ public class WXSMapMBeanImpl implements WXSMapMBean
 		return new Double(getMetric.getTotalTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getGetExceptionCount()
+	 */
+	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
+	public Integer getInsertExceptionCount() 
+	{
+		return new Integer(insertMetric.getExceptionCount());
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getGetLastExceptionString()
+	 */
+	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
+	public String getInsertLastExceptionString() 
+	{
+		Throwable t = insertMetric.getLastException();
+		if(t != null)
+		{
+			return t.toString();
+		}
+		else
+			return "<>";
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getGetTimeAvgMS()
+	 */
+	@TabularAttribute
+	public Double getInsertTimeAvgMS() 
+	{
+		return new Double(insertMetric.getAvgTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getGetTimeMaxMS()
+	 */
+	@TabularAttribute
+	public Double getInsertTimeMaxMS() 
+	{
+		return new Double(insertMetric.getMaxTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getGetTimeMinMS()
+	 */
+	@TabularAttribute
+	public Double getInsertTimeMinMS() {
+		return new Double(insertMetric.getMinTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getGetTotalTimeMS()
+	 */
+	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
+	public Double getInsertTotalTimeMS() {
+		return new Double(insertMetric.getTotalTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
+	}
+	
 	/* (non-Javadoc)
 	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getPutExceptionCount()
 	 */
