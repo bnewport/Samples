@@ -19,6 +19,11 @@ import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.query.ObjectQuery;
 
+/**
+ * This is a listener class that can be called from a client. The method getNextEntry should
+ * be polled to retrieve evicted records. An evicted record may be seen multiple times
+ *
+ */
 public class EvictionEventListener 
 {
 	ObjectGrid grid;
@@ -32,7 +37,14 @@ public class EvictionEventListener
 	Session sess;
 	final int numPartitions;
 	final int maxEntriesForPartition;
-	
+
+	/**
+	 * This constructs the eviction event listener
+	 * @param grid The client grid reference
+	 * @param qName The name of the eviction queue map being used by the EvictionEventPublisher plugin
+	 * @throws ObjectGridException
+	 * @see EvictionEventPublisher
+	 */
 	public EvictionEventListener(ObjectGrid grid, String qName)
 		throws ObjectGridException
 	{
@@ -47,7 +59,14 @@ public class EvictionEventListener
 		numPartitions = qmap.getPartitionManager().getNumOfPartitions();
 		maxEntriesForPartition = 2000;
 	}
-	
+
+	/**
+	 * This is called repeatedly by the client to retrieve the next evicted entry. It iterates
+	 * across all partitioned in the grid in a round robin fashion to get the current
+	 * list of evicted entries. These entries will be evicted eventually (look at the objectgrid.xml file).
+	 * @return An evicted entry or NULL if none exist
+	 * @throws ObjectGridException
+	 */
 	public synchronized EvictEntry getNextEntry()
 		throws ObjectGridException
 	{
