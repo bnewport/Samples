@@ -526,6 +526,7 @@ public class WXSUtils
 			ServerFactory.getCatalogProperties().setQuorum(false);
 			ServerFactory.getServerProperties().setServerName(catName);
 			ServerFactory.getServerProperties().setSystemStreamsToFileEnabled(false); // output goes to console, not a file
+			ServerFactory.getServerProperties().setMinimumThreadPoolSize(50);
 			
 			// this starts the server
 			com.ibm.websphere.objectgrid.server.Server server = ServerFactory.getInstance();
