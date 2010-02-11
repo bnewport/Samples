@@ -30,10 +30,10 @@ Licensed Materials - Property of IBM
 	       </bean>
 	       
 	       <!-- Data Map evicts data after 60 seconds -->
-           <backingMap name="Map"  lockStrategy="PESSIMISTIC" ttlEvictorType="LAST_ACCESS_TIME" timeToLive="20"/>
+           <backingMap name="Map"  lockStrategy="PESSIMISTIC" ttlEvictorType="LAST_ACCESS_TIME" timeToLive="60"/>
            
-           <!-- Evict Q Map evicts data 120 seconds after it's inserted  copyMode="COPY_TO_BYTES" -->
-           <backingMap name="EvictQ"  lockStrategy="PESSIMISTIC" ttlEvictorType="CREATION_TIME" timeToLive="600"/>
+           <!-- Evict Q Map evicts data 120 seconds after it's inserted -->
+           <backingMap name="EvictQ"  lockStrategy="PESSIMISTIC" ttlEvictorType="CREATION_TIME" timeToLive="120"/>
            
            <!-- We need this to be able to do queries on Maps -->
 	       <querySchema>
