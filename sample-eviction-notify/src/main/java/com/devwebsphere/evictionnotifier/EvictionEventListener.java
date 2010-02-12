@@ -96,6 +96,9 @@ public class EvictionEventListener
 					q.setMaxResults(maxEntriesForPartition); // reasonable limit per partition?
 					Iterator<EvictEntry> result_iter = q.getResultIterator();
 					
+					// the reason for the copy in to the array is the iterator is only
+					// valid till the sess tx commits. We want it to use the entries for
+					// longer so copy the records into an array
 					entriesForCurrentPartition = new ArrayList<EvictEntry>(maxEntriesForPartition);
 					while(result_iter.hasNext())
 						entriesForCurrentPartition.add(result_iter.next());
@@ -104,6 +107,8 @@ public class EvictionEventListener
 				}
 				catch(Exception e)
 				{
+					// exceptions should just be transient so we'll roll on to the next partition
+					// if we see a problem with this partition
 					iter = null;
 				}
 				finally
