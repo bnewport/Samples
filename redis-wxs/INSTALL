@@ -45,3 +45,6 @@ mvn install:install-file
 Now install mysql, and using phpadmin or something similar make a database called chirp
 and use the MYSQLDLL.SQL script in /src/main/resources to create the database
 
+When running the test cases inside eclipse, add the following command line args to the JVM using your directory location
+
+-Djava.endorsed.dirs=/Users/ibm/Documents/Development/og7002/lib/endorsed -server -Xmx512M -Dcom.sun.management.jmxremote
