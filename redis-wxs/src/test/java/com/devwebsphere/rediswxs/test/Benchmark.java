@@ -15,6 +15,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import com.devwebsphere.rediswxs.R;
+import com.devwebsphere.wxsutils.jmx.MinMaxAvgMetric;
 
 
 public class Benchmark {
@@ -29,35 +30,20 @@ public class Benchmark {
 		public void run()
 		{
 			int counter = 0;
-			long start = System.currentTimeMillis();
-			int[] responseTimes = new int[500];
+			long start = System.nanoTime();
+			MinMaxAvgMetric metric = new MinMaxAvgMetric();
 			while(true)
 			{
-				long before = System.currentTimeMillis();
+				long before = System.nanoTime();
 				String key = Integer.toString(counter % 100000);
 				R.str_long.set(Thread.currentThread().toString() + key, orig_value);
-				long now = System.currentTimeMillis();
-				int latency = (int)(now - before);
-				if(latency >= responseTimes.length)
-					latency = responseTimes.length - 1;
-				responseTimes[latency]++;
+				long now = System.nanoTime();
+				metric.logTime(now - before);
 				if(counter++ == 2000)
 				{
-					int rate = (int)(counter / ((now - start) / 1000.0));
+					long rate = (long)(counter / ((now - start) / 1000000000.0));
 					System.out.println("***********************************");
 					System.out.println("Rate is " + rate);
-					for(int i = 0; i < responseTimes.length;++i)
-					{
-						if(responseTimes[i] > 0)
-						{
-							double scale = 10000;
-							double p = (((double)responseTimes[i]) / counter) * 100 * scale;
-							p = ((int)p) / scale;
-							if(p >= 1.0)
-								System.out.println(Integer.toString(i) + "ms " + p + "%");
-							responseTimes[i] = 0;
-						}
-					}
 					counter = 0;
 					start = now;
 				}
@@ -74,7 +60,7 @@ public class Benchmark {
 		final Long orig_value = new Long(0);
 		
 		Runnable t = new BenchSetThread(orig_value);
-		int numThreads = 1;
+		int numThreads = 10;
 
 		ScheduledExecutorService ses = new ScheduledThreadPoolExecutor(numThreads);
 		for(int i = 0; i < numThreads; ++i)

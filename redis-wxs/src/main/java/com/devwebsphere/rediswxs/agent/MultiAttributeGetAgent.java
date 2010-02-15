@@ -16,7 +16,6 @@ import java.util.Map;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
-import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
@@ -39,7 +38,7 @@ public class MultiAttributeGetAgent implements MapGridAgent
 
 	public Object process(Session sess, ObjectMap map, Object key) 
 	{
-		AgentMBeanImpl bean = WXSUtils.getAgentMBeanManager().getBean(this.getClass().getName());
+		AgentMBeanImpl bean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid(), this.getClass().getName());
 		long startNS = System.nanoTime();
 		try
 		{

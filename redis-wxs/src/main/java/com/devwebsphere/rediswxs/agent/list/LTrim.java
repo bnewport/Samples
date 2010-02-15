@@ -42,7 +42,7 @@ public class LTrim extends BaseAgent<Object> implements MapGridAgent
 			ScalarKey sk = (ScalarKey)key;
 			key = sk.getKey();
 		}
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(this.getClass().getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid(), this.getClass().getName());
 		long startNS = System.nanoTime();
 		try
 		{

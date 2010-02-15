@@ -96,7 +96,7 @@ public abstract class JDBCValueLoader<K,V> extends BaseJDBCLoader implements Loa
 			throws LoaderException, OptimisticCollisionException 
 	{
 		mapName = ls.getMapName();
-		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(mapName);
+		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid(), mapName);
 		mbean.getBatchSizeMetrics().logTime(ls.size());
 		long startNS = System.nanoTime();
 		try
@@ -186,7 +186,7 @@ public abstract class JDBCValueLoader<K,V> extends BaseJDBCLoader implements Loa
 	 */
 	public List get(TxID tx, List keys, boolean arg2) throws LoaderException 
 	{
-		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(mapName);
+		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid(), mapName);
 		long startNS = System.nanoTime();
 		try
 		{

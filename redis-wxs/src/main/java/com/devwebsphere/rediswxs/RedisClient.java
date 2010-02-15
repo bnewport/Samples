@@ -194,7 +194,7 @@ public class RedisClient implements IRedisLowLevel
 			Hashtable<String, String> props = new Hashtable<String, String>();
 			props.put("name", "redis");
 			props.put("type", "Redis");
-			ObjectName on = new ObjectName("com.ibm.websphere.objectgrid.redis", props);
+			ObjectName on = new ObjectName("com.ibm.devwebsphere.redis", props);
 			jmxServer.registerMBean(mbn, on);
 		}
 		catch(Exception e)

@@ -12,35 +12,35 @@ package com.devwebsphere.wxs.asyncserviceimpl;
 
 import java.io.Serializable;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxs.asyncservice.AsyncServiceManager;
 import com.devwebsphere.wxs.asyncservice.Job;
 import com.devwebsphere.wxs.asyncservice.SerializedFuture;
+import com.devwebsphere.wxsutils.WXSUtils;
+import com.devwebsphere.wxsutils.uuid.WXSUUID;
 import com.ibm.websphere.objectgrid.BackingMap;
-import com.ibm.websphere.objectgrid.ClientServerLoaderException;
 import com.ibm.websphere.objectgrid.DuplicateKeyException;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
-import com.ibm.websphere.objectgrid.TransactionException;
-import com.ibm.ws.objectgrid.cluster.ServiceUnavailableException;
 
 public class AsyncServiceManagerImpl implements AsyncServiceManager
 {
 	static Logger logger = Logger.getLogger(AsyncServiceManagerImpl.class.getName());
 	ObjectGrid grid;
+	WXSUUID uuidGenerator;
 	//final boolean debug = false;
 
-	public AsyncServiceManagerImpl(ObjectGrid g)
+	public AsyncServiceManagerImpl(WXSUtils utils)
+		throws ObjectGridException
 	{
-		grid = g;
+		grid = utils.getObjectGrid();
+		uuidGenerator = new WXSUUID(utils, MapNames.SYSTEM_MAP);
  	}
 	
 	protected static final String timestampKey = AsyncServiceManagerImpl.class.getName() + "_timestamp";
@@ -96,7 +96,7 @@ public class AsyncServiceManagerImpl implements AsyncServiceManager
 					sess.rollback();
 				}
 				
-				isSendable = isRetryable(e);
+				isSendable = WXSUtils.isRetryable(e);
 				
 				if(true && isSendable && logger.isLoggable(Level.FINE))
 				{
@@ -169,10 +169,6 @@ public class AsyncServiceManagerImpl implements AsyncServiceManager
 		}
 	}
 
-	private static volatile Integer partitionId = null;
-	private static long assignedClusterId;
-	private static String prefix;
-	private static AtomicLong currentLocalId = new AtomicLong();
 	public long successCount=0;
 
 	/**
@@ -181,80 +177,7 @@ public class AsyncServiceManagerImpl implements AsyncServiceManager
 	public String getNextClusterUUID()
 		throws ObjectGridRuntimeException
 	{
-		try
-		{
-			if(partitionId == null)
-			{
-				synchronized(AsyncServiceManagerImpl.class)
-				{
-					if(partitionId == null)
-					{
-						if(logger.isLoggable(Level.FINE))
-						{
-							logger.fine( "Pulling prefix from grid");
-						}
-						Session sess = grid.getSession();
-						while(true)
-						{
-							try
-							{
-								BackingMap bmap = grid.getMap(MapNames.SYSTEM_MAP);
-								Random r = new Random(System.currentTimeMillis());
-								partitionId = new Integer(r.nextInt(bmap.getPartitionManager().getNumOfPartitions()));
-								sess.begin();
-								ObjectMap map = sess.getMap(MapNames.SYSTEM_MAP);
-								Long partitionIdValue = (Long)map.getForUpdate(partitionId);
-								if(partitionIdValue == null)
-								{
-									partitionIdValue = new Long(0);
-									map.insert(partitionId, partitionIdValue);
-								}
-								else
-								{
-									partitionIdValue=new Long(partitionIdValue.longValue() + 1);//rk changed
-									map.update(partitionId, partitionIdValue);
-								}
-								assignedClusterId = partitionIdValue.longValue();
-								sess.commit();
-								prefix = Long.toString(partitionId) + ":" + Long.toString(assignedClusterId) + ":";
-								//System.out.println("Prefix for cluster uuid is " + prefix);
-								if(logger.isLoggable(Level.FINE))
-								{
-								   logger.fine( "Prefix for cluster uuid is " + prefix);						   
-								}
-								break;
-							}
-							catch(Exception e)
-							{
-								if(sess.isTransactionActive())
-								{
-									sess.rollback();
-								}
-								if(AsyncServiceManagerImpl.isRetryable(e))
-								{							
-									continue;
-								}
-								else
-								{
-									logger.log(Level.SEVERE, "getNextClusterID exception", e);
-								}
-							}
-						}
-					}
-				}
-			}
-			String rc = prefix + Long.toString(currentLocalId.getAndIncrement());
-			if( logger.isLoggable(Level.FINE))
-			{
-				logger.fine( "New UUID is " + rc);
-			}
-			return rc;
-		}
-		catch(ObjectGridException e)
-		{
-			logger.log(Level.SEVERE, "Exception in getNextClusterUUID", e);
-			throw new ObjectGridRuntimeException(e);
-		}
+		return uuidGenerator.getNextClusterUUID();
 	}
 
 	public <V> SerializedFuture<V> serialize(Future<V> f) 
@@ -318,7 +241,7 @@ public class AsyncServiceManagerImpl implements AsyncServiceManager
 					if(sess.isTransactionActive()) {
 						sess.rollback();
 					}
-					isSendable = isRetryable(e);
+					isSendable = WXSUtils.isRetryable(e);
 					if(!isSendable) {
 						throw new ObjectGridRuntimeException("Cannot send message ", e);
 					}
@@ -338,60 +261,4 @@ public class AsyncServiceManagerImpl implements AsyncServiceManager
 		successCount++;
 		
 	}
-	
-    static public boolean isRetryable(Throwable e) 
-    {
-		Throwable theCause = null;
-		if (e != null) {
-			theCause=e.getCause();
-			logger.fine("isRetryable Main: " + e.getMessage());
-			logger.fine("isRetryable cause: " + theCause.getMessage());
-			e.printStackTrace(System.out);
-		} else {
-			logger.fine("isRetryable Main: null");
-			return false;
-		}
-
-		boolean firstAttempt = isRetryable2(e);
-		boolean secondAttempt = false;
-
-		if (firstAttempt) {
-			return true;
-		} else {
-			// check cause
-			secondAttempt = isRetryable2(theCause);	
-
-		}
-
-		if (secondAttempt) {
-			return true;
-		} else {			
-			if(theCause==null) {
-				return false;
-			} else { 
-			 return (isRetryable(theCause.getCause()));
-			}
-		}
-	}
-	
-	public static boolean isRetryable2(Throwable e) {
-		boolean rc = false;
-		if (e == null) {
-			if(logger.isLoggable(Level.FINE))
-				logger.fine( "isRetryable: e is null.");
-			rc = false;
-		} else {
-			logger.fine("is Exeption Retryable: " + e );
-			if ((e instanceof ObjectGridException) && (e instanceof ClientServerLoaderException|| 
-					                                   e instanceof TransactionException	|| 
-					                                   e instanceof com.ibm.websphere.objectgrid.ReplicationVotedToRollbackTransactionException	|| 
-					                                   e instanceof ServiceUnavailableException)) {
-				rc = true;
-			}
-		}
-		if(logger.isLoggable(Level.FINE))
-			logger.fine("returning retryable code: "+rc);
-		return rc;
-	}
-
 }

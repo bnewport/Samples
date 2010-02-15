@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxsutils.WXSUtils;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ClientClusterContext;
 import com.ibm.websphere.objectgrid.ObjectGrid;
@@ -250,7 +251,7 @@ public class MulticastMessage<V>
 					{
 						logger.log(Level.FINE, "MultiSendAgent:contains key "+key+" calling sendAsyncMessage2 ");
 					}
-					AsyncServiceManagerImpl as = new AsyncServiceManagerImpl(sess.getObjectGrid());
+					AsyncServiceManagerImpl as = new AsyncServiceManagerImpl(new WXSUtils(sess.getObjectGrid()));
 	
 					as.sendAsyncMessage2(null, message, msgId);
 					rc.put(key, Boolean.TRUE);

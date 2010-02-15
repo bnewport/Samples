@@ -19,6 +19,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxs.asyncservice.SerializedFuture;
+import com.devwebsphere.wxsutils.WXSUtils;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
@@ -80,7 +81,7 @@ class AsyncServiceFuture<T> implements java.util.concurrent.Future<T>, Serialize
 			{
 				logger.log(Level.SEVERE, "Exception during peek result for " + id, e);
 				try	{ if(sess.isTransactionActive()) sess.rollback(); }	catch(ObjectGridException e2) {}
-				isSendable = AsyncServiceManagerImpl.isRetryable(e);
+				isSendable = WXSUtils.isRetryable(e);
 				if(!isSendable)
 					throw new ObjectGridRuntimeException("Cannot send message ", e);
 			}
@@ -197,7 +198,7 @@ class AsyncServiceFuture<T> implements java.util.concurrent.Future<T>, Serialize
 				catch(Exception e)
 				{
 					logger.log(Level.SEVERE, "Exception during isDone for " + id, e);
-					isSendable = AsyncServiceManagerImpl.isRetryable(e);
+					isSendable = WXSUtils.isRetryable(e);
 					try	{ if(sess.isTransactionActive()) sess.rollback(); }	catch(ObjectGridException e2) { throw new ObjectGridRuntimeException(e2); }
 					if(!isSendable)
 						throw new ObjectGridRuntimeException("Cannot send message ", e);

@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.util.concurrent.Future;
 
 import com.devwebsphere.wxs.asyncserviceimpl.AsyncServiceManagerImpl;
+import com.devwebsphere.wxsutils.WXSUtils;
+import com.ibm.websphere.objectgrid.ObjectGridException;
+import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.plugins.BeanFactory;
 import com.ibm.websphere.objectgrid.spring.ObjectGridSpringFactory;
@@ -29,9 +32,13 @@ public class KeySpecificJob<V> implements Job<V>
 		
 		try
 		{
-			AsyncServiceManagerImpl mgr = new AsyncServiceManagerImpl(clientSession.getObjectGrid());
+			AsyncServiceManagerImpl mgr = new AsyncServiceManagerImpl(new WXSUtils(clientSession.getObjectGrid()));
 			Future<V> fv = mgr.sendAsyncRoutedJob(mapName, key, job);
 			return null;
+		}
+		catch(ObjectGridException e)
+		{
+			throw new ObjectGridRuntimeException(e);
 		}
 		finally
 		{
