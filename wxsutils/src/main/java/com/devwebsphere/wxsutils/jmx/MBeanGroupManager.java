@@ -98,26 +98,29 @@ public abstract class MBeanGroupManager <M>
 		throws InstanceAlreadyExistsException
 	{
 		ArrayList<MBeanServer> mBeanServers = MBeanServerFactory.findMBeanServer(null);
-        mbeanServer = (MBeanServer) mBeanServers.get(0);
-        try
-        {
-	        summaryMBean = new SummaryMBeanImpl<M>(this, mbeanClass, typeName);
-	        
-			Hashtable<String, String> props = new Hashtable<String, String>();
-			props.put("type", typeName + "Summary");
-			ObjectName on = new ObjectName("com.devwebsphere.wxs", props);
-			StandardMBean realMBean = new StandardMBean(summaryMBean, SummaryMBean.class);
-			mbeanServer.registerMBean(realMBean, on);
-        }
-        catch(InstanceAlreadyExistsException e)
-        {
-        	throw e;
-        }
-        catch(Exception e)
-        {
-        	System.out.println(e.toString());
-        	e.printStackTrace();
-        }
+		if(mBeanServers.size() >= 1)
+		{
+	        mbeanServer = (MBeanServer) mBeanServers.get(0);
+	        try
+	        {
+		        summaryMBean = new SummaryMBeanImpl<M>(this, mbeanClass, typeName);
+		        
+				Hashtable<String, String> props = new Hashtable<String, String>();
+				props.put("type", typeName + "Summary");
+				ObjectName on = new ObjectName("com.devwebsphere.wxs", props);
+				StandardMBean realMBean = new StandardMBean(summaryMBean, SummaryMBean.class);
+				mbeanServer.registerMBean(realMBean, on);
+	        }
+	        catch(InstanceAlreadyExistsException e)
+	        {
+	        	throw e;
+	        }
+	        catch(Exception e)
+	        {
+	        	System.out.println(e.toString());
+	        	e.printStackTrace();
+	        }
+		}
 	}
 	
 	/**

@@ -178,6 +178,7 @@ public class WXSUtils
 			}
 		}
 		threadPool = globalThreadPool.get();
+		tls = new ThreadLocalSession(this);
 	}
 	
 	/**

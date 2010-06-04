@@ -75,6 +75,7 @@ public class InsertAgent<K,V> implements ReduceGridAgent
 		}
 		catch(Exception e)
 		{
+			e.printStackTrace();
 			agent.getKeysMetric().logException(e);
 			return Boolean.FALSE;
 		}

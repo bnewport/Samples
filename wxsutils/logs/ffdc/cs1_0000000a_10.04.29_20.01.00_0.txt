@@ -1,0 +1,58 @@
+------Start of DE processing------ = [4/29/10 20:01:00:505 CDT] , key = com.ibm.websphere.objectgrid.ConnectException com.ibm.ws.objectgrid.em.EMFactoryImpl.activate 340
+Exception = com.ibm.websphere.objectgrid.ConnectException
+Source = com.ibm.ws.objectgrid.em.EMFactoryImpl.activate
+probeid = 340
+Stack Dump = com.ibm.websphere.objectgrid.ConnectException: 
+	at com.ibm.ws.objectgrid.ObjectGridManagerImpl.connect(ObjectGridManagerImpl.java:1631)
+	at com.ibm.ws.objectgrid.ObjectGridManagerImpl.connect(ObjectGridManagerImpl.java:1465)
+	at com.ibm.ws.objectgrid.ObjectGridManagerImpl.connect(ObjectGridManagerImpl.java:1497)
+	at com.ibm.ws.objectgrid.ObjectGridManagerImpl.connect(ObjectGridManagerImpl.java:2251)
+	at com.ibm.ws.objectgrid.em.EMFactoryImpl.activate(EMFactoryImpl.java:723)
+	at com.ibm.ws.objectgrid.runtime.ServerRuntimeFrameWorkImpl.activate(ServerRuntimeFrameWorkImpl.java:1353)
+	at com.ibm.ws.objectgrid.Launcher.launchServerRuntimeFrameWork(Launcher.java:393)
+	at com.ibm.ws.objectgrid.ServerImpl.startCatalogService(ServerImpl.java:1328)
+	at com.ibm.ws.objectgrid.ServerImpl.<init>(ServerImpl.java:402)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:39)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:27)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:513)
+	at java.lang.Class.newInstance0(Class.java:355)
+	at java.lang.Class.newInstance(Class.java:308)
+	at com.ibm.websphere.objectgrid.server.ServerFactory.initialize(ServerFactory.java:311)
+	at com.ibm.websphere.objectgrid.server.ServerFactory$2.run(ServerFactory.java:268)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at com.ibm.websphere.objectgrid.server.ServerFactory.getInstance(ServerFactory.java:266)
+	at com.devwebsphere.wxsutils.WXSUtils.startCatalogServer(WXSUtils.java:533)
+	at com.devwebsphere.wxsutils.WXSUtils.startTestServer(WXSUtils.java:553)
+	at com.devwebsphere.wxsutils.TestClientAPIs.setupTest(TestClientAPIs.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:44)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:15)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:41)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:27)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:236)
+	at org.eclipse.jdt.internal.junit4.runner.JUnit4TestReference.run(JUnit4TestReference.java:46)
+	at org.eclipse.jdt.internal.junit.runner.TestExecution.run(TestExecution.java:38)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.runTests(RemoteTestRunner.java:467)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.runTests(RemoteTestRunner.java:683)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.run(RemoteTestRunner.java:390)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.main(RemoteTestRunner.java:197)
+Caused by: com.ibm.websphere.objectgrid.ObjectGridRuntimeException: Unable to get configuration to bootstrap from
+	at com.ibm.ws.objectgrid.runtime.RuntimeFrameWorkImpl.bootstrap(RuntimeFrameWorkImpl.java:411)
+	at com.ibm.ws.objectgrid.ObjectGridManagerImpl.connect(ObjectGridManagerImpl.java:1617)
+	... 36 more
+
+Dump of callerThis = 
+Object type = com.ibm.ws.objectgrid.em.EMFactoryImpl
+com.ibm.ws.objectgrid.em.EMFactoryImpl@29178281
+
+Exception = com.ibm.websphere.objectgrid.ConnectException
+Source = com.ibm.ws.objectgrid.em.EMFactoryImpl.activate
+probeid = 340
+Dump of callerThis = 
+Object type = com.ibm.ws.objectgrid.em.EMFactoryImpl
+com.ibm.ws.objectgrid.em.EMFactoryImpl@29178281
+

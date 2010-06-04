@@ -12,7 +12,7 @@ package com.devwebsphere.wxsutils;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.devwebsphere.wxsutils.jmx.wxsmap.WXSMapMBeanImpl;
@@ -109,9 +109,15 @@ public class WXSMap <K,V>
 		{
 			InsertAgent<K, V> a = new InsertAgent<K, V>();
 			a.doGet = true;
-			a.batch = new Hashtable<K, V>();
+			a.batch = new HashMap<K, V>();
 			a.batch.put(k, v);
-			tls.getMap(mapName).getAgentManager().callReduceAgent(a, Collections.singletonList(k));
+			Object o = tls.getMap(mapName).getAgentManager().callReduceAgent(a, Collections.singletonList(k));
+			if(o instanceof Boolean)
+			{
+				Boolean b = (Boolean)o;
+				if(!b)
+					throw new ObjectGridRuntimeException("put failed");
+			}
 			mbean.getPutMetrics().logTime(System.nanoTime() - start);
 		}
 		catch(Exception e)

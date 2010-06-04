@@ -61,6 +61,18 @@ public class TestClientAPIs
 		}
 	}
 	
+	@Test
+	public void testPut()
+	{
+		clearMap();
+		WXSMap<String, String> map = utils.getCache(bmFarMap3.getName());
+		String value = "B";
+		map.put("A", value);
+		Assert.assertTrue(map.contains("A"));
+		String v = map.get("A");
+		Assert.assertEquals(value, v);
+	}
+
 	/**
 	 * This tests the basic putAll/getAll/removeAll capabilities
 	 */
