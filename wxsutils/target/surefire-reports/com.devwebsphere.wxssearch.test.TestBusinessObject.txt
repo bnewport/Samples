@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
 Test set: com.devwebsphere.wxssearch.test.TestBusinessObject
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.005 sec <<< FAILURE!
-initializationError(com.devwebsphere.wxssearch.test.TestBusinessObject)  Time elapsed: 0.003 sec  <<< ERROR!
+Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.003 sec <<< FAILURE!
+initializationError(com.devwebsphere.wxssearch.test.TestBusinessObject)  Time elapsed: 0.002 sec  <<< ERROR!
 java.lang.Exception: No runnable methods
 	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:171)
 	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:115)
