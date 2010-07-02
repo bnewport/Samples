@@ -24,6 +24,8 @@ public class WXSMapMBeanImpl implements WXSMapMBean
 	MinMaxAvgMetric insertMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric removeMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric containsMetric = new MinMaxAvgMetric();
+	MinMaxAvgMetric lockMetric = new MinMaxAvgMetric();
+	MinMaxAvgMetric unlockMetric = new MinMaxAvgMetric();
 	
 	@TabularKey
 	public final String getMapName() {
@@ -65,6 +67,16 @@ public class WXSMapMBeanImpl implements WXSMapMBean
 	public MinMaxAvgMetric getInsertMetrics()
 	{
 		return insertMetric;
+	}
+	
+	public MinMaxAvgMetric getLockMetrics()
+	{
+		return lockMetric;
+	}
+
+	public MinMaxAvgMetric getUnlockMetrics()
+	{
+		return unlockMetric;
 	}
 	
 	/* (non-Javadoc)
@@ -331,4 +343,111 @@ public class WXSMapMBeanImpl implements WXSMapMBean
 	public Double getContainsTotalTimeMS() {
 		return new Double(containsMetric.getTotalTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
+	
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getGetExceptionCount()
+	 */
+	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
+	public Integer getLockExceptionCount() 
+	{
+		return new Integer(getMetric.getExceptionCount());
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getLockLastExceptionString()
+	 */
+	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
+	public String getLockLastExceptionString() 
+	{
+		Throwable t = lockMetric.getLastException();
+		if(t != null)
+		{
+			return t.toString();
+		}
+		else
+			return "<>";
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getLockTimeAvgMS()
+	 */
+	@TabularAttribute
+	public Double getLockTimeAvgMS() 
+	{
+		return new Double(lockMetric.getAvgTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getLockTimeMaxMS()
+	 */
+	@TabularAttribute
+	public Double getLockTimeMaxMS() 
+	{
+		return new Double(lockMetric.getMaxTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getLockTimeMinMS()
+	 */
+	@TabularAttribute
+	public Double getLockTimeMinMS() {
+		return new Double(lockMetric.getMinTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getLockTotalTimeMS()
+	 */
+	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
+	public Double getLockTotalTimeMS() {
+		return new Double(lockMetric.getTotalTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
+	}
+
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getUnlockExceptionCount()
+	 */
+	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
+	public Integer getUnlockExceptionCount() 
+	{
+		return new Integer(unlockMetric.getExceptionCount());
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getUnlockLastExceptionString()
+	 */
+	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
+	public String getUnlockLastExceptionString() 
+	{
+		Throwable t = unlockMetric.getLastException();
+		if(t != null)
+		{
+			return t.toString();
+		}
+		else
+			return "<>";
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getUnlockTimeAvgMS()
+	 */
+	@TabularAttribute
+	public Double getUnlockTimeAvgMS() 
+	{
+		return new Double(unlockMetric.getAvgTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getUnlockTimeMaxMS()
+	 */
+	@TabularAttribute
+	public Double getUnlockTimeMaxMS() 
+	{
+		return new Double(unlockMetric.getMaxTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getUnlockTimeMinMS()
+	 */
+	@TabularAttribute
+	public Double getUnlockTimeMinMS() {
+		return new Double(unlockMetric.getMinTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getUnlockTotalTimeMS()
+	 */
+	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
+	public Double getUnlockTotalTimeMS() {
+		return new Double(unlockMetric.getTotalTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
+	}
+
 }

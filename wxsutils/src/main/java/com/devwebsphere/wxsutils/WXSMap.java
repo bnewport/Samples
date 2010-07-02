@@ -19,6 +19,8 @@ import com.devwebsphere.wxsutils.jmx.wxsmap.WXSMapMBeanImpl;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
+import com.ibm.websphere.objectgrid.ObjectMap;
+import com.ibm.websphere.objectgrid.Session;
 
 /**
  * This is a simplified interface to a WXS Map. It throws runtime exceptions and is completely
@@ -226,5 +228,72 @@ public class WXSMap <K,V>
 			mbean.getContainsMetrics().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
+	}
+	
+	/**
+	 * This get an advisory lock on a key. In reality, it inserts a record in a 'lock' map to acquire ownership
+	 * of a notional named lock (the name is the key). It will try to acquire the lock for at least timeoutMs.
+	 * Once acquired, the lock is permanent until the lock is removed OR evictor by configuring a default evictor
+	 * on the lock map.
+	 * @param k The name of the lock
+	 * @param value Any value, doesn't matter, typically use a Boolean
+	 * @param timeOutMS Desired max wait time for a lock
+	 * @return true if lock is acquired.
+	 */
+	public boolean lock(K k, V value, int timeOutMS)
+	{
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
+		long start = System.nanoTime();
+		Session sess = tls.getSession();
+		try
+		{
+			sess.begin();
+			ObjectMap map = sess.getMap(mapName);
+			map.setLockTimeout(timeOutMS);
+			V old = (V)map.getForUpdate(k);
+			if(old != null)
+			{
+				map.update(k, value);
+			}
+			else
+			{
+				map.insert(k, value);
+			}
+			sess.commit();
+			mbean.getLockMetrics().logTime(System.nanoTime() - start);
+			return true;
+		}
+		catch(Exception e)
+		{
+			mbean.getLockMetrics().logException(e);
+		}
+		finally
+		{
+			if(sess.isTransactionActive())
+			{
+				try { sess.rollback(); } catch(Exception e2) {}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Unlock a lock acquired by lock.
+	 * @param k The name of the lock
+	 */
+	public void unlock(K k)
+	{
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
+		long start = System.nanoTime();
+		try
+		{
+			tls.getMap(mapName).remove(k);
+		}
+		catch(Exception e)
+		{
+			mbean.getUnlockMetrics().logException(e);
+			throw new ObjectGridRuntimeException(e);
+		}
+		mbean.getUnlockMetrics().logTime(System.nanoTime() - start);
 	}
 }
