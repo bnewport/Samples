@@ -10,11 +10,8 @@
 //
 package com.devwebsphere.wxs.fs;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -155,9 +152,14 @@ public class GridOutputStream
 		{
 			logger.log(Level.FINEST, this.toString() + ":write/3");
 		}
-		byte[] buffer = new byte[len];
-		System.arraycopy(b, off, buffer, 0, len);
-		write(buffer);
+		if(off == 0 && len == b.length)
+			write(b);
+		else
+		{
+			byte[] buffer = new byte[len];
+			System.arraycopy(b, off, buffer, 0, len);
+			write(buffer);
+		}
 	}
 
 	public void close() throws IOException {

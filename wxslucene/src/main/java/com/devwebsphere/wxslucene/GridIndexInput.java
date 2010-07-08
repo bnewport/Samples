@@ -39,7 +39,7 @@ public class GridIndexInput extends IndexInput
 	{
 		logger.log(Level.WARNING, "getFilePointer called for " + stream.toString());
 		// TODO Auto-generated method stub
-		return 0;
+		return stream.getAbsolutePosition();
 	}
 
 	@Override

@@ -11,6 +11,7 @@
 package com.devwebsphere;
 
 import java.io.IOException;
+import java.util.Random;
 
 import junit.framework.Assert;
 
@@ -38,6 +39,67 @@ public class TestGridFile
 		utils = new WXSUtils(testGrid);
 	}
 	
+	@Test
+	public void testWriteReadFileInBytesRandom()
+		throws IOException
+	{
+		
+		GridFile file = new GridFile(utils, "test_random");
+		
+		GridOutputStream gos = new GridOutputStream(utils, file);
+		
+		int numBytes = 100000;
+		for(int i = 0; i < numBytes; ++i)
+		{
+			int v = i % 256;
+			byte b = (byte)(v);
+			gos.write(v);
+		}
+		
+		gos.close();
+		
+		GridInputStream gis = new GridInputStream(utils, file);
+
+		for(int i = 0; i < numBytes; ++i)
+		{
+			int by = gis.read();
+			if(by < 0) by += 256;
+			Assert.assertEquals(i % 256, by);
+		}
+		
+		Random r = new Random();
+		byte[] data = new byte[20];
+		for(int i = 0; i < numBytes; ++i)
+		{
+			int testPosition = Math.abs(r.nextInt()) % (numBytes - data.length);
+			gis.seek(testPosition);
+			readFully(gis, data);
+			for(int j = 0; j < data.length; ++j)
+			{
+				int expected = (testPosition + j) % 256;
+				int actual = data[j];
+				if(actual < 0) actual += 256;
+				Assert.assertEquals(expected, actual);
+			}
+		}
+		
+		// try bigger blocks
+		data = new byte[GridOutputStream.BLOCK_SIZE * 2 + 3];
+		for(int i = 0; i < numBytes; ++i)
+		{
+			int testPosition = Math.abs(r.nextInt()) % (numBytes - data.length);
+			gis.seek(testPosition);
+			readFully(gis, data);
+			for(int j = 0; j < data.length; ++j)
+			{
+				int expected = (testPosition + j) % 256;
+				int actual = data[j];
+				if(actual < 0) actual += 256;
+				Assert.assertEquals(expected, actual);
+			}
+		}
+	}
+
 	@Test
 	public void testWriteReadFile()
 		throws IOException
@@ -175,5 +237,18 @@ public class TestGridFile
 		String copyString = new String(copy);
 		
 		Assert.assertEquals(originalString, copyString);
+	}
+	
+	static void readFully(GridInputStream gis, byte[] copy)
+		throws IOException
+	{
+		int toGo = copy.length;
+		int offset = 0;
+		while(toGo > 0)
+		{
+			int c = gis.read(copy, offset, toGo);
+			toGo -= c;
+			offset += c;
+		}
 	}
 }

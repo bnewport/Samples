@@ -5,7 +5,7 @@
   <classpathentry kind="src" path="src/main/resources" excluding="**/*.java"/>
   <classpathentry kind="output" path="target/classes"/>
   <classpathentry kind="var" path="M2_REPO/junit/junit/4.8.1/junit-4.8.1.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/apache/lucene/lucene-core/2.4.1/lucene-core-2.4.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/lucene/lucene-core/2.9.3/lucene-core-2.9.3.jar"/>
   <classpathentry kind="var" path="M2_REPO/com/ibm/websphere/objectgrid/objectgrid-server/7.0.0.2/objectgrid-server-7.0.0.2.jar"/>
   <classpathentry kind="var" path="M2_REPO/com/billynewport/wxsutils/wxsutils/1.2-SNAPSHOT/wxsutils-1.2-SNAPSHOT.jar"/>
   <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>

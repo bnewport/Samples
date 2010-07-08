@@ -121,26 +121,33 @@ public class GridInputStream
 		{
 			logger.log(Level.FINER, this.toString() + ":read/1");
 		}
-		if(areBytesAvailable())
+		if(!areBytesAvailable())
+			return -1;
+		
+		int toGo = b.length;
+		int offset = 0;
+		
+		while(areBytesAvailable() && toGo > 0)
 		{
 			int bytesAvailable = currentValue.length - currentPosition;
-			if(bytesAvailable <= b.length)
+			if(bytesAvailable < toGo)
 			{
-				System.arraycopy(currentValue, currentPosition, b, 0, bytesAvailable);
+				System.arraycopy(currentValue, currentPosition, b, offset, bytesAvailable);
+				offset += bytesAvailable;
+				toGo -= bytesAvailable;
 				currentPosition += bytesAvailable;
 				currentAbsolutePosition += bytesAvailable;
-				return bytesAvailable;
 			}
 			else
 			{
-				System.arraycopy(currentValue, currentPosition, b, 0, b.length);
-				currentPosition += b.length;
-				currentAbsolutePosition += bytesAvailable;
-				return b.length;
+				System.arraycopy(currentValue, currentPosition, b, offset, toGo);
+				offset += toGo;
+				currentPosition += toGo;
+				currentAbsolutePosition += toGo;
+				toGo = 0;
 			}
 		}
-		else
-			return -1;
+		return offset;
 	}
 
 	public int read(byte[] b, int off, int len) throws IOException 
@@ -202,5 +209,10 @@ public class GridInputStream
 		n = Math.min(n, md.getActualSize());
 		currentAbsolutePosition = 0;
 		skip(n);
+	}
+	
+	public long getAbsolutePosition()
+	{
+		return currentAbsolutePosition;
 	}
 }

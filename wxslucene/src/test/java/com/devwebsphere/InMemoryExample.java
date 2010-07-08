@@ -2,12 +2,16 @@ package com.devwebsphere;
 /**
  * A simple example of an in-memory search using Lucene.
  */
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+
+import junit.framework.Assert;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.index.IndexFileNameFilter;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
@@ -16,7 +20,11 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Searcher;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.store.BufferedIndexOutput;
+import org.apache.lucene.store.ChecksumIndexInput;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.IndexOutput;
+import org.apache.lucene.store.NIOFSDirectory;
 
 import com.devwebsphere.wxslucene.GridDirectory;
 import com.devwebsphere.wxsutils.WXSUtils;
@@ -24,50 +32,119 @@ import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.plugins.TransactionCallbackException;
 
-public class InMemoryExample {
+public class InMemoryExample 
+{
+	static final int BUFFER_SIZE = 16384;
+	  public static void copy(Directory src, Directory dest, boolean closeDirSrc) throws IOException {
+		    final String[] files = src.listAll();
+
+		    IndexFileNameFilter filter = IndexFileNameFilter.getFilter();
+
+		    byte[] buf = new byte[BUFFER_SIZE];
+		    for (int i = 0; i < files.length; i++) {
+
+		      if (!filter.accept(null, files[i]))
+		        continue;
+
+		      IndexOutput os = null;
+		      ChecksumIndexInput is = null;
+		      try {
+		        // create file in dest directory
+		        os = dest.createOutput(files[i]);
+		        // read current file
+		        is = new ChecksumIndexInput(src.openInput(files[i]));
+		        System.out.println("Input " + files[i] + " size is " + is.length());
+		        // and copy to dest directory
+		        long len = is.length();
+		        long readCount = 0;
+		        while (readCount < len) {
+		          int toRead = readCount + BUFFER_SIZE > len ? (int)(len - readCount) : BUFFER_SIZE;
+		          is.readBytes(buf, 0, toRead);
+		          os.writeBytes(buf, toRead);
+		          readCount += toRead;
+		        }
+		        long src_sum = is.getChecksum();
+		        os.flush();
+		        System.out.println("Checksum for " + files[i] + " = " + src_sum);
+
+		        ChecksumIndexInput dst_check_stream = new ChecksumIndexInput(dest.openInput(files[i]));
+
+		        long dst_length = dst_check_stream.length();
+		        Assert.assertEquals(len, dst_length);
+		        len = dst_check_stream.length();
+		        readCount = 0;
+		        while(readCount < len) {
+		            int toRead = readCount + BUFFER_SIZE > len ? (int)(len - readCount) : BUFFER_SIZE;
+		            dst_check_stream.readBytes(buf, 0, toRead);
+		            readCount += toRead;
+		            System.out.println("Read " + readCount + "file thinks " + dst_check_stream.getFilePointer());
+		        }
+		        long dst_sum = dst_check_stream.getChecksum();
+		        System.out.println("Dst Checksum for " + files[i] + " = " + dst_sum);
+		        Assert.assertEquals(src_sum, dst_sum);
+		      } finally {
+		        // graceful cleanup
+		        try {
+		          if (os != null)
+		            os.close();
+		        } finally {
+		          if (is != null)
+		            is.close();
+		        }
+		      }
+		    }
+		    if(closeDirSrc)
+		      src.close();
+		  }
+
 
     @SuppressWarnings("deprecation")
-    public static void main(String[] args) throws TransactionCallbackException, ObjectGridException {
+    public static void main(String[] args) throws TransactionCallbackException, ObjectGridException, IOException {
         // Construct a RAMDirectory to hold the in-memory representation
         // of the index.
         
         ObjectGrid grid = WXSUtils.startTestServer("Grid", "/objectgrid.xml", "/deployment.xml");
         WXSUtils utils = new WXSUtils(grid);
         Directory idx = new GridDirectory(utils, "test");
+    	File file = new File("/Users/ibm/Downloads/artist_index_2");
+    	Directory diskidx = NIOFSDirectory.getDirectory(file);
+    	Directory.copy(diskidx, idx, true);
+    	
+    	
 
         try {
-            // Make an writer to create the index
-            IndexWriter writer =
-                new IndexWriter(idx, new StandardAnalyzer(), true, new IndexWriter.MaxFieldLength(5000));
-
-            // Add some Document objects containing quotes
-            writer.addDocument(createDocument("Theodore Roosevelt",
-                "It behooves every man to remember that the work of the " +
-                "critic, is of altogether secondary importance, and that, " +
-                "in the end, progress is accomplished by the man who does " +
-                "things."));
-            writer.addDocument(createDocument("Friedrich Hayek",
-                "The case for individual freedom rests largely on the " +
-                "recognition of the inevitable and universal ignorance " +
-                "of all of us concerning a great many of the factors on " +
-                "which the achievements of our ends and welfare depend."));
-            writer.addDocument(createDocument("Ayn Rand",
-                "There is nothing to take a man's freedom away from " +
-                "him, save other men. To be free, a man must be free " +
-                "of his brothers."));
-            writer.addDocument(createDocument("Mohandas Gandhi",
-                "Freedom is not worth having if it does not connote " +
-                "freedom to err."));
-
-            // Optimize and close the writer to finish building the index
-            writer.optimize();
-            writer.close();
+//            // Make an writer to create the index
+//            IndexWriter writer =
+//                new IndexWriter(idx, new StandardAnalyzer(), true, new IndexWriter.MaxFieldLength(5000));
+//
+//            // Add some Document objects containing quotes
+//            writer.addDocument(createDocument("Theodore Roosevelt",
+//                "It behooves every man to remember that the work of the " +
+//                "critic, is of altogether secondary importance, and that, " +
+//                "in the end, progress is accomplished by the man who does " +
+//                "things."));
+//            writer.addDocument(createDocument("Friedrich Hayek",
+//                "The case for individual freedom rests largely on the " +
+//                "recognition of the inevitable and universal ignorance " +
+//                "of all of us concerning a great many of the factors on " +
+//                "which the achievements of our ends and welfare depend."));
+//            writer.addDocument(createDocument("Ayn Rand",
+//                "There is nothing to take a man's freedom away from " +
+//                "him, save other men. To be free, a man must be free " +
+//                "of his brothers."));
+//            writer.addDocument(createDocument("Mohandas Gandhi",
+//                "Freedom is not worth having if it does not connote " +
+//                "freedom to err."));
+//
+//            // Optimize and close the writer to finish building the index
+//            writer.optimize();
+//            writer.close();
 
             // Build an IndexSearcher using the in-memory index
             Searcher searcher = new IndexSearcher(idx);
 
             // Run some queries
-            search(searcher, "freedom");
+            search(searcher, "britney");
             search(searcher, "free");
             search(searcher, "progress or achievements");
 
