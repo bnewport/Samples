@@ -11,17 +11,13 @@
 package com.devwebsphere.wxs.fs;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxslucene.GridDirectory;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 
@@ -37,11 +33,13 @@ public class GridFile
 	FileMetaData md;
 	boolean exists;
 	WXSMap<String, FileMetaData> mdMap;
+	GridDirectory parent;
 
-	public GridFile(WXSUtils client, String pathname) 
+	public GridFile(GridDirectory parent, String pathname) 
 	{
-		this.client = client;
-		fullPath = pathname;
+		this.parent = parent;
+		this.client = parent.getWXSUtils();
+		fullPath = parent.getName() + "/" + pathname;
 		mdMap = client.getCache(MapNames.MD_MAP);
 		md = mdMap.get(fullPath);
 		exists = (md != null);
@@ -57,13 +55,13 @@ public class GridFile
 		{
 			logger.log(Level.FINEST, this.toString() + ":getName");
 		}
-		StringTokenizer tok = new StringTokenizer(fullPath, "" + File.separatorChar);
-		String name = null;
-		while(tok.hasMoreTokens())
-		{
-			name = tok.nextToken();
-		}
-		return name;
+//		StringTokenizer tok = new StringTokenizer(fullPath, "" + File.separatorChar);
+//		String name = null;
+//		while(tok.hasMoreTokens())
+//		{
+//			name = tok.nextToken();
+//		}
+		return fullPath;
 	}
 
 	public String getPath() {
@@ -71,7 +69,7 @@ public class GridFile
 		{
 			logger.log(Level.FINEST, this.toString() + ":getPath");
 		}
-		return "";
+		return parent.getName();
 	}
 
 	public boolean isAbsolute() {

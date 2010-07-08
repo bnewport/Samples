@@ -21,6 +21,7 @@ import org.junit.Test;
 import com.devwebsphere.wxs.fs.GridFile;
 import com.devwebsphere.wxs.fs.GridInputStream;
 import com.devwebsphere.wxs.fs.GridOutputStream;
+import com.devwebsphere.wxslucene.GridDirectory;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
@@ -29,6 +30,7 @@ public class TestGridFile
 {
 	static ObjectGrid testGrid;
 	static WXSUtils utils;
+	static GridDirectory dir;
 	
 	@BeforeClass
 	static public void initialize()
@@ -37,6 +39,7 @@ public class TestGridFile
 		testGrid = WXSUtils.startTestServer("Grid", "/objectgrid.xml", "/deployment.xml");
 		
 		utils = new WXSUtils(testGrid);
+		dir = new GridDirectory(utils, "test");
 	}
 	
 	@Test
@@ -44,7 +47,7 @@ public class TestGridFile
 		throws IOException
 	{
 		
-		GridFile file = new GridFile(utils, "test_random");
+		GridFile file = new GridFile(dir, "test_random");
 		
 		GridOutputStream gos = new GridOutputStream(utils, file);
 		
@@ -105,7 +108,7 @@ public class TestGridFile
 		throws IOException
 	{
 		
-		GridFile file = new GridFile(utils, "test");
+		GridFile file = new GridFile(dir, "test");
 		
 		GridOutputStream gos = new GridOutputStream(utils, file);
 		
@@ -147,7 +150,7 @@ public class TestGridFile
 		throws IOException
 	{
 		
-		GridFile file = new GridFile(utils, "test2");
+		GridFile file = new GridFile(dir, "test2");
 		
 		GridOutputStream gos = new GridOutputStream(utils, file);
 		
@@ -196,7 +199,7 @@ public class TestGridFile
 		throws IOException
 	{
 		
-		GridFile file = new GridFile(utils, "test3");
+		GridFile file = new GridFile(dir, "test3");
 		
 		GridOutputStream gos = new GridOutputStream(utils, file);
 		

@@ -35,6 +35,16 @@ public class GridDirectory extends Directory
 	WXSMap<String, Set<String>> dirMap;
 	String name;
 
+	public String getName()
+	{
+		return name;
+	}
+	
+	public WXSUtils getWXSUtils()
+	{
+		return client;
+	}
+	
 	public GridDirectory(WXSUtils client, String directoryName)
 	{
 		if(logger.isLoggable(Level.INFO))
@@ -69,7 +79,7 @@ public class GridDirectory extends Directory
 			files.add(pathname);
 			dirMap.put(name, files);
 		}
-		GridFile file = new GridFile(client, pathname);
+		GridFile file = new GridFile(this, pathname);
 		GridOutputStream os = new GridOutputStream(client, file);
 		return new GridIndexOutput(os);
 	}
@@ -85,7 +95,7 @@ public class GridDirectory extends Directory
 		if(files.contains(pathname))
 		{
 			files.remove(pathname);
-			GridFile file = new GridFile(client, pathname);
+			GridFile file = new GridFile(this, pathname);
 			file.delete();
 			dirMap.put(name, files);
 		}
@@ -98,20 +108,20 @@ public class GridDirectory extends Directory
 	@Override
 	public boolean fileExists(String pathname) throws IOException 
 	{
-		GridFile file = new GridFile(client, pathname);
+		GridFile file = new GridFile(this, pathname);
 		return file.exists();
 	}
 
 	@Override
 	public long fileLength(String pathname) throws IOException 
 	{
-		GridFile file = new GridFile(client, pathname);
+		GridFile file = new GridFile(this, pathname);
 		return file.length();
 	}
 
 	@Override
 	public long fileModified(String pathname) throws IOException {
-		GridFile file = new GridFile(client, pathname);
+		GridFile file = new GridFile(this, pathname);
 		return file.lastModified();
 	}
 
@@ -148,7 +158,7 @@ public class GridDirectory extends Directory
 		{
 			logger.log(Level.FINE, "GridDirectory#openInput: " + pathname);
 		}
-		GridFile file = new GridFile(client, pathname);
+		GridFile file = new GridFile(this, pathname);
 		GridInputStream is = new GridInputStream(client, file);
 		return new GridIndexInput(is);
 	}
@@ -162,7 +172,7 @@ public class GridDirectory extends Directory
 	@Override
 	public void touchFile(String pathname) throws IOException 
 	{
-		GridFile file = new GridFile(client, pathname);
+		GridFile file = new GridFile(this, pathname);
 		file.setLastModified(System.currentTimeMillis());
 	}
 
