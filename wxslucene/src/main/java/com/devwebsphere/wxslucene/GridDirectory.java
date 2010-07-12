@@ -34,6 +34,16 @@ public class GridDirectory extends Directory
 	WXSUtils client;
 	WXSMap<String, Set<String>> dirMap;
 	String name;
+	boolean isAsyncEnabled;
+
+	public final boolean isAsyncEnabled() {
+		return isAsyncEnabled;
+	}
+
+	public final void setAsyncEnabled(boolean isAsyncEnabled) {
+		this.isAsyncEnabled = isAsyncEnabled;
+		logger.log(Level.INFO, "Async enabled = " + isAsyncEnabled + " for directory " + name);
+	}
 
 	public String getName()
 	{
@@ -81,6 +91,8 @@ public class GridDirectory extends Directory
 		}
 		GridFile file = new GridFile(this, pathname);
 		GridOutputStream os = new GridOutputStream(client, file);
+		if(isAsyncEnabled)
+			os.enableAsyncWrite();
 		return new GridIndexOutput(os);
 	}
 

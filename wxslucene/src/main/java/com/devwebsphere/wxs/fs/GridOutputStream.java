@@ -12,6 +12,8 @@ package com.devwebsphere.wxs.fs;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,6 +34,7 @@ public class GridOutputStream
 	int currentPosition;
 	long absolutePosition;
 	FileMetaData md;
+	Map<String, byte[]> asyncBuffers;
 
 	public FileMetaData getMetaData()
 	{
@@ -61,6 +64,11 @@ public class GridOutputStream
 		}
 		if(logger.isLoggable(Level.FINE))
 			logger.log(Level.FINE, "Opened output stream " + fileName + " size = " + md.getActualSize());
+	}
+	
+	public void enableAsyncWrite()
+	{
+		asyncBuffers = new HashMap<String, byte[]>();
 	}
 
 	public void seek(long n)
@@ -128,7 +136,18 @@ public class GridOutputStream
 	void flushCurrentBuffer()
 	{
 		String bucketKey = GridInputStream.generateKey(fileName, currentBucket);
-		chunkMap.put(bucketKey, buffer);
+		if(asyncBuffers == null)
+			chunkMap.put(bucketKey, buffer);
+		else
+		{
+			asyncBuffers.put(bucketKey, buffer.clone());
+			if(asyncBuffers.size() > 40)
+			{
+				chunkMap.putAll(asyncBuffers);
+				asyncBuffers.clear();
+			}
+		}
+		md.setLastModifiedTime(System.currentTimeMillis());
 	}
 	
 	void flushCurrentBufferAndAdvance()
@@ -177,6 +196,11 @@ public class GridOutputStream
 			logger.log(Level.FINEST, this.toString() + ":flush:Current size " + md.getActualSize());
 		}
 		flushCurrentBuffer();
+		if(asyncBuffers != null)
+		{
+			chunkMap.putAll(asyncBuffers);
+			asyncBuffers.clear();
+		}
 		mdMap.put(fileName, md);
 	}
 
