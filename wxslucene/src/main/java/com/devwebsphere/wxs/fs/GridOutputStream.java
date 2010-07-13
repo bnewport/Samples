@@ -10,12 +10,18 @@
 //
 package com.devwebsphere.wxs.fs;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
@@ -59,8 +65,10 @@ public class GridOutputStream
 		if(md == null)
 		{
 			md = new FileMetaData();
-			mdMap.put(fileName, md);
 			md.setActualSize(0);
+			if(file.getParent().isCompressionEnabled())
+				md.setCompressed();
+			mdMap.put(fileName, md);
 		}
 		if(logger.isLoggable(Level.FINE))
 			logger.log(Level.FINE, "Opened output stream " + fileName + " size = " + md.getActualSize());
@@ -71,13 +79,59 @@ public class GridOutputStream
 		asyncBuffers = new HashMap<String, byte[]>();
 	}
 
+	static byte[] unZip(FileMetaData md, byte[] b)
+		throws IOException
+	{
+		byte[] o = null;
+		if(b != null && md.isCompressed())
+		{
+			ByteArrayInputStream bis = new ByteArrayInputStream(b);
+			InflaterInputStream zis = new InflaterInputStream(bis);
+			o = new byte[BLOCK_SIZE];
+			int offset = 0;
+			int toGo = BLOCK_SIZE;
+			while(toGo > 0)
+			{
+				int c = zis.read(o, offset, toGo);
+				offset += c;
+				toGo -= c;
+			}
+			zis.close();
+			bis.close();
+		}
+		else
+			o = b;
+		return o;
+	}
+
+	static byte[] zip(FileMetaData md, byte[] b)
+		throws IOException
+	{
+		if(b.length != BLOCK_SIZE)
+		{
+			System.out.println("oop");
+		}
+		if(md.isCompressed())
+		{
+			ByteArrayOutputStream bos = new ByteArrayOutputStream(BLOCK_SIZE);
+			DeflaterOutputStream zos = new DeflaterOutputStream(bos);
+			zos.write(b);
+			zos.close();
+			bos.close();
+			return bos.toByteArray();
+		}
+		else
+			return b;
+	}
+	
 	public void seek(long n)
+		throws IOException
 	{
 		if(logger.isLoggable(Level.FINE))
 			logger.log(Level.FINE, "seek to " + n + " in " + fileName);
 		flushCurrentBuffer();
 		currentBucket = n / BLOCK_SIZE;
-		buffer = chunkMap.get(GridInputStream.generateKey(fileName, currentBucket));
+		buffer = unZip(md, chunkMap.get(GridInputStream.generateKey(fileName, currentBucket)));
 		if(buffer == null) // could be sparse
 		{
 			buffer = new byte[BLOCK_SIZE];
@@ -105,6 +159,7 @@ public class GridOutputStream
 	}
 
 	void writeArray(byte[] b)
+		throws IOException
 	{
 //		if(logger.isLoggable(Level.FINEST))
 //		{
@@ -134,13 +189,15 @@ public class GridOutputStream
 	}
 	
 	void flushCurrentBuffer()
+		throws IOException
 	{
 		String bucketKey = GridInputStream.generateKey(fileName, currentBucket);
+		byte[] obuffer = zip(md, buffer);
 		if(asyncBuffers == null)
-			chunkMap.put(bucketKey, buffer);
+			chunkMap.put(bucketKey, obuffer);
 		else
 		{
-			asyncBuffers.put(bucketKey, buffer.clone());
+			asyncBuffers.put(bucketKey, md.isCompressed() ? obuffer : buffer.clone());
 			if(asyncBuffers.size() > 40)
 			{
 				chunkMap.putAll(asyncBuffers);
@@ -151,6 +208,7 @@ public class GridOutputStream
 	}
 	
 	void flushCurrentBufferAndAdvance()
+		throws IOException
 	{
 		flushCurrentBuffer();
 		currentPosition = 0;

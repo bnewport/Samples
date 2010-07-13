@@ -41,7 +41,7 @@ public class GridInputStream
 		return "GridInputStream(" + fileName + " pos = " + currentAbsolutePosition + " max= " + md.getActualSize();
 	}
 	
-	public GridInputStream(WXSUtils utils, GridFile file) throws FileNotFoundException 
+	public GridInputStream(WXSUtils utils, GridFile file) throws FileNotFoundException, IOException 
 	{
 		this.utils = utils;
 		streamMap = utils.getCache(MapNames.CHUNK_MAP);
@@ -58,7 +58,7 @@ public class GridInputStream
 		}
 		currentAbsolutePosition = 0;
 		currentBucket = 0;
-		currentValue = streamMap.get(generateKey(fileName, currentBucket));
+		currentValue = GridOutputStream.unZip(md, streamMap.get(generateKey(fileName, currentBucket)));
 	}
 
 	static String generateKey(String fileName, long bucket)
@@ -71,6 +71,7 @@ public class GridInputStream
 	}
 	
 	boolean areBytesAvailable()
+		throws IOException
 	{
 		if(currentAbsolutePosition == md.getActualSize())
 		{
@@ -83,7 +84,7 @@ public class GridInputStream
 		if(currentValue == null || currentPosition == currentValue.length)
 		{
 			currentBucket++;
-			currentValue = streamMap.get(generateKey(fileName, currentBucket));
+			currentValue = GridOutputStream.unZip(md, streamMap.get(generateKey(fileName, currentBucket)));
 			if(currentValue == null)
 			{
 				currentValue = new byte[GridOutputStream.BLOCK_SIZE];
@@ -179,7 +180,7 @@ public class GridInputStream
 		if(newBucket != currentBucket)
 		{
 			currentBucket = newBucket;
-			currentValue = streamMap.get(generateKey(fileName, currentBucket));
+			currentValue = GridOutputStream.unZip(md, streamMap.get(generateKey(fileName, currentBucket)));
 			if(currentValue == null)
 				currentValue = new byte[GridOutputStream.BLOCK_SIZE];
 		}

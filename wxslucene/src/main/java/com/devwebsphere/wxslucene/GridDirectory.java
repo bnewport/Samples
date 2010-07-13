@@ -35,6 +35,7 @@ public class GridDirectory extends Directory
 	WXSMap<String, Set<String>> dirMap;
 	String name;
 	boolean isAsyncEnabled;
+	boolean isCompressionEnabled;
 
 	public final boolean isAsyncEnabled() {
 		return isAsyncEnabled;
@@ -186,6 +187,15 @@ public class GridDirectory extends Directory
 	{
 		GridFile file = new GridFile(this, pathname);
 		file.setLastModified(System.currentTimeMillis());
+	}
+
+	public final boolean isCompressionEnabled() {
+		return isCompressionEnabled;
+	}
+
+	public final void setCompressionEnabled(boolean isCompressionEnabled) {
+		this.isCompressionEnabled = isCompressionEnabled;
+		logger.log(Level.INFO, "Compression enabled = " + isCompressionEnabled + " for directory " + name);
 	}
 
 }

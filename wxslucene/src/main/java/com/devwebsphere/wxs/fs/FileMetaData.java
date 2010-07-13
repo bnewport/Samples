@@ -18,6 +18,7 @@ public class FileMetaData implements Serializable
 	static public final short O_WRITE = 2;
 	static public final short O_DIRECTORY = 4;
 	static public final short O_EXEC = 8;
+	static public final short O_ZIP = 16;
 	/**
 	 * 
 	 */
@@ -87,6 +88,16 @@ public class FileMetaData implements Serializable
 	public boolean isExecutable() {
 		// TODO Auto-generated method stub
 		return (permissions & O_EXEC) != 0;
+	}
+
+	public void setCompressed()
+	{
+		permissions |= O_ZIP;
+	}
+	
+	public boolean isCompressed() {
+		// TODO Auto-generated method stub
+		return (permissions & O_ZIP) != 0;
 	}
 
 	public boolean isDirectory() {

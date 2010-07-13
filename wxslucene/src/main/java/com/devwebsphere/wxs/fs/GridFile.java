@@ -351,4 +351,8 @@ public class GridFile
 		return "GridFile(" + md + ")";
 	}
 
+	public final GridDirectory getParent() {
+		return parent;
+	}
+
 }

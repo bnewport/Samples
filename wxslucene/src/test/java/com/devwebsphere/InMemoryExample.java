@@ -5,6 +5,8 @@ package com.devwebsphere;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import junit.framework.Assert;
 
@@ -36,6 +38,7 @@ public class InMemoryExample
 	  public static void copy(Directory src, GridDirectory dest, boolean closeDirSrc) throws IOException {
 		    final String[] files = src.listAll();
 		    dest.setAsyncEnabled(true);
+		    dest.setCompressionEnabled(true);
 		    try
 		    {
 			    IndexFileNameFilter filter = IndexFileNameFilter.getFilter();
@@ -67,22 +70,19 @@ public class InMemoryExample
 
 			        // this code can just compare the new file with the old one
 			        // to make sure it's copied correctly
-			        if(false)
-			        {
-				        ChecksumIndexInput dst_check_stream = new ChecksumIndexInput(dest.openInput(files[i]));
-		
-				        long dst_length = dst_check_stream.length();
-				        Assert.assertEquals(len, dst_length);
-				        len = dst_check_stream.length();
-				        readCount = 0;
-				        while(readCount < len) {
-				            int toRead = readCount + BUFFER_SIZE > len ? (int)(len - readCount) : BUFFER_SIZE;
-				            dst_check_stream.readBytes(buf, 0, toRead);
-				            readCount += toRead;
-				        }
-				        long dst_sum = dst_check_stream.getChecksum();
-				        Assert.assertEquals(src_sum, dst_sum);
+			        ChecksumIndexInput dst_check_stream = new ChecksumIndexInput(dest.openInput(files[i]));
+	
+			        long dst_length = dst_check_stream.length();
+			        Assert.assertEquals(len, dst_length);
+			        len = dst_check_stream.length();
+			        readCount = 0;
+			        while(readCount < len) {
+			            int toRead = readCount + BUFFER_SIZE > len ? (int)(len - readCount) : BUFFER_SIZE;
+			            dst_check_stream.readBytes(buf, 0, toRead);
+			            readCount += toRead;
 			        }
+			        long dst_sum = dst_check_stream.getChecksum();
+			        Assert.assertEquals(src_sum, dst_sum);
 			      } finally {
 			        // graceful cleanup
 			        try {
@@ -110,12 +110,16 @@ public class InMemoryExample
         // of the index.
         
         ObjectGrid grid = WXSUtils.startTestServer("Grid", "/objectgrid.xml", "/deployment.xml");
-        WXSUtils utils = new WXSUtils(grid);
+        ExecutorService threadPool = Executors.newFixedThreadPool(32);
+        WXSUtils utils = new WXSUtils(grid, threadPool);
         GridDirectory idx = new GridDirectory(utils, "test");
+        // enable zip compression of blocks
+        idx.setCompressionEnabled(true);
         idx.setAsyncEnabled(true);
     	File file = new File("/Users/ibm/Downloads/index_hs0_2");
     	Directory diskidx = NIOFSDirectory.getDirectory(file);
-    	Directory.copy(diskidx, idx, true);
+    	// This copy version checks all copied files are the same as the inputs
+    	InMemoryExample.copy(diskidx, idx, true);
     	idx.setAsyncEnabled(false);
     	
 
