@@ -5,6 +5,7 @@ package com.devwebsphere;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -13,6 +14,7 @@ import junit.framework.Assert;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.Fieldable;
 import org.apache.lucene.index.IndexFileNameFilter;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
@@ -109,18 +111,10 @@ public class InMemoryExample
         // Construct a RAMDirectory to hold the in-memory representation
         // of the index.
         
-        ObjectGrid grid = WXSUtils.startTestServer("Grid", "/objectgrid.xml", "/deployment.xml");
-        ExecutorService threadPool = Executors.newFixedThreadPool(32);
-        WXSUtils utils = new WXSUtils(grid, threadPool);
-        GridDirectory idx = new GridDirectory(utils, "test");
+        GridDirectory idx = new GridDirectory("/Users/ibm/Downloads/index_hs0_2");
         // enable zip compression of blocks
-        idx.setCompressionEnabled(true);
+//        idx.setCompressionEnabled(true);
         idx.setAsyncEnabled(true);
-    	File file = new File("/Users/ibm/Downloads/index_hs0_2");
-    	Directory diskidx = NIOFSDirectory.getDirectory(file);
-    	// This copy version checks all copied files are the same as the inputs
-    	InMemoryExample.copy(diskidx, idx, true);
-    	idx.setAsyncEnabled(false);
     	
 
         try {
@@ -158,7 +152,11 @@ public class InMemoryExample
 //            search(searcher, "britney");
 //            search(searcher, "free");
 //            search(searcher, "progress or achievements");
-            search(searcher, "a*");
+            for(int i = 0; i < 1000000; ++i)
+            {
+	            search(searcher, "ARTIST", "U2");
+	            search(searcher, "CATEGORY_LIST", "19");
+            }
 
             searcher.close();
         }
@@ -196,35 +194,45 @@ public class InMemoryExample
     /**
      * Searches for the given string in the "content" field
      */
-    private static void search(Searcher searcher, String queryString)
+    private static void search(Searcher searcher, String fieldName, String value)
         throws ParseException, IOException {
 
-        QueryParser qp = new QueryParser("content", new StandardAnalyzer());
+    	Query query = new QueryParser(fieldName, new StandardAnalyzer()).parse(value);
+//    	QueryParser qp = new QueryParser("content", new StandardAnalyzer());
         // Build a Query object
-        Query query = qp.parse(queryString);
+//        Query query = qp.parse(queryString);
         
         // Search for the query
-        TopDocs td = searcher.search(query, 100);        
+    	long now = System.nanoTime();
+        TopDocs td = searcher.search(query, 100);
+        long duration = System.nanoTime() - now;
+        System.out.println("Query took " + (duration / 1000000.0) + " ms");
 
         // Examine the Hits object to see if there were any matches
         int hitCount = td.totalHits;
         if (hitCount == 0) {
             System.out.println(
-                "No matches were found for \"" + queryString + "\"");
+                "No matches were found for \"" + fieldName + "=" + value + "\"");
         }
         else {
-            System.out.println("Hits for \"" +
-                queryString + "\" were found in quotes by:");
+            System.out.println(hitCount + " hits for \"" +
+            		fieldName + "=" + value + "\" were found in quotes by:");
 
-            // Iterate over the Documents in the Hits object
-            for (ScoreDoc hit : td.scoreDocs) {
-                Document doc = searcher.doc(hit.doc);
-
-                // Print the value that we stored in the "title" field. Note
-                // that this Field was not indexed, but (unlike the
-                // "contents" field) was stored verbatim and can be
-                // retrieved.
-                System.out.println("  " + doc.get("title"));
+            if(false)
+            {
+	            // Iterate over the Documents in the Hits object
+	            for (ScoreDoc hit : td.scoreDocs) {
+	                Document doc = searcher.doc(hit.doc);
+	                List<Fieldable> fields = doc.getFields();
+	                for(Fieldable f : fields)
+	                {
+	                    System.out.println("  " + f.name() + "=" + doc.get(f.name()));
+	                }
+	                // Print the value that we stored in the "title" field. Note
+	                // that this Field was not indexed, but (unlike the
+	                // "contents" field) was stored verbatim and can be
+	                // retrieved.
+	            }
             }
         }
         System.out.println();

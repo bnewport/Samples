@@ -23,7 +23,7 @@
     <dependency>
     	<groupId>com.billynewport.wxsutils</groupId>
     	<artifactId>wxsutils</artifactId>
-    	<version>1.2-SNAPSHOT</version>
+    	<version>1.3-SNAPSHOT</version>
     </dependency>
     <dependency>
     	<groupId>junit</groupId>

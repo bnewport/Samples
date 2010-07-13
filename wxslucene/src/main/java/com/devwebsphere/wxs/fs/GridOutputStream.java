@@ -20,8 +20,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
@@ -29,7 +27,7 @@ import com.devwebsphere.wxsutils.WXSUtils;
 public class GridOutputStream 
 {
 	static Logger logger = Logger.getLogger(GridOutputStream.class.getName());
-	final public static int BLOCK_SIZE = 10 * 1024;
+	final public static int BLOCK_SIZE = 4 * 1024;
 
 	WXSUtils utils;
 	WXSMap<String, byte[]> chunkMap;
@@ -107,10 +105,6 @@ public class GridOutputStream
 	static byte[] zip(FileMetaData md, byte[] b)
 		throws IOException
 	{
-		if(b.length != BLOCK_SIZE)
-		{
-			System.out.println("oop");
-		}
 		if(md.isCompressed())
 		{
 			ByteArrayOutputStream bos = new ByteArrayOutputStream(BLOCK_SIZE);

@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
+import org.apache.lucene.store.NIOFSDirectory;
 
 import com.devwebsphere.wxs.fs.GridFile;
 import com.devwebsphere.wxs.fs.GridInputStream;
@@ -35,7 +36,7 @@ public class GridDirectory extends Directory
 	WXSMap<String, Set<String>> dirMap;
 	String name;
 	boolean isAsyncEnabled;
-	boolean isCompressionEnabled;
+	boolean isCompressionEnabled = true;
 
 	public final boolean isAsyncEnabled() {
 		return isAsyncEnabled;
@@ -56,17 +57,55 @@ public class GridDirectory extends Directory
 		return client;
 	}
 	
+	/**
+	 * This constructor obtains a grid connection using the wxsutils.properties file
+	 * loads a File based directory at the specified path and then copies it in to
+	 * the grid using a directory named after the file directory path.
+	 * @param fileDirectoryName The location of the file index to copy.
+	 * @see WXSUtils#getDefaultUtils()
+	 */
+	public GridDirectory(String fileDirectoryName)
+	{
+		try
+		{
+			WXSUtils c = WXSUtils.getDefaultUtils();
+			init(c, fileDirectoryName);
+			Directory diskDir = NIOFSDirectory.getDirectory(fileDirectoryName);
+			Directory.copy(diskDir, this, false);
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.SEVERE, "Exception creating GridDirectory from file ", e);
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * This creates a named Grid Directory thats stored in the grid represented by
+	 * the client parameter
+	 * @param client
+	 * @param directoryName
+	 */
 	public GridDirectory(WXSUtils client, String directoryName)
 	{
 		if(logger.isLoggable(Level.INFO))
 		{
 			logger.log(Level.INFO, "Creating GridDirectory: " + directoryName);
 		}
+		init(client, directoryName);
+	}
+	
+	private void init(WXSUtils client, String directoryName)
+	{
 		this.client = client;
 		dirMap = client.getCache(MapNames.DIR_MAP);
 		name = directoryName;
 		setLockFactory(new WXSLockFactory(client));
 		getLockFactory().setLockPrefix(directoryName);
+		// turn on compression by default
+		setCompressionEnabled(true);
+		// turn on async put by default
+		setAsyncEnabled(true);
 	}
 	
 	@Override
