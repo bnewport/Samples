@@ -21,10 +21,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -276,6 +278,7 @@ public class WXSUtils
 			Map<Integer, Map<K,V>> pmap = convertToPartitionEntryMap(bmap, batch);
 			Iterator<Map<K,V>> items = pmap.values().iterator();
 			ArrayList<Future<?>> results = new ArrayList<Future<?>>();
+			CountDownLatch doneSignal = new CountDownLatch(pmap.size());
 			while(items.hasNext())
 			{
 				Map<K,V> perPartitionEntries = items.next();
@@ -288,11 +291,11 @@ public class WXSUtils
 				ia.doGet = doGet;
 				ia.batch = perPartitionEntries;
 				// Insert all keys for one partition using the first key as a routing key
-				Future<?> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ia));
+				Future<?> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ia, doneSignal));
 				results.add(fv);
 			}
 	
-			blockForAllFuturesToFinish(results);
+			blockForAllFuturesToFinish(doneSignal);
 			if(!areAllFuturesTRUE(results))
 				throw new ObjectGridRuntimeException("putAll failed");
 		}
@@ -341,6 +344,7 @@ public class WXSUtils
 			Map<Integer, List<K>> pmap = convertToPartitionEntryMap(bmap, batch);
 			Iterator<List<K>> items = pmap.values().iterator();
 			ArrayList<Future<?>> results = new ArrayList<Future<?>>();
+			CountDownLatch doneSignal = new CountDownLatch(pmap.size());
 			while(items.hasNext())
 			{
 				List<K> perPartitionEntries = items.next();
@@ -351,11 +355,11 @@ public class WXSUtils
 				// invoke the agent to add the batch of records to the grid
 				RemoveAgent<K> ra = new RemoveAgent<K>();
 				ra.batch = perPartitionEntries;
-				Future<?> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ra));
+				Future<?> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ra, doneSignal));
 				results.add(fv);
 			}
 	
-			blockForAllFuturesToFinish(results);
+			blockForAllFuturesToFinish(doneSignal);
 			if(!areAllFuturesTRUE(results))
 				throw new ObjectGridRuntimeException("removeAll failed");
 		}
@@ -379,6 +383,7 @@ public class WXSUtils
 				Map<Integer, Map<K,A>> pmap = convertToPartitionEntryMap(bmap, batch);
 				Iterator<Map<K,A>> items = pmap.values().iterator();
 				ArrayList<Future<Map<K,X>>> results = new ArrayList<Future<Map<K,X>>>();
+				CountDownLatch doneSignal = new CountDownLatch(pmap.size());
 				while(items.hasNext())
 				{
 					Map<K,A> perPartitionEntries = items.next();
@@ -389,7 +394,7 @@ public class WXSUtils
 					// invoke the agent to add the batch of records to the grid
 					MapAgentExecutor<K,A,X> ia = new MapAgentExecutor<K,A,X>();
 					ia.batch = perPartitionEntries;
-					Future<Map<K,X>> fv = threadPool.submit(new CallReduceAgentThread<K,Map<K,X>>(bmap.getName(), key, ia));
+					Future<Map<K,X>> fv = threadPool.submit(new CallReduceAgentThread<K,Map<K,X>>(bmap.getName(), key, ia, doneSignal));
 					results.add(fv);
 				}
 				Map<K,X> result = new HashMap<K, X>();
@@ -428,6 +433,7 @@ public class WXSUtils
 				Map<Integer, Map<K,A>> pmap = convertToPartitionEntryMap(bmap, batch);
 				Iterator<Map<K,A>> items = pmap.values().iterator();
 				ArrayList<Future<X>> results = new ArrayList<Future<X>>();
+				CountDownLatch doneSignal = new CountDownLatch(pmap.size());
 				if(batch.size() > 0)
 				{
 					while(items.hasNext())
@@ -440,7 +446,7 @@ public class WXSUtils
 						// invoke the agent to add the batch of records to the grid
 						ReduceAgentExecutor<K,A> ia = new ReduceAgentExecutor<K,A>();
 						ia.batch = perPartitionEntries;
-						Future<X> fv = threadPool.submit(new CallReduceAgentThread<K,X>(bmap.getName(), key, ia));
+						Future<X> fv = threadPool.submit(new CallReduceAgentThread<K,X>(bmap.getName(), key, ia, doneSignal));
 						results.add(fv);
 					}
 					Iterator<Future<X>> iter = results.iterator();
@@ -609,9 +615,11 @@ public class WXSUtils
 		K key;
 		String mapName;
 		ReduceGridAgent agent;
+		CountDownLatch doneSignal;
 		
-		public CallReduceAgentThread(String mapName, K key, ReduceGridAgent agent)
+		public CallReduceAgentThread(String mapName, K key, ReduceGridAgent agent, CountDownLatch ds)
 		{
+			this.doneSignal = ds;
 			this.key = key;
 			this.mapName = mapName;
 			this.agent = agent;
@@ -631,6 +639,10 @@ public class WXSUtils
 				System.out.println("Exception " + e.toString());
 				e.printStackTrace();
 			}
+			finally
+			{
+				doneSignal.countDown();
+			}
 			return null;
 		}
 	}
@@ -639,18 +651,15 @@ public class WXSUtils
 	 * This waits for all the Futures to be complete
 	 * @param results The list of Futures to wait on.
 	 */
-	void blockForAllFuturesToFinish(List<Future<?>> futures)
+	void blockForAllFuturesToFinish(CountDownLatch doneSignal)
 	{
-		// wait for all threads to finish or cancel
-		ArrayList<Future<?>> copy = new ArrayList<Future<?>>(futures);
-		while(!copy.isEmpty())
+		try 
 		{
-			int last = copy.size() - 1;
-			if(copy.get(last).isDone() || copy.get(last).isCancelled())
-			{
-				copy.remove(last);
-			}
-		}
+			doneSignal.await(60, TimeUnit.SECONDS);
+		} catch (InterruptedException e) 
+		{
+			logger.log(Level.WARNING, "Time out detected waiting for agent");
+		}		
 	}
 
 	/**
