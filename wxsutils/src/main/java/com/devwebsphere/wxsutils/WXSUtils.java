@@ -10,6 +10,12 @@
 //
 package com.devwebsphere.wxsutils;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,6 +25,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -789,5 +796,72 @@ public class WXSUtils
 		{
 			throw new ObjectGridRuntimeException(e);
 		}
+	}
+	
+	static WXSUtils globalDefaultUtils;
+	
+	/**
+	 * This is a helper method to return a configured grid connection. The configuration is specified in the
+	 * property file wxsutils.properties on the classpath. The grid name and path to objectgrid.xml file must
+	 * always be specified. If a remote grid connection is required then a cep must be specified also. If
+	 * a local intra JVM test grid should be started then omit the cep property and specify a deployment
+	 * xml file path.
+	 * 
+	 * This can be called multiple times and the same WXSUtils instance is returned. It's a JVM wide instance
+	 * 
+	 * cep=XXXXX
+	 * grid=XXXX (default Grid)
+	 * og_xml_path=XXXXX (default /objectgrid.xml)
+	 * dp_xml_path=XXXXX (default /deployment.xml)
+	 * @return
+	 * @throws FileNotFoundException
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 */
+	static synchronized public WXSUtils getDefaultUtils()
+		throws FileNotFoundException, URISyntaxException, IOException
+	{
+		if(globalDefaultUtils == null)
+		{
+			Properties props = new Properties();
+			InputStream is = new FileInputStream(new File(WXSUtils.class.getResource("/wxsutils.properties").toURI()));
+			props.load(is);
+			
+			String cep = props.getProperty("cep");
+			if(cep == null)
+			{
+				logger.log(Level.INFO, "No catalog endpoint specified, starting test server intra JVM");
+			}
+			String gridName = props.getProperty("grid");
+			String ogXMLPath = props.getProperty("og_xml_path");
+			String dpXMLPath = props.getProperty("dp_xml_path");
+			if(ogXMLPath == null)
+				ogXMLPath = "/objectgrid.xml";
+			if(dpXMLPath == null)
+				dpXMLPath = "/deployment.xml";
+			if(gridName == null)
+				gridName = "Grid";
+
+			try
+			{
+				ObjectGrid grid = null;
+				if(cep != null)
+				{
+					logger.log(Level.INFO, "Default CEP = " + cep + "; Grid = " + gridName + "; ogXMLPath=" + ogXMLPath);
+					grid = WXSUtils.connectClient(cep, gridName, ogXMLPath);
+				}					
+				else
+				{
+					logger.log(Level.INFO, "Test Server; Grid = " + gridName + "; ogXMLPath = " + ogXMLPath + "; dpXMLPath = " + dpXMLPath);
+					grid = WXSUtils.startTestServer(gridName, ogXMLPath, dpXMLPath);
+				}
+				globalDefaultUtils = new WXSUtils(grid);
+			}
+			catch(Exception e)
+			{
+				logger.log(Level.SEVERE, "Cannot connect to grid ", e);
+			}
+		}
+		return globalDefaultUtils;
 	}
 }
