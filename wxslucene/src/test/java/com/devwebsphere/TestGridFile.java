@@ -87,7 +87,7 @@ public class TestGridFile
 		}
 		
 		// try bigger blocks
-		data = new byte[GridOutputStream.BLOCK_SIZE * 2 + 3];
+		data = new byte[file.getParent().getBlockSize() * 2 + 3];
 		for(int i = 0; i < numBytes; ++i)
 		{
 			int testPosition = Math.abs(r.nextInt()) % (numBytes - data.length);

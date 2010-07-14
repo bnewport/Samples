@@ -10,8 +10,12 @@
 //
 package com.devwebsphere.wxslucene;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,6 +32,21 @@ import com.devwebsphere.wxs.fs.MapNames;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 
+/**
+ * This is a Lucene Directory implementation to store the directory and its files in an IBM WebSphere
+ * eXtreme Scale grid. The class can use an optional property file to configure it which must
+ * be called wxslucene.properties and must be in the root class path. This property file allows
+ * the performance of the Directory to be tuned.
+ * 
+ * These are the properties that can be in the file
+ * compression=false
+ * async_put=true
+ * block_size=4096
+ * partition_max_batch_size=40
+ * 
+ * @author bnewport
+ *
+ */
 public class GridDirectory extends Directory 
 {
 	static Logger logger = Logger.getLogger(GridDirectory.class.getName());
@@ -37,11 +56,49 @@ public class GridDirectory extends Directory
 	String name;
 	boolean isAsyncEnabled;
 	boolean isCompressionEnabled = true;
+	int blockSize = 4096;
+	// This is how many puts we will batch PER partition
+	int partitionMaxBatchSize = 20;
+
+	public final int getPartitionMaxBatchSize() {
+		return partitionMaxBatchSize;
+	}
+
+	/**
+	 * When async puts are enabled then this specifies how many individual put operations for
+	 * a single partition to batch together at a maximum.
+	 * @param partitionMaxBatchSize
+	 */
+	public final void setPartitionMaxBatchSize(int partitionMaxBatchSize) {
+		this.partitionMaxBatchSize = partitionMaxBatchSize;
+		logger.log(Level.INFO, "Partition Max Batch Size  = " + partitionMaxBatchSize + " for directory " + name);
+	}
+
+	public final int getBlockSize() {
+		return blockSize;
+	}
+
+	/**
+	 * This specifies the block size used for storing files in the directory. 4k looks a common number
+	 * from researching.
+	 * @param blockSize
+	 */
+	public final void setBlockSize(int blockSize) {
+		this.blockSize = blockSize;
+		logger.log(Level.INFO, "Block Size  = " + blockSize + " for directory " + name);
+	}
 
 	public final boolean isAsyncEnabled() {
 		return isAsyncEnabled;
 	}
 
+	/**
+	 * This greatly accelerates writing files to the grid as it parallelizes puts and batches them. Normally
+	 * each flush results in an individual put. These puts are buffered and only written on an explicit flush or
+	 * close in this mode. They are also written if the number of buffers puts reaches the #partitions times
+	 * the PartitionMaxBatchSize
+	 * @param isAsyncEnabled
+	 */
 	public final void setAsyncEnabled(boolean isAsyncEnabled) {
 		this.isAsyncEnabled = isAsyncEnabled;
 		logger.log(Level.INFO, "Async enabled = " + isAsyncEnabled + " for directory " + name);
@@ -102,10 +159,42 @@ public class GridDirectory extends Directory
 		name = directoryName;
 		setLockFactory(new WXSLockFactory(client));
 		getLockFactory().setLockPrefix(directoryName);
-		// turn on compression by default
-		setCompressionEnabled(true);
-		// turn on async put by default
-		setAsyncEnabled(true);
+		
+		Properties props = new Properties();
+		boolean useDefaults = true;
+		try
+		{
+			props.load(new FileInputStream(new File(GridDirectory.class.getResource("/wxslucene.properties").toURI())));
+			String value = props.getProperty("compression", "true");
+			setCompressionEnabled(value.equalsIgnoreCase("true"));
+			value = props.getProperty("async_put", "true");
+			setAsyncEnabled(value.equalsIgnoreCase("true"));
+			value = props.getProperty("block_size", "4096");
+			setBlockSize(Integer.parseInt(value));
+			value = props.getProperty("partition_max_batch_size", "20");
+			setPartitionMaxBatchSize(Integer.parseInt(value));
+			useDefaults = false;
+		}
+		catch(FileNotFoundException e)
+		{
+			logger.log(Level.INFO, "wxslucene.properties not found, using defaults");
+		}
+		catch(NumberFormatException e)
+		{
+			logger.log(Level.WARNING, "wxslucene.properties number format exception on property");
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.WARNING, "Exception reading wxslucene.properties", e);
+		}
+		if(useDefaults)
+		{
+			// turn on compression by default
+			setCompressionEnabled(true);
+			// turn on async put by default
+			setAsyncEnabled(true);
+			setBlockSize(4096);
+		}
 	}
 	
 	@Override

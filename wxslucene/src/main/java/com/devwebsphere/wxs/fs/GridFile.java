@@ -188,7 +188,7 @@ public class GridFile
 		if(!exists)
 			return false;
 		WXSMap<String, byte[]> chunkMap = client.getCache(MapNames.CHUNK_MAP);
-		long numChunks = (md.getActualSize() / GridOutputStream.BLOCK_SIZE) + 1;
+		long numChunks = (md.getActualSize() / getParent().getBlockSize()) + 1;
 		ArrayList<String> chunks = new ArrayList<String>();
 		for(long i = 0; i < numChunks; ++i)
 		{

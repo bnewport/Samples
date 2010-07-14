@@ -30,6 +30,7 @@ public class GridInputStream
 	int currentPosition;
 	byte[] currentValue;
 	FileMetaData md;
+	int blockSize;
 	
 	public FileMetaData getMetaData()
 	{
@@ -48,6 +49,7 @@ public class GridInputStream
 		fileName= file.getName();
 		mdMap = utils.getCache(MapNames.MD_MAP);
 		md = mdMap.get(fileName);
+		blockSize = file.getParent().getBlockSize();
 		if(md == null)
 		{
 			throw new FileNotFoundException(fileName);
@@ -58,7 +60,7 @@ public class GridInputStream
 		}
 		currentAbsolutePosition = 0;
 		currentBucket = 0;
-		currentValue = GridOutputStream.unZip(md, streamMap.get(generateKey(fileName, currentBucket)));
+		currentValue = GridOutputStream.unZip(blockSize, md, streamMap.get(generateKey(fileName, currentBucket)));
 	}
 
 	static String generateKey(String fileName, long bucket)
@@ -84,10 +86,10 @@ public class GridInputStream
 		if(currentValue == null || currentPosition == currentValue.length)
 		{
 			currentBucket++;
-			currentValue = GridOutputStream.unZip(md, streamMap.get(generateKey(fileName, currentBucket)));
+			currentValue = GridOutputStream.unZip(blockSize, md, streamMap.get(generateKey(fileName, currentBucket)));
 			if(currentValue == null)
 			{
-				currentValue = new byte[GridOutputStream.BLOCK_SIZE];
+				currentValue = new byte[blockSize];
 			}
 			currentPosition = 0;
 		}
@@ -176,15 +178,15 @@ public class GridInputStream
 		}
 		long skipAmount = newPosition - currentAbsolutePosition;
 		
-		int newBucket = (int)(newPosition / GridOutputStream.BLOCK_SIZE);
+		int newBucket = (int)(newPosition / blockSize);
 		if(newBucket != currentBucket)
 		{
 			currentBucket = newBucket;
-			currentValue = GridOutputStream.unZip(md, streamMap.get(generateKey(fileName, currentBucket)));
+			currentValue = GridOutputStream.unZip(blockSize, md, streamMap.get(generateKey(fileName, currentBucket)));
 			if(currentValue == null)
-				currentValue = new byte[GridOutputStream.BLOCK_SIZE];
+				currentValue = new byte[blockSize];
 		}
-		currentPosition = (int)(newPosition % GridOutputStream.BLOCK_SIZE);
+		currentPosition = (int)(newPosition % blockSize);
 		currentAbsolutePosition = newPosition;
 		
 		return skipAmount;

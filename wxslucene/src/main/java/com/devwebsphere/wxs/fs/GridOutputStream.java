@@ -27,18 +27,19 @@ import com.devwebsphere.wxsutils.WXSUtils;
 public class GridOutputStream 
 {
 	static Logger logger = Logger.getLogger(GridOutputStream.class.getName());
-	final public static int BLOCK_SIZE = 4 * 1024;
 
 	WXSUtils utils;
 	WXSMap<String, byte[]> chunkMap;
 	WXSMap<String, FileMetaData> mdMap;
 	String fileName;
 	long currentBucket;
-	byte[] buffer = new byte[BLOCK_SIZE];
+	byte[] buffer;
 	int currentPosition;
 	long absolutePosition;
 	FileMetaData md;
 	Map<String, byte[]> asyncBuffers;
+	int blockSize;
+	int partitionMaxBatchSize;
 
 	public FileMetaData getMetaData()
 	{
@@ -60,6 +61,9 @@ public class GridOutputStream
 		chunkMap = utils.getCache(MapNames.CHUNK_MAP);
 		mdMap = utils.getCache(MapNames.MD_MAP);
 		md = mdMap.get(fileName);
+		blockSize = file.getParent().getBlockSize();
+		partitionMaxBatchSize = file.getParent().getPartitionMaxBatchSize();
+		buffer = new byte[blockSize];
 		if(md == null)
 		{
 			md = new FileMetaData();
@@ -77,7 +81,7 @@ public class GridOutputStream
 		asyncBuffers = new HashMap<String, byte[]>();
 	}
 
-	static byte[] unZip(FileMetaData md, byte[] b)
+	static byte[] unZip(int blockSize, FileMetaData md, byte[] b)
 		throws IOException
 	{
 		byte[] o = null;
@@ -85,9 +89,9 @@ public class GridOutputStream
 		{
 			ByteArrayInputStream bis = new ByteArrayInputStream(b);
 			InflaterInputStream zis = new InflaterInputStream(bis);
-			o = new byte[BLOCK_SIZE];
+			o = new byte[blockSize];
 			int offset = 0;
-			int toGo = BLOCK_SIZE;
+			int toGo = blockSize;
 			while(toGo > 0)
 			{
 				int c = zis.read(o, offset, toGo);
@@ -102,12 +106,12 @@ public class GridOutputStream
 		return o;
 	}
 
-	static byte[] zip(FileMetaData md, byte[] b)
+	static byte[] zip(int blockSize, FileMetaData md, byte[] b)
 		throws IOException
 	{
 		if(md.isCompressed())
 		{
-			ByteArrayOutputStream bos = new ByteArrayOutputStream(BLOCK_SIZE);
+			ByteArrayOutputStream bos = new ByteArrayOutputStream(blockSize);
 			DeflaterOutputStream zos = new DeflaterOutputStream(bos);
 			zos.write(b);
 			zos.close();
@@ -124,13 +128,13 @@ public class GridOutputStream
 		if(logger.isLoggable(Level.FINE))
 			logger.log(Level.FINE, "seek to " + n + " in " + fileName);
 		flushCurrentBuffer();
-		currentBucket = n / BLOCK_SIZE;
-		buffer = unZip(md, chunkMap.get(GridInputStream.generateKey(fileName, currentBucket)));
+		currentBucket = n / blockSize;
+		buffer = unZip(blockSize, md, chunkMap.get(GridInputStream.generateKey(fileName, currentBucket)));
 		if(buffer == null) // could be sparse
 		{
-			buffer = new byte[BLOCK_SIZE];
+			buffer = new byte[blockSize];
 		}
-		currentPosition = (int)(n % BLOCK_SIZE);
+		currentPosition = (int)(n % blockSize);
 		absolutePosition = n;
 	}
 	
@@ -164,7 +168,7 @@ public class GridOutputStream
 		int toGo = size;
 		while(toGo != 0)
 		{
-			int spaceAvailable = BLOCK_SIZE - currentPosition;
+			int spaceAvailable = blockSize - currentPosition;
 			if(spaceAvailable != 0)
 			{
 				int copySize = Math.min(toGo, spaceAvailable);
@@ -186,13 +190,14 @@ public class GridOutputStream
 		throws IOException
 	{
 		String bucketKey = GridInputStream.generateKey(fileName, currentBucket);
-		byte[] obuffer = zip(md, buffer);
+		byte[] obuffer = zip(blockSize, md, buffer);
 		if(asyncBuffers == null)
 			chunkMap.put(bucketKey, obuffer);
 		else
 		{
 			asyncBuffers.put(bucketKey, md.isCompressed() ? obuffer : buffer.clone());
-			if(asyncBuffers.size() > 40)
+			int numPartitions = utils.getObjectGrid().getMap(MapNames.CHUNK_MAP).getPartitionManager().getNumOfPartitions();
+			if(asyncBuffers.size() > numPartitions * partitionMaxBatchSize)
 			{
 				chunkMap.putAll(asyncBuffers);
 				asyncBuffers.clear();
