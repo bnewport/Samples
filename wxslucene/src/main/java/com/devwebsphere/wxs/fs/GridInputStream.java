@@ -45,9 +45,9 @@ public class GridInputStream
 	public GridInputStream(WXSUtils utils, GridFile file) throws FileNotFoundException, IOException 
 	{
 		this.utils = utils;
-		streamMap = utils.getCache(MapNames.CHUNK_MAP);
+		streamMap = utils.getCache(MapNames.CHUNK_MAP_PREFIX + file.getParent().getName());
 		fileName= file.getName();
-		mdMap = utils.getCache(MapNames.MD_MAP);
+		mdMap = utils.getCache(MapNames.MD_MAP_PREFIX + file.getParent().getName());
 		md = mdMap.get(fileName);
 		blockSize = file.getParent().getBlockSize();
 		if(md == null)

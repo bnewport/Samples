@@ -16,8 +16,8 @@ Licensed Materials - Property of IBM
 
     <objectGrids>
         <objectGrid name="Grid">
-            <backingMap name="ChunkMap" lockStrategy="PESSIMISTIC" copyMode="COPY_TO_BYTES"/>
-            <backingMap name="FileMetaData" lockStrategy="PESSIMISTIC" copyMode="COPY_TO_BYTES"/>
+            <backingMap name="ChunkMap.*" template="true" lockStrategy="PESSIMISTIC" copyMode="COPY_TO_BYTES"/>
+            <backingMap name="FileMetaData.*" template="true" lockStrategy="PESSIMISTIC" copyMode="COPY_TO_BYTES"/>
             <backingMap name="DirectoryMetaData" lockStrategy="PESSIMISTIC" copyMode="COPY_TO_BYTES"/>
             <backingMap name="LockMap" lockStrategy="PESSIMISTIC" copyMode="COPY_TO_BYTES"/>
         </objectGrid>

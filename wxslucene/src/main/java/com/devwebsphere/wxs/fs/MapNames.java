@@ -15,11 +15,11 @@ public interface MapNames
 	/**
 	 * This map stores blocks for the 'file'. The key is the file name + block index
 	 */
-	public String CHUNK_MAP = "ChunkMap";
+	public String CHUNK_MAP_PREFIX = "ChunkMap.";
 	/**
 	 * This maps stores meta data such as actual file size about a file
 	 */
-	public String MD_MAP = "FileMetaData";
+	public String MD_MAP_PREFIX = "FileMetaData.";
 	/**
 	 * Directory contents such as list of files are stored here
 	 */

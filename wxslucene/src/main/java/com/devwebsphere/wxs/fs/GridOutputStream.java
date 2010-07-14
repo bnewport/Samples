@@ -40,6 +40,7 @@ public class GridOutputStream
 	Map<String, byte[]> asyncBuffers;
 	int blockSize;
 	int partitionMaxBatchSize;
+	String chunkMapName;
 
 	public FileMetaData getMetaData()
 	{
@@ -58,8 +59,9 @@ public class GridOutputStream
 		absolutePosition = 0;
 		fileName = file.getName();
 		this.utils = utils;
-		chunkMap = utils.getCache(MapNames.CHUNK_MAP);
-		mdMap = utils.getCache(MapNames.MD_MAP);
+		chunkMapName = MapNames.CHUNK_MAP_PREFIX + file.getParent().getName();
+		chunkMap = utils.getCache(chunkMapName);
+		mdMap = utils.getCache(MapNames.MD_MAP_PREFIX + file.getParent().getName());
 		md = mdMap.get(fileName);
 		blockSize = file.getParent().getBlockSize();
 		partitionMaxBatchSize = file.getParent().getPartitionMaxBatchSize();
@@ -196,7 +198,7 @@ public class GridOutputStream
 		else
 		{
 			asyncBuffers.put(bucketKey, md.isCompressed() ? obuffer : buffer.clone());
-			int numPartitions = utils.getObjectGrid().getMap(MapNames.CHUNK_MAP).getPartitionManager().getNumOfPartitions();
+			int numPartitions = utils.getObjectGrid().getMap(chunkMapName).getPartitionManager().getNumOfPartitions();
 			if(asyncBuffers.size() > numPartitions * partitionMaxBatchSize)
 			{
 				chunkMap.putAll(asyncBuffers);

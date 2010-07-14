@@ -38,7 +38,7 @@ public class GridFile
 		this.parent = parent;
 		this.client = parent.getWXSUtils();
 		fullPath = parent.getName() + "/" + pathname;
-		mdMap = client.getCache(MapNames.MD_MAP);
+		mdMap = client.getCache(MapNames.MD_MAP_PREFIX + parent.getName());
 		md = mdMap.get(fullPath);
 		exists = (md != null);
 		if(!exists)
@@ -187,7 +187,7 @@ public class GridFile
 		}
 		if(!exists)
 			return false;
-		WXSMap<String, byte[]> chunkMap = client.getCache(MapNames.CHUNK_MAP);
+		WXSMap<String, byte[]> chunkMap = client.getCache(MapNames.CHUNK_MAP_PREFIX + parent.getName());
 		long numChunks = (md.getActualSize() / getParent().getBlockSize()) + 1;
 		ArrayList<String> chunks = new ArrayList<String>();
 		for(long i = 0; i < numChunks; ++i)
