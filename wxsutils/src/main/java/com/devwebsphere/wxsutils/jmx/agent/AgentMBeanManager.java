@@ -23,7 +23,7 @@ public final class AgentMBeanManager extends MBeanGroupManager<AgentMBeanImpl>
 	public AgentMBeanManager()
 		throws InstanceAlreadyExistsException
 	{
-		super(AgentMBeanImpl.class, AgentMBean.class, "Agent", "ClassName");
+		super(AgentMBeanImpl.class, AgentMBean.class, "com.devwebsphere.wxs", "grid", "Agent", "ClassName");
 	}
 
 	@Override

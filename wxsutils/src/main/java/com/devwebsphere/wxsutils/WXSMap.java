@@ -67,7 +67,7 @@ public class WXSMap <K,V>
 	 */
 	public V get(K k)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		try
 		{
@@ -90,7 +90,7 @@ public class WXSMap <K,V>
 	 */
 	public Map<K,V> getAll(Collection<K> keys)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		Map<K,V> rc =  utils.getAll(keys, bmap);
 		mbean.getGetMetrics().logTime(System.nanoTime() - start);
@@ -105,7 +105,7 @@ public class WXSMap <K,V>
 	 */
 	public void put(K k, V v)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		try
 		{
@@ -136,7 +136,7 @@ public class WXSMap <K,V>
 	 */
 	public void insert(K k, V v)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		try
 		{
@@ -156,7 +156,7 @@ public class WXSMap <K,V>
 	 */
 	public void putAll(Map<K,V> batch)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		utils.putAll(batch, bmap);
 		mbean.getPutMetrics().logTime(System.nanoTime() - start);
@@ -168,7 +168,7 @@ public class WXSMap <K,V>
 	 */
 	public void insertAll(Map<K,V> batch)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		utils.insertAll(batch, bmap);
 		mbean.getInsertMetrics().logTime(System.nanoTime() - start);
@@ -181,7 +181,7 @@ public class WXSMap <K,V>
 	 */
 	public V remove(K k)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		try
 		{
@@ -202,7 +202,7 @@ public class WXSMap <K,V>
 	 */
 	public void removeAll(Collection<K> keys)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		utils.removeAll(keys, bmap);
 		mbean.getRemoveMetrics().logTime(System.nanoTime() - start);
@@ -215,7 +215,7 @@ public class WXSMap <K,V>
 	 */
 	public boolean contains(K k)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		try
 		{
@@ -242,7 +242,7 @@ public class WXSMap <K,V>
 	 */
 	public boolean lock(K k, V value, int timeOutMS)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		Session sess = tls.getSession();
 		try
@@ -283,7 +283,7 @@ public class WXSMap <K,V>
 	 */
 	public void unlock(K k)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid, mapName);
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		try
 		{

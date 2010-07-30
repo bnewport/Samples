@@ -26,6 +26,7 @@ public class SummaryMBeanImpl<T> implements SummaryMBean
 	TabularDataMetaData<T> general;
 	TabularDataMetaData<T> monitor;
 	String typePrefix;
+	String domainName;
 	/**
 	 * Attributes annotated with this mbean name are included in the more concise
 	 * summary mbeans.
@@ -35,6 +36,7 @@ public class SummaryMBeanImpl<T> implements SummaryMBean
 	public SummaryMBeanImpl(MBeanGroupManager<T> beanSource, Class<T> sourceClass, String typePrefix)
 		throws OpenDataException
 	{
+		domainName = beanSource.getDomainName();
 		this.typePrefix = typePrefix;
 		general = new TabularDataMetaData<T>(beanSource, sourceClass, TabularAttribute.defaultMBean, typePrefix + "Detail", typePrefix+"DetailItemNames");
 		monitor = new TabularDataMetaData<T>(beanSource, sourceClass, MONITOR_MBEAN, typePrefix+"MonitorDetail", typePrefix+" Statistics for monitors");
@@ -69,7 +71,7 @@ public class SummaryMBeanImpl<T> implements SummaryMBean
 			props.put(keyNames.get(i), value);
 		}
 		props.put("type", type);
-		return new ObjectName("com.devwebsphere.wxs", props);
+		return new ObjectName(domainName, props);
 	}
 
 }

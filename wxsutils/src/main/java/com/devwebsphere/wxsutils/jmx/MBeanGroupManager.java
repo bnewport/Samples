@@ -24,7 +24,6 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.StandardMBean;
 
-import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
 /**
@@ -58,30 +57,48 @@ public abstract class MBeanGroupManager <M>
 	 * Example: Map MBeans then MapName would be the key
 	 */
 	String keyAttributeName;
+	
+	/**
+	 * The domain name to register MBeans under.
+	 */
+	String domainName;
+	/**
+	 * The main property these MBeans are about, i.e. a grid or a directory or a container of things with mbeans
+	 */
+	String groupingAttributeName;
 	SummaryMBeanImpl<M> summaryMBean;
 	
 	volatile MBeanServer mbeanServer;
 	
-	public ObjectName makeObjectName(String grid, String keyValue)
+	public String getDomainName()
+	{
+		return domainName;
+	}
+	
+	public ObjectName makeObjectName(String groupName, String keyValue)
 		throws MalformedObjectNameException
 	{
 		Hashtable<String, String> props = new Hashtable<String, String>();
-		props.put("grid", grid);
+		props.put(groupingAttributeName, groupName);
 		props.put(keyAttributeName, keyValue);
 		props.put("type", typeName);
-		return new ObjectName("com.devwebsphere.wxs", props);
+		return new ObjectName(domainName, props);
 	}
 
 	/**
 	 * Construct a manager.
 	 * @param clazz The MBeanImpl class file
 	 * @param clazzI The JMX interface implemented by clazz
+	 * @param domainName The domain to register MBeans for
+	 * @param groupName The name of the container of these MBeans
 	 * @param typeName The name of the attribute (agentClass or mapName...)
 	 * @param keyName The attribute value attribute
 	 */
-	public MBeanGroupManager(Class<M> clazz, Class clazzI, String typeName, String keyName)
+	public MBeanGroupManager(Class<M> clazz, Class clazzI, String domainName, String groupName, String typeName, String keyName)
 		throws InstanceAlreadyExistsException
 	{
+		this.domainName = domainName;
+		groupingAttributeName = groupName;
 		mbeanClass = clazz;
 		mbeanInterface = clazzI;
 		this.typeName = typeName;
@@ -107,7 +124,7 @@ public abstract class MBeanGroupManager <M>
 		        
 				Hashtable<String, String> props = new Hashtable<String, String>();
 				props.put("type", typeName + "Summary");
-				ObjectName on = new ObjectName("com.devwebsphere.wxs", props);
+				ObjectName on = new ObjectName(domainName, props);
 				StandardMBean realMBean = new StandardMBean(summaryMBean, SummaryMBean.class);
 				mbeanServer.registerMBean(realMBean, on);
 	        }
@@ -145,7 +162,7 @@ public abstract class MBeanGroupManager <M>
 	 * This is called to fetch the MBeanImpl for a given key. The bean
 	 * is created if it didn't already exist.
 	 */
-	public M getBean(ObjectGrid grid, String keyValue)
+	public M getBean(String groupName, String keyValue)
 	{
 		M bean = beans.get(keyValue);
 		if(bean == null)
@@ -155,7 +172,7 @@ public abstract class MBeanGroupManager <M>
 				bean = beans.get(keyValue);
 				if(bean == null)
 				{
-					bean = createMBean(grid.getName(), keyValue);
+					bean = createMBean(groupName, keyValue);
 					try
 					{
 						MBeanServer server = getServer();

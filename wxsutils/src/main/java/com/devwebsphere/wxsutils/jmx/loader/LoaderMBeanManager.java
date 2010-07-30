@@ -19,7 +19,7 @@ public final class LoaderMBeanManager extends MBeanGroupManager<LoaderMBeanImpl>
 	public LoaderMBeanManager() 
 		throws InstanceAlreadyExistsException
 	{
-		super(LoaderMBeanImpl.class, LoaderMBean.class, "Loader", "MapName");
+		super(LoaderMBeanImpl.class, LoaderMBean.class, "com.devwebsphere.wxs", "grid", "Loader", "MapName");
 		// TODO Auto-generated constructor stub
 	}
 

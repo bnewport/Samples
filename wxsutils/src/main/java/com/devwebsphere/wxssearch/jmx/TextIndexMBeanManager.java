@@ -19,7 +19,7 @@ public class TextIndexMBeanManager extends MBeanGroupManager<TextIndexMBeanImpl>
 	public TextIndexMBeanManager() 
 		throws InstanceAlreadyExistsException
 	{
-		super(TextIndexMBeanImpl.class, TextIndexMBean.class, "TextIndex", "IndexName");
+		super(TextIndexMBeanImpl.class, TextIndexMBean.class, "com.devwebsphere.wxssearch", "grid", "TextIndex", "IndexName");
 	}
 
 	@Override

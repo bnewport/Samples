@@ -53,7 +53,7 @@ public class InsertAgent<K,V> implements ReduceGridAgent
 	}
 
 	public Object reduce(Session sess, ObjectMap map, Collection arg2) {
-		AgentMBeanImpl agent = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid(), this.getClass().getName());
+		AgentMBeanImpl agent = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
 		long startNS = System.nanoTime();
 		try
 		{

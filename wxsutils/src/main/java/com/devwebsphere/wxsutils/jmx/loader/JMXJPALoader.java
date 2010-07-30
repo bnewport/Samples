@@ -31,7 +31,7 @@ public class JMXJPALoader extends JPALoader
 			throws LoaderException, OptimisticCollisionException 
 	{
 		long start = System.nanoTime();
-		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid(), getEntityClassName());
+		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid().getName(), getEntityClassName());
 		super.batchUpdate(tx, ls);
 		mbean.getBatchSizeMetrics().logTime(ls.size());
 		mbean.getBatchUpdateMetrics().logTime(System.nanoTime() - start);
@@ -43,7 +43,7 @@ public class JMXJPALoader extends JPALoader
 	public List get(TxID tx, List keys, boolean b) throws LoaderException 
 	{
 		long start = System.nanoTime();
-		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid(), getEntityClassName());
+		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid().getName(), getEntityClassName());
 		List rc = super.get(tx, keys, b);
 		mbean.getGetMetrics().logTime(System.nanoTime() - start);
 		mbean.getGetSizeMetrics().logTime(keys.size());

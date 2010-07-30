@@ -74,7 +74,7 @@ public abstract class Index<C, RK>
 		indexMapName = indexName + "_" + DYN_INDEX_MAP_SUFFIX;
 		badSymbolMapName = indexName + "_" + DYN_BAD_SYMBOL_MAP_SUFFIX;
 		
-		mbean = WXSUtils.getIndexMBeanManager().getBean(im.utils.getObjectGrid(), indexName);
+		mbean = WXSUtils.getIndexMBeanManager().getBean(im.utils.getObjectGrid().getName(), indexName);
 		
 		try
 		{
