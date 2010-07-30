@@ -18,9 +18,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
+import com.devwebsphere.wxslucene.GridDirectory;
+import com.devwebsphere.wxslucene.jmx.LuceneFileMBeanImpl;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 
@@ -41,6 +44,8 @@ public class GridOutputStream
 	int blockSize;
 	int partitionMaxBatchSize;
 	String chunkMapName;
+	static ThreadLocalDeflator tlsDeflator = new ThreadLocalDeflator();
+	LuceneFileMBeanImpl mbean;
 
 	public FileMetaData getMetaData()
 	{
@@ -54,6 +59,7 @@ public class GridOutputStream
 	
 	public GridOutputStream(WXSUtils utils, GridFile file) throws FileNotFoundException 
 	{
+		mbean = GridDirectory.getLuceneFileMBeanManager().getBean(file.getParent().getName(), file.getName());
 		currentBucket = 0;
 		currentPosition = 0;
 		absolutePosition = 0;
@@ -114,6 +120,7 @@ public class GridOutputStream
 		if(md.isCompressed())
 		{
 			ByteArrayOutputStream bos = new ByteArrayOutputStream(blockSize);
+			Deflater deflater = tlsDeflator.get();
 			DeflaterOutputStream zos = new DeflaterOutputStream(bos);
 			zos.write(b);
 			zos.close();

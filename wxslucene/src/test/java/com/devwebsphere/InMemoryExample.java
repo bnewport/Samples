@@ -111,10 +111,10 @@ public class InMemoryExample
         // Construct a RAMDirectory to hold the in-memory representation
         // of the index.
         
-        GridDirectory idx = new GridDirectory("/Users/ibm/Downloads/index_hs0_2");
-        // enable zip compression of blocks
-//        idx.setCompressionEnabled(true);
-        idx.setAsyncEnabled(true);
+    	String indexFileName = "/Users/ibm/Downloads/index_hs0_2";
+        GridDirectory gidx = new GridDirectory(indexFileName);
+//        NIOFSDirectory didx = new NIOFSDirectory(new File(indexFileName));
+        Directory idx = gidx;
     	
 
         try {

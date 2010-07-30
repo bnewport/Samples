@@ -15,8 +15,11 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxslucene.GridDirectory;
+import com.devwebsphere.wxslucene.jmx.LuceneFileMBeanImpl;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
+import com.devwebsphere.wxsutils.jmx.MinMaxAvgMetric;
 
 public class GridInputStream 
 {
@@ -31,6 +34,7 @@ public class GridInputStream
 	byte[] currentValue;
 	FileMetaData md;
 	int blockSize;
+	LuceneFileMBeanImpl mbean;
 	
 	public FileMetaData getMetaData()
 	{
@@ -44,6 +48,7 @@ public class GridInputStream
 	
 	public GridInputStream(WXSUtils utils, GridFile file) throws FileNotFoundException, IOException 
 	{
+		mbean = GridDirectory.getLuceneFileMBeanManager().getBean(file.getParent().getName(), file.getName());
 		this.utils = utils;
 		streamMap = utils.getCache(MapNames.CHUNK_MAP_PREFIX + file.getParent().getName());
 		fileName= file.getName();
@@ -60,7 +65,7 @@ public class GridInputStream
 		}
 		currentAbsolutePosition = 0;
 		currentBucket = 0;
-		currentValue = GridOutputStream.unZip(blockSize, md, streamMap.get(generateKey(fileName, currentBucket)));
+		currentValue = getBlock(currentBucket);
 	}
 
 	static String generateKey(String fileName, long bucket)
@@ -86,7 +91,7 @@ public class GridInputStream
 		if(currentValue == null || currentPosition == currentValue.length)
 		{
 			currentBucket++;
-			currentValue = GridOutputStream.unZip(blockSize, md, streamMap.get(generateKey(fileName, currentBucket)));
+			currentValue = getBlock(currentBucket);
 			if(currentValue == null)
 			{
 				currentValue = new byte[blockSize];
@@ -107,6 +112,7 @@ public class GridInputStream
 		{
 			rc = currentValue[currentPosition++];
 			++currentAbsolutePosition;
+			mbean.getReadBytesMetric().logTime(1);
 		}
 		if(logger.isLoggable(Level.FINER))
 		{
@@ -115,12 +121,21 @@ public class GridInputStream
 		return rc;
 	}
 
-	public int read(byte[] b) throws IOException 
+	public int read(byte[] b) throws IOException
 	{
+		mbean.getReadBytesMetric().logTime(b.length);
+		long now = System.nanoTime();
 		if(logger.isLoggable(Level.FINER))
 		{
 			logger.log(Level.FINER, this.toString() + ":read/1");
 		}
+		int rc = privateRead(b);
+		mbean.getReadTimeMetric().logTime(System.nanoTime() - now);
+		return rc;
+	}
+	
+	public int privateRead(byte[] b) throws IOException 
+	{
 		if(!areBytesAvailable())
 			return -1;
 		
@@ -152,15 +167,18 @@ public class GridInputStream
 
 	public int read(byte[] b, int off, int len) throws IOException 
 	{
+		mbean.getReadBytesMetric().logTime(len);
+		long now = System.nanoTime();
 		if(logger.isLoggable(Level.FINER))
 		{
 			logger.log(Level.FINER, this.toString() + ":read/3");
 		}
 		int maxToRead = Math.min(b.length - off, len);
 		byte[] buffer = new byte[maxToRead];
-		int bytesRead = read(buffer);
+		int bytesRead = privateRead(buffer);
 		if(bytesRead > 0)
 			System.arraycopy(buffer, 0, b, off, bytesRead);
+		mbean.getReadTimeMetric().logTime(System.nanoTime() - now);
 		return bytesRead;
 	}
 
@@ -182,7 +200,7 @@ public class GridInputStream
 		if(newBucket != currentBucket)
 		{
 			currentBucket = newBucket;
-			currentValue = GridOutputStream.unZip(blockSize, md, streamMap.get(generateKey(fileName, currentBucket)));
+			currentValue = getBlock(currentBucket);
 			if(currentValue == null)
 				currentValue = new byte[blockSize];
 		}
@@ -192,6 +210,30 @@ public class GridInputStream
 		return skipAmount;
 	}
 
+	long lastBlock = -1;
+	int currentRun = 1;
+	private byte[] getBlock(long blockNum)
+		throws IOException
+	{
+		if(blockNum == lastBlock + 1)
+			currentRun++;
+		else
+		{
+			if(currentRun != 1)
+			{
+				MinMaxAvgMetric metric = mbean.getReadSequentialMetric();
+				metric.logTime(currentRun);
+				if(logger.isLoggable(Level.FINE))
+				{
+					logger.log(Level.FINE, "<Min: " + metric.getMinTimeNS() + ", Max:" + metric.getMaxTimeNS() + ", Avg: " + metric.getAvgTimeNS() + ">" + " from " + fileName);
+				}
+				currentRun = 1;
+			}
+		}
+		lastBlock = blockNum;
+		return GridOutputStream.unZip(blockSize, md, streamMap.get(generateKey(fileName, blockNum)));
+	}
+	
 	public void close() throws IOException {
 		if(logger.isLoggable(Level.FINER))
 		{

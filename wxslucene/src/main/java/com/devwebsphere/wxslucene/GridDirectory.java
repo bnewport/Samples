@@ -29,6 +29,8 @@ import com.devwebsphere.wxs.fs.GridFile;
 import com.devwebsphere.wxs.fs.GridInputStream;
 import com.devwebsphere.wxs.fs.GridOutputStream;
 import com.devwebsphere.wxs.fs.MapNames;
+import com.devwebsphere.wxslucene.jmx.LuceneFileMBeanManager;
+import com.devwebsphere.wxsutils.LazyMBeanManagerAtomicReference;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 
@@ -51,6 +53,8 @@ public class GridDirectory extends Directory
 {
 	static Logger logger = Logger.getLogger(GridDirectory.class.getName());
 	
+	static LazyMBeanManagerAtomicReference<LuceneFileMBeanManager> luceneFileMBeanManager = new LazyMBeanManagerAtomicReference<LuceneFileMBeanManager>(LuceneFileMBeanManager.class);
+	
 	WXSUtils client;
 	WXSMap<String, Set<String>> dirMap;
 	String name;
@@ -60,6 +64,11 @@ public class GridDirectory extends Directory
 	// This is how many puts we will batch PER partition
 	int partitionMaxBatchSize = 20;
 
+	public static LuceneFileMBeanManager getLuceneFileMBeanManager()
+	{
+		return luceneFileMBeanManager.getLazyRef();
+	}
+	
 	public final int getPartitionMaxBatchSize() {
 		return partitionMaxBatchSize;
 	}
