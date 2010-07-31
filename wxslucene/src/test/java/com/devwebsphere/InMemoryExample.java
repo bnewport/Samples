@@ -29,6 +29,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.NIOFSDirectory;
 
+import com.devwebsphere.wxslucene.ClientGridDirectory;
 import com.devwebsphere.wxslucene.GridDirectory;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.MinMaxAvgMetric;
@@ -115,7 +116,7 @@ public class InMemoryExample
         
     	String indexFileName = "/Users/ibm/Downloads/index_hs0_2";
 //        GridDirectory gidx = new GridDirectory(indexFileName);
-        GridDirectory gidx = new GridDirectory(WXSUtils.getDefaultUtils(), indexFileName);
+        ClientGridDirectory gidx = new ClientGridDirectory(indexFileName);
 //        NIOFSDirectory didx = new NIOFSDirectory(new File(indexFileName));
         Directory idx = gidx;
     	
