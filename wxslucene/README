@@ -5,3 +5,5 @@ ClientGridDirectory lets you easily attach to a working grid with an index alrea
 The Directory is configured usually using two properties files on the root class path. wxsutils.properties is used
 to connect to the grid and wxslucene.properties is used to configure the directory. Examples of these can be
 found in the src/test/resources folder.
+
+The wiki page for the plugin is at http://wiki.github.com/bnewport/Samples/wxslucene
