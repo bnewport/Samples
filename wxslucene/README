@@ -1,3 +1,7 @@
 This is an Apache Lucene Directory implementation using IBM WebSphere eXtreme Scale as a storage device. 
 The GridDirectory class can be used to attach to a remote grid and then copy a disk based Lucene index to it. The
 ClientGridDirectory lets you easily attach to a working grid with an index already loaded.
+
+The Directory is configured usually using two properties files on the root class path. wxsutils.properties is used
+to connect to the grid and wxslucene.properties is used to configure the directory. Examples of these can be
+found in the src/test/resources folder.
