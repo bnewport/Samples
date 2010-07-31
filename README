@@ -1,0 +1,8 @@
+This is a collection of source code written by Billy Newport at IBM. It's primarily a dump of sample code that I've written for customers over the years and as such contains a lot of patterns that are the best way to do various things
+with IBM WebSphere eXtreme Scale.
+
+The wxsutils package is a collection of help wrappers for WXS that I always use for samples. It makes WXS even easier to use and even improves performance for quite a few scenarios. If you use WXS then I recommend for simple CRUD cache style applications that you use WXS with wxsutils on top.
+
+All code is, of course, owned by IBM and it is provided using the WXS sample code license which makes it free to use for IBM customers. Read the license for more details.
+
+I am actively maintaining this codebase so please use it and open an issues on this site.
