@@ -240,11 +240,15 @@ public class GridInputStream
 		byte[] data = null;
 		if(parentBlockCache != null)
 			data = parentBlockCache.get(blockKey);
+		// if found in cache then nothing to do
 		if(data == null)
 		{
+			// try fetch from grid
 			data = streamMap.get(blockKey);
+			// decompress if needed
 			data = GridOutputStream.unZip(blockSize, md, data);
-			if(data != null)
+			// update LRU cache if enabled and found
+			if(data != null && parentBlockCache != null)
 				parentBlockCache.put(blockKey, data);
 		}
 		return data;
