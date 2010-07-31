@@ -121,7 +121,8 @@ public class GridOutputStream
 		{
 			ByteArrayOutputStream bos = new ByteArrayOutputStream(blockSize);
 			Deflater deflater = tlsDeflator.get();
-			DeflaterOutputStream zos = new DeflaterOutputStream(bos);
+			deflater.reset();
+			DeflaterOutputStream zos = new DeflaterOutputStream(bos, deflater);
 			zos.write(b);
 			zos.close();
 			bos.close();

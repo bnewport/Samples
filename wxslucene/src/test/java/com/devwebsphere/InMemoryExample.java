@@ -5,6 +5,7 @@ package com.devwebsphere;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -30,6 +31,7 @@ import org.apache.lucene.store.NIOFSDirectory;
 
 import com.devwebsphere.wxslucene.GridDirectory;
 import com.devwebsphere.wxsutils.WXSUtils;
+import com.devwebsphere.wxsutils.jmx.MinMaxAvgMetric;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.plugins.TransactionCallbackException;
@@ -107,12 +109,12 @@ public class InMemoryExample
 
 
     @SuppressWarnings("deprecation")
-    public static void main(String[] args) throws TransactionCallbackException, ObjectGridException, IOException {
+    public static void main(String[] args) throws TransactionCallbackException, ObjectGridException, IOException, URISyntaxException {
         // Construct a RAMDirectory to hold the in-memory representation
         // of the index.
         
     	String indexFileName = "/Users/ibm/Downloads/index_hs0_2";
-        GridDirectory gidx = new GridDirectory(indexFileName);
+        GridDirectory gidx = new GridDirectory(WXSUtils.getDefaultUtils(), indexFileName);
 //        NIOFSDirectory didx = new NIOFSDirectory(new File(indexFileName));
         Directory idx = gidx;
     	
@@ -152,10 +154,17 @@ public class InMemoryExample
 //            search(searcher, "britney");
 //            search(searcher, "free");
 //            search(searcher, "progress or achievements");
+            MinMaxAvgMetric qArtist = new MinMaxAvgMetric();
+            MinMaxAvgMetric qCategory = new MinMaxAvgMetric();
             for(int i = 0; i < 1000000; ++i)
             {
-	            search(searcher, "ARTIST", "U2");
-	            search(searcher, "CATEGORY_LIST", "19");
+	            search(searcher, "ARTIST", "U2", qArtist);
+	            search(searcher, "CATEGORY_LIST", "19", qCategory);
+	            if(i % 100 == 0)
+	            {
+	            	System.out.println("qArtist: " + qArtist.toString());
+	            	System.out.println("qCat: " + qCategory.toString());
+	            }
             }
 
             searcher.close();
@@ -194,7 +203,7 @@ public class InMemoryExample
     /**
      * Searches for the given string in the "content" field
      */
-    private static void search(Searcher searcher, String fieldName, String value)
+    private static void search(Searcher searcher, String fieldName, String value, MinMaxAvgMetric metric)
         throws ParseException, IOException {
 
     	Query query = new QueryParser(fieldName, new StandardAnalyzer()).parse(value);
@@ -206,7 +215,7 @@ public class InMemoryExample
     	long now = System.nanoTime();
         TopDocs td = searcher.search(query, 100);
         long duration = System.nanoTime() - now;
-        System.out.println("Query took " + (duration / 1000000.0) + " ms");
+        metric.logTime(duration);
 
         // Examine the Hits object to see if there were any matches
         int hitCount = td.totalHits;
@@ -215,8 +224,8 @@ public class InMemoryExample
                 "No matches were found for \"" + fieldName + "=" + value + "\"");
         }
         else {
-            System.out.println(hitCount + " hits for \"" +
-            		fieldName + "=" + value + "\" were found in quotes by:");
+//            System.out.println(hitCount + " hits for \"" +
+//            		fieldName + "=" + value + "\" were found in quotes by:");
 
             if(false)
             {
@@ -235,7 +244,7 @@ public class InMemoryExample
 	            }
             }
         }
-        System.out.println();
+//        System.out.println();
     }
     
 }

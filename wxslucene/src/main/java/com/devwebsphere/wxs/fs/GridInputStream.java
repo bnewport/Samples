@@ -16,6 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxslucene.GridDirectory;
+import com.devwebsphere.wxslucene.LRUCache;
 import com.devwebsphere.wxslucene.jmx.LuceneFileMBeanImpl;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
@@ -35,6 +36,7 @@ public class GridInputStream
 	FileMetaData md;
 	int blockSize;
 	LuceneFileMBeanImpl mbean;
+	LRUCache<String, byte[]> parentBlockCache;
 	
 	public FileMetaData getMetaData()
 	{
@@ -49,6 +51,7 @@ public class GridInputStream
 	public GridInputStream(WXSUtils utils, GridFile file) throws FileNotFoundException, IOException 
 	{
 		mbean = GridDirectory.getLuceneFileMBeanManager().getBean(file.getParent().getName(), file.getName());
+		parentBlockCache = file.getParent().getLRUBlockCache();
 		this.utils = utils;
 		streamMap = utils.getCache(MapNames.CHUNK_MAP_PREFIX + file.getParent().getName());
 		fileName= file.getName();
@@ -231,7 +234,20 @@ public class GridInputStream
 			}
 		}
 		lastBlock = blockNum;
-		return GridOutputStream.unZip(blockSize, md, streamMap.get(generateKey(fileName, blockNum)));
+		String blockKey = generateKey(fileName, blockNum);
+		
+		// maintain an LRU cache of uncompressed blocks
+		byte[] data = null;
+		if(parentBlockCache != null)
+			data = parentBlockCache.get(blockKey);
+		if(data == null)
+		{
+			data = streamMap.get(blockKey);
+			data = GridOutputStream.unZip(blockSize, md, data);
+			if(data != null)
+				parentBlockCache.put(blockKey, data);
+		}
+		return data;
 	}
 	
 	public void close() throws IOException {
