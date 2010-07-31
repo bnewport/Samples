@@ -16,7 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxslucene.GridDirectory;
-import com.devwebsphere.wxslucene.LRUCache;
+import com.devwebsphere.wxslucene.MTLRUCache;
 import com.devwebsphere.wxslucene.jmx.LuceneFileMBeanImpl;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
@@ -36,7 +36,7 @@ public class GridInputStream
 	FileMetaData md;
 	int blockSize;
 	LuceneFileMBeanImpl mbean;
-	LRUCache<String, byte[]> parentBlockCache;
+	MTLRUCache<String, byte[]> parentBlockCache;
 	
 	public FileMetaData getMetaData()
 	{

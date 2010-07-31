@@ -64,7 +64,7 @@ public class GridDirectory extends Directory
 	// This is how many puts we will batch PER partition
 	int partitionMaxBatchSize = 20;
 	
-	LRUCache<String, byte[]> blockCache;
+	MTLRUCache<String, byte[]> blockCache;
 
 	public static LuceneFileMBeanManager getLuceneFileMBeanManager()
 	{
@@ -163,7 +163,7 @@ public class GridDirectory extends Directory
 		init(client, directoryName);
 	}
 
-	public LRUCache<String, byte[]> getLRUBlockCache()
+	public MTLRUCache<String, byte[]> getLRUBlockCache()
 	{
 		return blockCache;
 	}
@@ -194,7 +194,7 @@ public class GridDirectory extends Directory
 			if(value.length() > 0)
 			{
 				int size = Integer.parseInt(value);
-				blockCache = new LRUCache<String, byte[]>(size);
+				blockCache = new MTLRUCache<String, byte[]>(size);
 				logger.log(Level.INFO, "Local lru block cache set to " + size + " blocks for directory " + name);
 			}
 		}
