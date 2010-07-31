@@ -185,7 +185,7 @@ public class GridDirectory extends Directory
 			setCompressionEnabled(value.equalsIgnoreCase("true"));
 			value = props.getProperty("async_put", "true");
 			setAsyncEnabled(value.equalsIgnoreCase("true"));
-			value = props.getProperty("block_size", "4096");
+			value = props.getProperty("block_size", "16384");
 			setBlockSize(Integer.parseInt(value));
 			value = props.getProperty("partition_max_batch_size", "20");
 			setPartitionMaxBatchSize(Integer.parseInt(value));
