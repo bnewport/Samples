@@ -11,6 +11,8 @@
 package com.devwebsphere.wxsutils;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.management.InstanceAlreadyExistsException;
 
@@ -22,6 +24,7 @@ import javax.management.InstanceAlreadyExistsException;
  */
 public class LazyMBeanManagerAtomicReference<T> extends AtomicReference<T>
 {
+	static Logger logger = Logger.getLogger(LazyMBeanManagerAtomicReference.class.getName());
 	/**
 	 * 
 	 */
@@ -58,8 +61,16 @@ public class LazyMBeanManagerAtomicReference<T> extends AtomicReference<T>
 			{
 				// this exception is expected and ok
 				if(!(e instanceof InstanceAlreadyExistsException))
+				{
+					logger.log(Level.SEVERE, "Unexpected exception creating MBeanManager", e);
 					throw new RuntimeException(e);
+				}
 			}
+		}
+		T rc = get();
+		if(rc == null)
+		{
+			logger.log(Level.SEVERE, "MBeanManager doesn't exist");
 		}
 		return get();
 	}

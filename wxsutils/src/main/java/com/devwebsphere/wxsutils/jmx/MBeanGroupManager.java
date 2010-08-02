@@ -15,6 +15,8 @@ import java.util.Collection;
 import java.util.Hashtable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanInfo;
@@ -37,6 +39,7 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 public abstract class MBeanGroupManager <M>
 {
 	public ConcurrentMap<String, M> beans = new ConcurrentHashMap<String, M>();
+	static Logger logger = Logger.getLogger(MBeanGroupManager.class.getName());
 
 	final static public String UNKNOWN_MAP = "_UNDEFINED";
 	
@@ -130,15 +133,21 @@ public abstract class MBeanGroupManager <M>
 	        }
 	        catch(InstanceAlreadyExistsException e)
 	        {
+	        	logger.log(Level.INFO, "Summary MBean already exists, reuse old one");
 	        	throw e;
 	        }
 	        catch(Exception e)
 	        {
-	        	System.out.println(e.toString());
-	        	e.printStackTrace();
+	        	logger.log(Level.SEVERE, "Exception initializing MBeanGroupManager", e);
 	        }
 		}
+		else
+		{
+			logger.log(Level.SEVERE, "Cannot find an MBeanServer to use");
+		}
 	}
+	
+	FakeMBeanServer fakeMBeanServer = new FakeMBeanServer();
 	
 	/**
 	 * This returns the JMXServer to use for registering mbeans. The first time that it's called
@@ -147,7 +156,8 @@ public abstract class MBeanGroupManager <M>
 	 */
 	public MBeanServer getServer()
 	{
-		return mbeanServer;
+		// if MBeanServer isn't available then return a fake one to allow everything to pretend everything is ok
+		return (mbeanServer != null) ? mbeanServer : fakeMBeanServer;
 	}
 	
 	/**
@@ -180,13 +190,17 @@ public abstract class MBeanGroupManager <M>
 						{
 							StandardMBean mbean = new StandardMBean(bean, mbeanInterface);
 							MBeanInfo info = mbean.getMBeanInfo();
-							ObjectName on = summaryMBean.makeObjectName(bean, typeName);
-							server.registerMBean(mbean, on);
+							if(summaryMBean != null)
+							{
+								ObjectName on = summaryMBean.makeObjectName(bean, typeName);
+								server.registerMBean(mbean, on);
+							}
 						}
 						beans.put(keyValue, bean);
 					}
 					catch(Exception e)
 					{
+						logger.log(Level.SEVERE, "Exception registering MBean for " + groupName + ":" + keyValue, e);
 						throw new ObjectGridRuntimeException(e);
 					}
 				}
