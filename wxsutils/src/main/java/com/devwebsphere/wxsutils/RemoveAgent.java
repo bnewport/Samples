@@ -11,6 +11,8 @@
 package com.devwebsphere.wxsutils;
 
 import java.util.Collection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.ibm.websphere.objectgrid.ObjectMap;
@@ -27,6 +29,7 @@ public class RemoveAgent<K> implements ReduceGridAgent
 	 * 
 	 */
 	private static final long serialVersionUID = 6568906743945108310L;
+	static Logger logger = Logger.getLogger(RemoveAgent.class.getName());
 	
 	java.util.List<K> batch;
 
@@ -50,6 +53,7 @@ public class RemoveAgent<K> implements ReduceGridAgent
 		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			agent.getKeysMetric().logException(e);
 			return Boolean.FALSE;
 		}

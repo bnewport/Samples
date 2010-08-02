@@ -14,6 +14,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
@@ -30,6 +32,7 @@ public class GetAllAgent<K,V> implements ReduceGridAgent
 	 * 
 	 */
 	private static final long serialVersionUID = 6568906743945108310L;
+	static Logger logger = Logger.getLogger(GetAllAgent.class.getName());
 	
 	public List<K> batch;
 
@@ -55,6 +58,7 @@ public class GetAllAgent<K,V> implements ReduceGridAgent
 		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			bean.getKeysMetric().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}

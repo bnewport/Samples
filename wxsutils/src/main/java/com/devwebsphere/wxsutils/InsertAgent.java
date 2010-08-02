@@ -12,6 +12,8 @@ package com.devwebsphere.wxsutils;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.ibm.websphere.objectgrid.ObjectMap;
@@ -35,6 +37,7 @@ import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
  */
 public class InsertAgent<K,V> implements ReduceGridAgent 
 {
+	static Logger logger = Logger.getLogger(InsertAgent.class.getName());
 	/**
 	 * 
 	 */
@@ -75,7 +78,7 @@ public class InsertAgent<K,V> implements ReduceGridAgent
 		}
 		catch(Exception e)
 		{
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Exception", e);
 			agent.getKeysMetric().logException(e);
 			return Boolean.FALSE;
 		}

@@ -133,7 +133,7 @@ public abstract class MBeanGroupManager <M>
 	        }
 	        catch(InstanceAlreadyExistsException e)
 	        {
-	        	logger.log(Level.INFO, "Summary MBean already exists, reuse old one");
+//	        	logger.log(Level.INFO, "Summary MBean already exists, reuse old one");
 	        	throw e;
 	        }
 	        catch(Exception e)

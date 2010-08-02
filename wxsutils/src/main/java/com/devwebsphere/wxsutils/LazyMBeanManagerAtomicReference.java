@@ -50,7 +50,7 @@ public class LazyMBeanManagerAtomicReference<T> extends AtomicReference<T>
 	 */
 	public T getLazyRef()
 	{
-		if(get() == null)
+		while(get() == null)
 		{
 			try
 			{
