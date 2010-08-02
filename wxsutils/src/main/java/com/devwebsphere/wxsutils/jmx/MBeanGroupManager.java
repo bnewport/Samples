@@ -143,7 +143,7 @@ public abstract class MBeanGroupManager <M>
 		}
 		else
 		{
-			logger.log(Level.SEVERE, "Cannot find an MBeanServer to use");
+			logger.log(Level.SEVERE, "Cannot find an MBeanServer to use, try -Dcom.sun.management.jmxremote");
 		}
 	}
 	
