@@ -144,10 +144,9 @@ public abstract class MBeanGroupManager <M>
 		else
 		{
 			logger.log(Level.SEVERE, "Cannot find an MBeanServer to use, try -Dcom.sun.management.jmxremote");
+			mbeanServer = new FakeMBeanServer();
 		}
 	}
-	
-	FakeMBeanServer fakeMBeanServer = new FakeMBeanServer();
 	
 	/**
 	 * This returns the JMXServer to use for registering mbeans. The first time that it's called
@@ -157,7 +156,7 @@ public abstract class MBeanGroupManager <M>
 	public MBeanServer getServer()
 	{
 		// if MBeanServer isn't available then return a fake one to allow everything to pretend everything is ok
-		return (mbeanServer != null) ? mbeanServer : fakeMBeanServer;
+		return mbeanServer;
 	}
 	
 	/**

@@ -14,6 +14,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.jmx.wxsmap.WXSMapMBeanImpl;
 import com.ibm.websphere.objectgrid.BackingMap;
@@ -30,6 +32,7 @@ import com.ibm.websphere.objectgrid.Session;
  */
 public class WXSMap <K,V>
 {
+	static Logger logger = Logger.getLogger(WXSMap.class.getName());
 	BackingMap bmap;
 	ThreadLocalSession tls;
 	WXSUtils utils;
@@ -56,6 +59,7 @@ public class WXSMap <K,V>
 		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
@@ -77,6 +81,7 @@ public class WXSMap <K,V>
 		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			mbean.getGetMetrics().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
@@ -118,12 +123,16 @@ public class WXSMap <K,V>
 			{
 				Boolean b = (Boolean)o;
 				if(!b)
+				{
+					logger.log(Level.SEVERE, "put(K,V) failed");
 					throw new ObjectGridRuntimeException("put failed");
+				}
 			}
 			mbean.getPutMetrics().logTime(System.nanoTime() - start);
 		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			mbean.getPutMetrics().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
@@ -145,6 +154,7 @@ public class WXSMap <K,V>
 		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			mbean.getInsertMetrics().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
@@ -191,6 +201,7 @@ public class WXSMap <K,V>
 		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			mbean.getRemoveMetrics().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
@@ -225,6 +236,7 @@ public class WXSMap <K,V>
 		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			mbean.getContainsMetrics().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
@@ -265,6 +277,7 @@ public class WXSMap <K,V>
 		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			mbean.getLockMetrics().logException(e);
 		}
 		finally
@@ -291,6 +304,7 @@ public class WXSMap <K,V>
 		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			mbean.getUnlockMetrics().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}

@@ -17,6 +17,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
@@ -37,6 +39,7 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
  */
 public class TabularDataMetaData<T>
 {
+	static Logger logger = Logger.getLogger(TabularDataMetaData.class.getName());
 	CompositeType jmxType;
 	
 	/**
@@ -79,7 +82,10 @@ public class TabularDataMetaData<T>
 			name = name.substring(0, 1).toUpperCase() + name.substring(1);
 		}
 		else
+		{
+			logger.log(Level.SEVERE, "Method " + m.getName() + " isn't an is or get");
 			throw new IllegalArgumentException("Method " + m.getName() + " isn't an is or get");
+		}
 		return name;
 	}
 	
@@ -129,12 +135,18 @@ public class TabularDataMetaData<T>
 						description = attr.description();
 					SimpleType atype = typeConversion.get(m.getReturnType());
 					if(atype == null)
+					{
+						logger.log(Level.SEVERE, "Unmapped return type " + m.getReturnType().getName());
 						throw new IllegalArgumentException("Unmapped return type " + m.getReturnType().getName());
+					}
 					attributes.add(new TabularDataColumnMetaData(description, atype, m));
 				}
 			}
 			if(keyAttr != null && attr != null)
+			{
+				logger.log(Level.SEVERE, "Attribute <" + getAttributeFromMethod(m) + "> has both TabularKey and TabularAttribute annotations, you can have one");
 				throw new ObjectGridRuntimeException("Attribute <" + getAttributeFromMethod(m) + "> has both TabularKey and TabularAttribute annotations, you can have one");
+			}
 		}
 		jmxType = getCompositeType(typeName, typeDescription);
 	}

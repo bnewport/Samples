@@ -50,11 +50,15 @@ public class LazyMBeanManagerAtomicReference<T> extends AtomicReference<T>
 	 */
 	public T getLazyRef()
 	{
+		// basically a spin lock until we get an instance
 		while(get() == null)
 		{
 			try
 			{
+				// make it, this can throw an InstanceAlreadyExistsException if two
+				// threads do this concurrently, this is NORMAL
 				T m = clazz.newInstance();
+				// try to set it
 				compareAndSet(null, m);
 			}
 			catch(Exception e)
@@ -70,8 +74,9 @@ public class LazyMBeanManagerAtomicReference<T> extends AtomicReference<T>
 		T rc = get();
 		if(rc == null)
 		{
+			// should be impossible but however...
 			logger.log(Level.SEVERE, "MBeanManager doesn't exist");
 		}
-		return get();
+		return rc;
 	}
 }

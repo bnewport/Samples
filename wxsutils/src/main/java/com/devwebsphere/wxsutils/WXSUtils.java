@@ -161,10 +161,14 @@ public class WXSUtils
 					maps.put(mapName, rc);
 				}
 				else
+				{
+					logger.log(Level.SEVERE, "Unknown map " + mapName);
 					throw new ObjectGridRuntimeException("Unknown map:" + mapName);
+				}
 			}
 			catch(ObjectGridException e)
 			{
+				logger.log(Level.SEVERE, "Exception", e);
 				throw new ObjectGridRuntimeException(e);
 			}
 		}
@@ -304,7 +308,10 @@ public class WXSUtils
 	
 			blockForAllFuturesToFinish(doneSignal);
 			if(!areAllFuturesTRUE(results))
+			{
+				logger.log(Level.SEVERE, "putAll failed because of a server side exception");
 				throw new ObjectGridRuntimeException("putAll failed");
+			}
 		}
 	}
 
@@ -327,6 +334,7 @@ public class WXSUtils
 		}
 		catch(ExecutionException e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 		catch(InterruptedException e)
@@ -368,7 +376,10 @@ public class WXSUtils
 	
 			blockForAllFuturesToFinish(doneSignal);
 			if(!areAllFuturesTRUE(results))
+			{
+				logger.log(Level.SEVERE, "removeAll failed because of a server side exception");
 				throw new ObjectGridRuntimeException("removeAll failed");
+			}
 		}
 	}
 	/**
@@ -415,6 +426,7 @@ public class WXSUtils
 			}
 			catch(Exception e)
 			{
+				logger.log(Level.SEVERE, "Exception", e);
 				throw new ObjectGridRuntimeException(e);
 			}
 		}
@@ -469,6 +481,7 @@ public class WXSUtils
 			}
 			catch(Exception e)
 			{
+				logger.log(Level.SEVERE, "Exception", e);
 				throw new ObjectGridRuntimeException(e);
 			}
 		}
@@ -547,6 +560,7 @@ public class WXSUtils
 		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 		
@@ -585,6 +599,7 @@ public class WXSUtils
 		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException("Cannot start OG container", e);
 		}
 	}
@@ -607,6 +622,7 @@ public class WXSUtils
 		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException("Cannot start OG client", e);
 		}
 	}
@@ -643,8 +659,7 @@ public class WXSUtils
 			}
 			catch(Exception e)
 			{
-				System.out.println("Exception " + e.toString());
-				e.printStackTrace();
+				logger.log(Level.SEVERE, "Exception in CallReduceAgentThread.call", e);
 			}
 			finally
 			{
@@ -700,7 +715,6 @@ public class WXSUtils
 			theCause=e.getCause();
 			logger.fine("isRetryable Main: " + e.getMessage());
 			logger.fine("isRetryable cause: " + theCause.getMessage());
-			e.printStackTrace(System.out);
 		} else {
 			logger.fine("isRetryable Main: null");
 			return false;

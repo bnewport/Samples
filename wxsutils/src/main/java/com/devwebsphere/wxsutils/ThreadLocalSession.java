@@ -10,6 +10,9 @@
 //
 package com.devwebsphere.wxsutils;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
@@ -24,6 +27,7 @@ import com.ibm.websphere.objectgrid.Session;
 public class ThreadLocalSession extends ThreadLocal<ThreadStuff>
 {
 	WXSUtils utils;
+	static Logger logger = Logger.getLogger(ThreadLocalSession.class.getName());
 	
 	public ThreadLocalSession(WXSUtils utils)
 	{
@@ -40,6 +44,7 @@ public class ThreadLocalSession extends ThreadLocal<ThreadStuff>
 		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Cannot get Session", e);
 			throw new IllegalStateException("Cannot get session", e);
 		}
 	}
@@ -62,6 +67,7 @@ public class ThreadLocalSession extends ThreadLocal<ThreadStuff>
 		}
 		catch(ObjectGridException e)
 		{
+			logger.log(Level.SEVERE, "Cannot get Map", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
