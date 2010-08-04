@@ -115,9 +115,9 @@ public class InMemoryExample
         // of the index.
         
     	String indexFileName = "/Users/ibm/Downloads/index_hs0_2";
-//        GridDirectory gidx = new GridDirectory(indexFileName);
-        ClientGridDirectory gidx = new ClientGridDirectory(indexFileName);
-//        NIOFSDirectory didx = new NIOFSDirectory(new File(indexFileName));
+  	GridDirectory gidx = new GridDirectory(indexFileName);
+//        ClientGridDirectory gidx = new ClientGridDirectory(indexFileName);
+//        NIOFSDirectory gidx = new NIOFSDirectory(new File(indexFileName));
         Directory idx = gidx;
     	
 
@@ -160,12 +160,16 @@ public class InMemoryExample
             MinMaxAvgMetric qCategory = new MinMaxAvgMetric();
             for(int i = 0; i < 1000000; ++i)
             {
-	            search(searcher, "ARTIST", "U2", qArtist);
-	            search(searcher, "CATEGORY_LIST", "19", qCategory);
+	            TopDocs q1 = search(searcher, "ARTIST", "U2", qArtist);
+	            TopDocs q2 = search(searcher, "CATEGORY_LIST", "19", qCategory);
 	            if(i % 100 == 0)
 	            {
 	            	System.out.println("qArtist: " + qArtist.toString());
 	            	System.out.println("qCat: " + qCategory.toString());
+	            	qArtist.reset();
+	            	qCategory.reset();
+	            	System.out.println("Hit rate:" + gidx.getLRUBlockCache().getHitRate());
+//	            	dumpTopDocs(searcher, q1, "ARTIST", "U2");
 	            }
             }
 
@@ -205,7 +209,7 @@ public class InMemoryExample
     /**
      * Searches for the given string in the "content" field
      */
-    private static void search(Searcher searcher, String fieldName, String value, MinMaxAvgMetric metric)
+    private static TopDocs search(Searcher searcher, String fieldName, String value, MinMaxAvgMetric metric)
         throws ParseException, IOException {
 
     	Query query = new QueryParser(fieldName, new StandardAnalyzer()).parse(value);
@@ -225,28 +229,28 @@ public class InMemoryExample
             System.out.println(
                 "No matches were found for \"" + fieldName + "=" + value + "\"");
         }
-        else {
-//            System.out.println(hitCount + " hits for \"" +
-//            		fieldName + "=" + value + "\" were found in quotes by:");
-
-            if(false)
-            {
-	            // Iterate over the Documents in the Hits object
-	            for (ScoreDoc hit : td.scoreDocs) {
-	                Document doc = searcher.doc(hit.doc);
-	                List<Fieldable> fields = doc.getFields();
-	                for(Fieldable f : fields)
-	                {
-	                    System.out.println("  " + f.name() + "=" + doc.get(f.name()));
-	                }
-	                // Print the value that we stored in the "title" field. Note
-	                // that this Field was not indexed, but (unlike the
-	                // "contents" field) was stored verbatim and can be
-	                // retrieved.
-	            }
-            }
-        }
+        return td;
 //        System.out.println();
     }
-    
+
+    static void dumpTopDocs(Searcher searcher, TopDocs td, String fieldName, String value)
+    	throws IOException
+    {
+        System.out.println(td.totalHits + " hits for \"" +
+        		fieldName + "=" + value + "\" were found in quotes by:");
+
+        // Iterate over the Documents in the Hits object
+        for (ScoreDoc hit : td.scoreDocs) {
+            Document doc = searcher.doc(hit.doc);
+            List<Fieldable> fields = doc.getFields();
+            for(Fieldable f : fields)
+            {
+                System.out.println("  " + f.name() + "=" + doc.get(f.name()));
+            }
+            // Print the value that we stored in the "title" field. Note
+            // that this Field was not indexed, but (unlike the
+            // "contents" field) was stored verbatim and can be
+            // retrieved.
+        }
+    }
 }

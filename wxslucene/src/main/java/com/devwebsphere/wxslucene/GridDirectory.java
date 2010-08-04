@@ -25,6 +25,7 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.NIOFSDirectory;
 
+import com.devwebsphere.wxs.fs.FileMetaData;
 import com.devwebsphere.wxs.fs.GridFile;
 import com.devwebsphere.wxs.fs.GridInputStream;
 import com.devwebsphere.wxs.fs.GridOutputStream;
@@ -65,6 +66,7 @@ public class GridDirectory extends Directory
 	int partitionMaxBatchSize = 20;
 	
 	MTLRUCache<String, byte[]> blockCache;
+	MTLRUCache<String, FileMetaData> fileMDcache;
 
 	public static LuceneFileMBeanManager getLuceneFileMBeanManager()
 	{
@@ -185,6 +187,12 @@ public class GridDirectory extends Directory
 			setCompressionEnabled(value.equalsIgnoreCase("true"));
 			value = props.getProperty("async_put", "true");
 			setAsyncEnabled(value.equalsIgnoreCase("true"));
+			value = props.getProperty("file_md_cache", "false");
+			if(value.equalsIgnoreCase("true"))
+			{
+				fileMDcache = new MTLRUCache<String, FileMetaData>(512);
+				logger.log(Level.INFO, "File meta data cache of 512 enabled");
+			}
 			value = props.getProperty("block_size", "16384");
 			setBlockSize(Integer.parseInt(value));
 			value = props.getProperty("partition_max_batch_size", "20");
@@ -347,6 +355,10 @@ public class GridDirectory extends Directory
 	public final void setCompressionEnabled(boolean isCompressionEnabled) {
 		this.isCompressionEnabled = isCompressionEnabled;
 		logger.log(Level.INFO, "Compression enabled = " + isCompressionEnabled + " for directory " + name);
+	}
+
+	public final MTLRUCache<String, FileMetaData> getFileMDcache() {
+		return fileMDcache;
 	}
 
 }

@@ -16,6 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxslucene.GridDirectory;
+import com.devwebsphere.wxslucene.MTLRUCache;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 
@@ -39,12 +40,23 @@ public class GridFile
 		this.client = parent.getWXSUtils();
 		fullPath = parent.getName() + "/" + pathname;
 		mdMap = client.getCache(MapNames.MD_MAP_PREFIX + parent.getName());
-		md = mdMap.get(fullPath);
+		MTLRUCache<String, FileMetaData> mdCache = parent.getFileMDcache();
+		if(mdCache != null)
+		{
+			md = mdCache.get(fullPath);
+		}
+		if(md == null)
+			md = mdMap.get(fullPath);
 		exists = (md != null);
 		if(!exists)
 		{
 			md = new FileMetaData();
 			md.setName(fullPath);
+		}
+		else
+		{
+			if(mdCache != null)
+				mdCache.put(fullPath, md);
 		}
 	}
 

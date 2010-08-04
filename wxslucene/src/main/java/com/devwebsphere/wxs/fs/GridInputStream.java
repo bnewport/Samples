@@ -68,7 +68,7 @@ public class GridInputStream
 		}
 		currentAbsolutePosition = 0;
 		currentBucket = 0;
-		currentValue = getBlock(currentBucket);
+		currentValue = null;
 	}
 
 	static String generateKey(String fileName, long bucket)
@@ -93,7 +93,9 @@ public class GridInputStream
 		}
 		if(currentValue == null || currentPosition == currentValue.length)
 		{
-			currentBucket++;
+			// if not first block in file then advance otherwise fetch first block
+			if(currentAbsolutePosition > 0)
+				currentBucket++;
 			currentValue = getBlock(currentBucket);
 			if(currentValue == null)
 			{
