@@ -10,12 +10,8 @@
 //
 package com.devwebsphere.wxslucene;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,6 +26,8 @@ import com.devwebsphere.wxs.fs.GridFile;
 import com.devwebsphere.wxs.fs.GridInputStream;
 import com.devwebsphere.wxs.fs.GridOutputStream;
 import com.devwebsphere.wxs.fs.MapNames;
+import com.devwebsphere.wxslucene.jmx.LuceneDirectoryMBeanImpl;
+import com.devwebsphere.wxslucene.jmx.LuceneDirectoryMBeanManager;
 import com.devwebsphere.wxslucene.jmx.LuceneFileMBeanManager;
 import com.devwebsphere.wxsutils.LazyMBeanManagerAtomicReference;
 import com.devwebsphere.wxsutils.WXSMap;
@@ -55,18 +53,13 @@ public class GridDirectory extends Directory
 	static Logger logger = Logger.getLogger(GridDirectory.class.getName());
 	
 	static LazyMBeanManagerAtomicReference<LuceneFileMBeanManager> luceneFileMBeanManager = new LazyMBeanManagerAtomicReference<LuceneFileMBeanManager>(LuceneFileMBeanManager.class);
+	static LazyMBeanManagerAtomicReference<LuceneDirectoryMBeanManager> luceneDirectoryMBeanManager = new LazyMBeanManagerAtomicReference<LuceneDirectoryMBeanManager>(LuceneDirectoryMBeanManager.class);
 	
 	WXSUtils client;
 	WXSMap<String, Set<String>> dirMap;
 	String name;
-	boolean isAsyncEnabled;
-	boolean isCompressionEnabled = true;
-	int blockSize = 4096;
-	// This is how many puts we will batch PER partition
-	int partitionMaxBatchSize = 20;
 	
-	MTLRUCache<String, byte[]> blockCache;
-	MTLRUCache<String, FileMetaData> fileMDcache;
+	LuceneDirectoryMBeanImpl mbean;
 
 	public static LuceneFileMBeanManager getLuceneFileMBeanManager()
 	{
@@ -74,7 +67,7 @@ public class GridDirectory extends Directory
 	}
 	
 	public final int getPartitionMaxBatchSize() {
-		return partitionMaxBatchSize;
+		return mbean.getPartitionMaxBatchSize();
 	}
 
 	/**
@@ -83,12 +76,11 @@ public class GridDirectory extends Directory
 	 * @param partitionMaxBatchSize
 	 */
 	public final void setPartitionMaxBatchSize(int partitionMaxBatchSize) {
-		this.partitionMaxBatchSize = partitionMaxBatchSize;
-		logger.log(Level.INFO, "Partition Max Batch Size  = " + partitionMaxBatchSize + " for directory " + name);
+		mbean.setPartitionMaxBatchSize(partitionMaxBatchSize);
 	}
 
 	public final int getBlockSize() {
-		return blockSize;
+		return mbean.getBlockSize();
 	}
 
 	/**
@@ -96,13 +88,13 @@ public class GridDirectory extends Directory
 	 * from researching.
 	 * @param blockSize
 	 */
-	public final void setBlockSize(int blockSize) {
-		this.blockSize = blockSize;
-		logger.log(Level.INFO, "Block Size  = " + blockSize + " for directory " + name);
+	public final void setBlockSize(int blockSize) 
+	{
+		mbean.setBlockSize(blockSize);
 	}
 
 	public final boolean isAsyncEnabled() {
-		return isAsyncEnabled;
+		return mbean.isAsyncEnabled();
 	}
 
 	/**
@@ -112,9 +104,9 @@ public class GridDirectory extends Directory
 	 * the PartitionMaxBatchSize
 	 * @param isAsyncEnabled
 	 */
-	public final void setAsyncEnabled(boolean isAsyncEnabled) {
-		this.isAsyncEnabled = isAsyncEnabled;
-		logger.log(Level.INFO, "Async enabled = " + isAsyncEnabled + " for directory " + name);
+	public final void setAsyncEnabled(boolean isAsyncEnabled) 
+	{
+		mbean.setAsyncEnabled(isAsyncEnabled);
 	}
 
 	public String getName()
@@ -167,65 +159,17 @@ public class GridDirectory extends Directory
 
 	public MTLRUCache<String, byte[]> getLRUBlockCache()
 	{
-		return blockCache;
+		return mbean.getBlockLRUCache();
 	}
 	
 	private void init(WXSUtils client, String directoryName)
 	{
 		this.client = client;
+		mbean = luceneDirectoryMBeanManager.getLazyRef().getBean(client.getObjectGrid().getName(), directoryName);
 		dirMap = client.getCache(MapNames.DIR_MAP);
 		name = directoryName;
 		setLockFactory(new WXSLockFactory(client));
 		getLockFactory().setLockPrefix(directoryName);
-		
-		Properties props = new Properties();
-		boolean useDefaults = true;
-		try
-		{
-			props.load(new FileInputStream(new File(GridDirectory.class.getResource("/wxslucene.properties").toURI())));
-			String value = props.getProperty("compression", "true");
-			setCompressionEnabled(value.equalsIgnoreCase("true"));
-			value = props.getProperty("async_put", "true");
-			setAsyncEnabled(value.equalsIgnoreCase("true"));
-			value = props.getProperty("file_md_cache", "false");
-			if(value.equalsIgnoreCase("true"))
-			{
-				fileMDcache = new MTLRUCache<String, FileMetaData>(512);
-				logger.log(Level.INFO, "File meta data cache of 512 enabled");
-			}
-			value = props.getProperty("block_size", "16384");
-			setBlockSize(Integer.parseInt(value));
-			value = props.getProperty("partition_max_batch_size", "20");
-			setPartitionMaxBatchSize(Integer.parseInt(value));
-			useDefaults = false;
-			value = props.getProperty("block_cache_size", "");
-			if(value.length() > 0)
-			{
-				int size = Integer.parseInt(value);
-				blockCache = new MTLRUCache<String, byte[]>(size);
-				logger.log(Level.INFO, "Local lru block cache set to " + size + " blocks for directory " + name);
-			}
-		}
-		catch(FileNotFoundException e)
-		{
-			logger.log(Level.INFO, "wxslucene.properties not found, using defaults");
-		}
-		catch(NumberFormatException e)
-		{
-			logger.log(Level.WARNING, "wxslucene.properties number format exception on property");
-		}
-		catch(Exception e)
-		{
-			logger.log(Level.WARNING, "Exception reading wxslucene.properties", e);
-		}
-		if(useDefaults)
-		{
-			// turn on compression by default
-			setCompressionEnabled(true);
-			// turn on async put by default
-			setAsyncEnabled(true);
-			setBlockSize(4096);
-		}
 	}
 	
 	@Override
@@ -251,8 +195,9 @@ public class GridDirectory extends Directory
 		}
 		GridFile file = new GridFile(this, pathname);
 		GridOutputStream os = new GridOutputStream(client, file);
-		if(isAsyncEnabled)
+		if(mbean.isAsyncEnabled())
 			os.enableAsyncWrite();
+		mbean.incrementOpenOutput();
 		return new GridIndexOutput(os);
 	}
 
@@ -332,6 +277,7 @@ public class GridDirectory extends Directory
 		}
 		GridFile file = new GridFile(this, pathname);
 		GridInputStream is = new GridInputStream(client, file);
+		mbean.incrementOpenInput();
 		return new GridIndexInput(is);
 	}
 
@@ -349,16 +295,16 @@ public class GridDirectory extends Directory
 	}
 
 	public final boolean isCompressionEnabled() {
-		return isCompressionEnabled;
+		return mbean.isCompressionEnabled();
 	}
 
-	public final void setCompressionEnabled(boolean isCompressionEnabled) {
-		this.isCompressionEnabled = isCompressionEnabled;
-		logger.log(Level.INFO, "Compression enabled = " + isCompressionEnabled + " for directory " + name);
+	public final void setCompressionEnabled(boolean isCompressionEnabled) 
+	{
+		mbean.setCompressionEnabled(isCompressionEnabled);
 	}
 
 	public final MTLRUCache<String, FileMetaData> getFileMDcache() {
-		return fileMDcache;
+		return mbean.getMdLRUCache();
 	}
 
 }

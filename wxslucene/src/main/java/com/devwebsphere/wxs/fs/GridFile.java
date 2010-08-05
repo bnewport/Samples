@@ -40,14 +40,19 @@ public class GridFile
 		this.client = parent.getWXSUtils();
 		fullPath = parent.getName() + "/" + pathname;
 		mdMap = client.getCache(MapNames.MD_MAP_PREFIX + parent.getName());
+		
+		// check the file meta data cache if it's enabled
 		MTLRUCache<String, FileMetaData> mdCache = parent.getFileMDcache();
 		if(mdCache != null)
 		{
 			md = mdCache.get(fullPath);
 		}
+		// if we can't find it in cache then look up in grid
 		if(md == null)
 			md = mdMap.get(fullPath);
 		exists = (md != null);
+		
+		// doesnt exist so make a default one
 		if(!exists)
 		{
 			md = new FileMetaData();
@@ -55,6 +60,7 @@ public class GridFile
 		}
 		else
 		{
+			// update md cache if necessary
 			if(mdCache != null)
 				mdCache.put(fullPath, md);
 		}

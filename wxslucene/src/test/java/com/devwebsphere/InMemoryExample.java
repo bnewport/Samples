@@ -115,8 +115,8 @@ public class InMemoryExample
         // of the index.
         
     	String indexFileName = "/Users/ibm/Downloads/index_hs0_2";
-  	GridDirectory gidx = new GridDirectory(indexFileName);
-//        ClientGridDirectory gidx = new ClientGridDirectory(indexFileName);
+//	GridDirectory gidx = new GridDirectory(indexFileName);
+        ClientGridDirectory gidx = new ClientGridDirectory(indexFileName);
 //        NIOFSDirectory gidx = new NIOFSDirectory(new File(indexFileName));
         Directory idx = gidx;
     	
@@ -168,7 +168,8 @@ public class InMemoryExample
 	            	System.out.println("qCat: " + qCategory.toString());
 	            	qArtist.reset();
 	            	qCategory.reset();
-	            	System.out.println("Hit rate:" + gidx.getLRUBlockCache().getHitRate());
+	            	if(gidx.getLRUBlockCache() != null)
+	            		System.out.println("Hit rate:" + gidx.getLRUBlockCache().getHitRate());
 //	            	dumpTopDocs(searcher, q1, "ARTIST", "U2");
 	            }
             }
