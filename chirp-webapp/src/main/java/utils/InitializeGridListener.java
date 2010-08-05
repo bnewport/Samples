@@ -42,8 +42,7 @@ public class InitializeGridListener implements ServletContextListener
 
 	public void contextInitialized(ServletContextEvent c) 
 	{
-		String cep = c.getServletContext().getInitParameter("grid-catalog-endpoints");
-		R.initialize(cep);
+		R.initialize();
 	}
 
 }
