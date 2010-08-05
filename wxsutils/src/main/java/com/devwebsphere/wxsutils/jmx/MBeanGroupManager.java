@@ -118,33 +118,36 @@ public abstract class MBeanGroupManager <M>
 		throws InstanceAlreadyExistsException
 	{
 		ArrayList<MBeanServer> mBeanServers = MBeanServerFactory.findMBeanServer(null);
-		if(mBeanServers.size() >= 1)
+		if(mBeanServers.size() == 0)
 		{
-	        mbeanServer = (MBeanServer) mBeanServers.get(0);
-	        try
-	        {
-		        summaryMBean = new SummaryMBeanImpl<M>(this, mbeanClass, typeName);
-		        
-				Hashtable<String, String> props = new Hashtable<String, String>();
-				props.put("type", typeName + "Summary");
-				ObjectName on = new ObjectName(domainName, props);
-				StandardMBean realMBean = new StandardMBean(summaryMBean, SummaryMBean.class);
-				mbeanServer.registerMBean(realMBean, on);
-	        }
-	        catch(InstanceAlreadyExistsException e)
-	        {
-//	        	logger.log(Level.INFO, "Summary MBean already exists, reuse old one");
-	        	throw e;
-	        }
-	        catch(Exception e)
-	        {
-	        	logger.log(Level.SEVERE, "Exception initializing MBeanGroupManager", e);
-	        }
+			logger.log(Level.INFO, "No MBeanServer found, creating a new one");
+			mbeanServer = MBeanServerFactory.createMBeanServer(domainName);
 		}
 		else
 		{
-			logger.log(Level.SEVERE, "Cannot find an MBeanServer to use, try -Dcom.sun.management.jmxremote");
-			mbeanServer = new FakeMBeanServer();
+			logger.log(Level.INFO, "Reusing existing MBeanServer");
+			mbeanServer = (MBeanServer)mBeanServers.get(0);
+		}
+		
+        try
+        {
+	        summaryMBean = new SummaryMBeanImpl<M>(this, mbeanClass, typeName);
+	        
+			Hashtable<String, String> props = new Hashtable<String, String>();
+			props.put("type", typeName + "Summary");
+			ObjectName on = new ObjectName(domainName, props);
+			StandardMBean realMBean = new StandardMBean(summaryMBean, SummaryMBean.class);
+			mbeanServer.registerMBean(realMBean, on);
+        }
+        catch(InstanceAlreadyExistsException e)
+        {
+//	        	logger.log(Level.INFO, "Summary MBean already exists, reuse old one");
+        	throw e;
+        }
+        catch(Exception e)
+        {
+        	e.printStackTrace();
+        	logger.log(Level.SEVERE, "Exception initializing MBeanGroupManager: " + e.toString(), e);
 		}
 	}
 	

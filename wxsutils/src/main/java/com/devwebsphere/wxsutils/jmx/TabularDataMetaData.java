@@ -57,6 +57,7 @@ public class TabularDataMetaData<T>
 		typeConversion.put(Long.class, SimpleType.LONG);
 		typeConversion.put(Double.class, SimpleType.DOUBLE);
 		typeConversion.put(String.class, SimpleType.STRING);
+		typeConversion.put(Boolean.class, SimpleType.BOOLEAN);
 	}
 	
 	ArrayList<TabularDataColumnMetaData> attributes;
