@@ -1,0 +1,35 @@
+This is an example web app using wxsutils to implement a simple web client that allows
+get/put and remove operations against a grid.
+
+The grid to use is specified in the wxsutils.properties file in main/resources. The wxsutils.properties
+provided in the project will create a grid within the servlet container by default. Provide the
+cep to the remote grid if you want to connect to a remote grid.
+
+The URLs are: (I'm assuming the context for the application is "grid" and it's on port 80)
+
+http://host/grid/get.jsp?key=Billy&map=MAP
+
+This will fetch the value for the key "Billy" from the map called "MAP". All values are assumed
+to be strings in this demo.
+
+http://host/grid/put.jsp?key=Billy&value=USA&map=MAP
+
+This stores the value "USA" under the key "Billy" in the map "MAP".
+
+http://host/grid/remove.jsp?key=Billy&map=MAP
+
+This removes the entry for the key "Billy" from the map "MAP".
+
+If you are deploying this webapp on WebSphere then make sure the web container is using Java 5 for
+the JSP compiler otherwise you will get errors. More information on how to configure is at this link:
+
+I'm assuming the WebSphere instance hosting this webapp has WXS already installed on top of it before you
+try to run this application. If you're on a non IBM web container then just put the objectgrid.jar
+or ogclient.jar in the webapp also. You can do this by changing the scope in the pom.xml to compile rather
+than provided.
+
+For 6.1.0.15 or better
+http://www-01.ibm.com/support/docview.wss?rs=180&uid=swg1PK55810
+
+For <6.1.0.15
+http://publib.boulder.ibm.com/infocenter/wasinfo/v6r1/index.jsp?topic=/com.ibm.websphere.nd.doc/info/ae/ae/rweb_jspengine.html
