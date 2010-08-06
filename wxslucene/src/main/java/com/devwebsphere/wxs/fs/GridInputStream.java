@@ -20,7 +20,6 @@ import com.devwebsphere.wxslucene.MTLRUCache;
 import com.devwebsphere.wxslucene.jmx.LuceneFileMBeanImpl;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
-import com.devwebsphere.wxsutils.jmx.MinMaxAvgMetric;
 
 public class GridInputStream 
 {
@@ -81,48 +80,13 @@ public class GridInputStream
 		throws IOException
 	{
 		GridInputStreamState state = tlsState.get();
-		if(state.currentAbsolutePosition == md.getActualSize())
-		{
-//			if(logger.isLoggable(Level.FINEST))
-//			{
-//				logger.log(Level.FINEST, this.toString() + ":areBytesAvailable=FALSE");
-//			}
-			return false;
-		}
-		if(state.currentValue == null || state.currentPosition == state.currentValue.length)
-		{
-			// if not first block in file then advance otherwise fetch first block
-			if(state.currentAbsolutePosition > 0)
-				state.currentBucket++;
-			state.currentValue = getBlock(state.currentBucket);
-			if(state.currentValue == null)
-			{
-				state.currentValue = new byte[blockSize];
-			}
-			state.currentPosition = 0;
-		}
-//		if(logger.isLoggable(Level.FINEST))
-//		{
-//			logger.log(Level.FINEST, this.toString() + ":areBytesAvailable=TRUE");
-//		}
-		return true;
+		return state.areBytesAvailable(this);
 	}
 	
 	public int read() throws IOException 
 	{
 		GridInputStreamState state = tlsState.get();
-		int rc = -1;
-		if(areBytesAvailable())
-		{
-			rc = state.currentValue[state.currentPosition++];
-			++state.currentAbsolutePosition;
-			mbean.getReadBytesMetric().logTime(1);
-		}
-		if(logger.isLoggable(Level.FINER))
-		{
-			logger.log(Level.FINER, this.toString() + ":read/0=" + rc);
-		}
-		return rc;
+		return state.read(this);
 	}
 
 	public int read(byte[] b) throws IOException
@@ -141,33 +105,7 @@ public class GridInputStream
 	public int privateRead(byte[] b) throws IOException 
 	{
 		GridInputStreamState state = tlsState.get();
-		if(!areBytesAvailable())
-			return -1;
-		
-		int toGo = b.length;
-		int offset = 0;
-		
-		while(areBytesAvailable() && toGo > 0)
-		{
-			int bytesAvailable = state.currentValue.length - state.currentPosition;
-			if(bytesAvailable < toGo)
-			{
-				System.arraycopy(state.currentValue, state.currentPosition, b, offset, bytesAvailable);
-				offset += bytesAvailable;
-				toGo -= bytesAvailable;
-				state.currentPosition += bytesAvailable;
-				state.currentAbsolutePosition += bytesAvailable;
-			}
-			else
-			{
-				System.arraycopy(state.currentValue, state.currentPosition, b, offset, toGo);
-				offset += toGo;
-				state.currentPosition += toGo;
-				state.currentAbsolutePosition += toGo;
-				toGo = 0;
-			}
-		}
-		return offset;
+		return state.privateRead(this, b);
 	}
 
 	public int read(byte[] b, int off, int len) throws IOException 
@@ -189,54 +127,14 @@ public class GridInputStream
 
 	public long skip(long n) throws IOException {
 		GridInputStreamState state = tlsState.get();
-		if(logger.isLoggable(Level.FINER))
-		{
-			logger.log(Level.FINER, this.toString() + ":skip to " + n);
-		}
-		if(state.currentAbsolutePosition == md.getActualSize())
-			return 0;
-		long newPosition = state.currentAbsolutePosition + n;
-		if(newPosition >= md.getActualSize())
-		{
-			newPosition = md.getActualSize();
-		}
-		long skipAmount = newPosition - state.currentAbsolutePosition;
-		
-		int newBucket = (int)(newPosition / blockSize);
-		if(newBucket != state.currentBucket)
-		{
-			state.currentBucket = newBucket;
-			state.currentValue = getBlock(state.currentBucket);
-			if(state.currentValue == null)
-				state.currentValue = new byte[blockSize];
-		}
-		state.currentPosition = (int)(newPosition % blockSize);
-		state.currentAbsolutePosition = newPosition;
-		
-		return skipAmount;
+		return state.skip(this, n);
 	}
 
-	long lastBlock = -1;
-	int currentRun = 1;
-	private byte[] getBlock(long blockNum)
+	byte[] getBlock(long blockNum)
 		throws IOException
 	{
-		if(blockNum == lastBlock + 1)
-			currentRun++;
-		else
-		{
-			if(currentRun != 1)
-			{
-				MinMaxAvgMetric metric = mbean.getReadSequentialMetric();
-				metric.logTime(currentRun);
-				if(logger.isLoggable(Level.FINE))
-				{
-					logger.log(Level.FINE, "<Min: " + metric.getMinTimeNS() + ", Max:" + metric.getMaxTimeNS() + ", Avg: " + metric.getAvgTimeNS() + ">" + " from " + fileName);
-				}
-				currentRun = 1;
-			}
-		}
-		lastBlock = blockNum;
+		GridInputStreamState state = tlsState.get();
+		state.noteNewBlock(this, blockNum);
 		String blockKey = generateKey(fileName, blockNum);
 		
 		// maintain an LRU cache of uncompressed blocks

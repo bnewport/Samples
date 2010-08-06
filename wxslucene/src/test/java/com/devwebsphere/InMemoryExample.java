@@ -115,8 +115,8 @@ public class InMemoryExample
         // of the index.
         
     	String indexFileName = "/Users/ibm/Downloads/index_hs0_2";
-//	GridDirectory gidx = new GridDirectory(indexFileName);
-        ClientGridDirectory gidx = new ClientGridDirectory(indexFileName);
+	GridDirectory gidx = new GridDirectory(indexFileName);
+//        ClientGridDirectory gidx = new ClientGridDirectory(indexFileName);
 //        NIOFSDirectory gidx = new NIOFSDirectory(new File(indexFileName));
         Directory idx = gidx;
     	
