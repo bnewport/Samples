@@ -29,14 +29,13 @@ public class GridInputStream
 	WXSUtils utils;
 	WXSMap<String, byte[]> streamMap;
 	WXSMap<String, FileMetaData> mdMap;
-	long currentBucket;
-	long currentAbsolutePosition;
-	int currentPosition;
-	byte[] currentValue;
+	
+	ThreadLocalInputStreamState tlsState = new ThreadLocalInputStreamState();
+	
 	FileMetaData md;
 	int blockSize;
 	LuceneFileMBeanImpl mbean;
-	MTLRUCache<String, byte[]> parentBlockCache;
+	GridDirectory parentDirectory;
 	
 	public FileMetaData getMetaData()
 	{
@@ -45,13 +44,14 @@ public class GridInputStream
 	
 	public String toString()
 	{
-		return "GridInputStream(" + fileName + " pos = " + currentAbsolutePosition + " max= " + md.getActualSize();
+		GridInputStreamState state = tlsState.get();
+		return "GridInputStream(" + fileName + " pos = " + state.currentAbsolutePosition + " max= " + md.getActualSize();
 	}
 	
 	public GridInputStream(WXSUtils utils, GridFile file) throws FileNotFoundException, IOException 
 	{
+		this.parentDirectory = file.getParent();
 		mbean = GridDirectory.getLuceneFileMBeanManager().getBean(file.getParent().getName(), file.getName());
-		parentBlockCache = file.getParent().getLRUBlockCache();
 		this.utils = utils;
 		streamMap = utils.getCache(MapNames.CHUNK_MAP_PREFIX + file.getParent().getName());
 		fileName= file.getName();
@@ -66,9 +66,6 @@ public class GridInputStream
 		{
 			logger.log(Level.FINE, "Opening stream for " + fileName + " with " + md.getActualSize() + " bytes");
 		}
-		currentAbsolutePosition = 0;
-		currentBucket = 0;
-		currentValue = null;
 	}
 
 	static String generateKey(String fileName, long bucket)
@@ -83,7 +80,8 @@ public class GridInputStream
 	boolean areBytesAvailable()
 		throws IOException
 	{
-		if(currentAbsolutePosition == md.getActualSize())
+		GridInputStreamState state = tlsState.get();
+		if(state.currentAbsolutePosition == md.getActualSize())
 		{
 //			if(logger.isLoggable(Level.FINEST))
 //			{
@@ -91,17 +89,17 @@ public class GridInputStream
 //			}
 			return false;
 		}
-		if(currentValue == null || currentPosition == currentValue.length)
+		if(state.currentValue == null || state.currentPosition == state.currentValue.length)
 		{
 			// if not first block in file then advance otherwise fetch first block
-			if(currentAbsolutePosition > 0)
-				currentBucket++;
-			currentValue = getBlock(currentBucket);
-			if(currentValue == null)
+			if(state.currentAbsolutePosition > 0)
+				state.currentBucket++;
+			state.currentValue = getBlock(state.currentBucket);
+			if(state.currentValue == null)
 			{
-				currentValue = new byte[blockSize];
+				state.currentValue = new byte[blockSize];
 			}
-			currentPosition = 0;
+			state.currentPosition = 0;
 		}
 //		if(logger.isLoggable(Level.FINEST))
 //		{
@@ -112,11 +110,12 @@ public class GridInputStream
 	
 	public int read() throws IOException 
 	{
+		GridInputStreamState state = tlsState.get();
 		int rc = -1;
 		if(areBytesAvailable())
 		{
-			rc = currentValue[currentPosition++];
-			++currentAbsolutePosition;
+			rc = state.currentValue[state.currentPosition++];
+			++state.currentAbsolutePosition;
 			mbean.getReadBytesMetric().logTime(1);
 		}
 		if(logger.isLoggable(Level.FINER))
@@ -141,6 +140,7 @@ public class GridInputStream
 	
 	public int privateRead(byte[] b) throws IOException 
 	{
+		GridInputStreamState state = tlsState.get();
 		if(!areBytesAvailable())
 			return -1;
 		
@@ -149,21 +149,21 @@ public class GridInputStream
 		
 		while(areBytesAvailable() && toGo > 0)
 		{
-			int bytesAvailable = currentValue.length - currentPosition;
+			int bytesAvailable = state.currentValue.length - state.currentPosition;
 			if(bytesAvailable < toGo)
 			{
-				System.arraycopy(currentValue, currentPosition, b, offset, bytesAvailable);
+				System.arraycopy(state.currentValue, state.currentPosition, b, offset, bytesAvailable);
 				offset += bytesAvailable;
 				toGo -= bytesAvailable;
-				currentPosition += bytesAvailable;
-				currentAbsolutePosition += bytesAvailable;
+				state.currentPosition += bytesAvailable;
+				state.currentAbsolutePosition += bytesAvailable;
 			}
 			else
 			{
-				System.arraycopy(currentValue, currentPosition, b, offset, toGo);
+				System.arraycopy(state.currentValue, state.currentPosition, b, offset, toGo);
 				offset += toGo;
-				currentPosition += toGo;
-				currentAbsolutePosition += toGo;
+				state.currentPosition += toGo;
+				state.currentAbsolutePosition += toGo;
 				toGo = 0;
 			}
 		}
@@ -188,29 +188,30 @@ public class GridInputStream
 	}
 
 	public long skip(long n) throws IOException {
+		GridInputStreamState state = tlsState.get();
 		if(logger.isLoggable(Level.FINER))
 		{
 			logger.log(Level.FINER, this.toString() + ":skip to " + n);
 		}
-		if(currentAbsolutePosition == md.getActualSize())
+		if(state.currentAbsolutePosition == md.getActualSize())
 			return 0;
-		long newPosition = currentAbsolutePosition + n;
+		long newPosition = state.currentAbsolutePosition + n;
 		if(newPosition >= md.getActualSize())
 		{
 			newPosition = md.getActualSize();
 		}
-		long skipAmount = newPosition - currentAbsolutePosition;
+		long skipAmount = newPosition - state.currentAbsolutePosition;
 		
 		int newBucket = (int)(newPosition / blockSize);
-		if(newBucket != currentBucket)
+		if(newBucket != state.currentBucket)
 		{
-			currentBucket = newBucket;
-			currentValue = getBlock(currentBucket);
-			if(currentValue == null)
-				currentValue = new byte[blockSize];
+			state.currentBucket = newBucket;
+			state.currentValue = getBlock(state.currentBucket);
+			if(state.currentValue == null)
+				state.currentValue = new byte[blockSize];
 		}
-		currentPosition = (int)(newPosition % blockSize);
-		currentAbsolutePosition = newPosition;
+		state.currentPosition = (int)(newPosition % blockSize);
+		state.currentAbsolutePosition = newPosition;
 		
 		return skipAmount;
 	}
@@ -240,8 +241,9 @@ public class GridInputStream
 		
 		// maintain an LRU cache of uncompressed blocks
 		byte[] data = null;
-		if(parentBlockCache != null)
-			data = parentBlockCache.get(blockKey);
+		MTLRUCache<String, byte[]> cache = parentDirectory.getLRUBlockCache();
+		if(cache != null)
+			data = cache.get(blockKey);
 		// if found in cache then nothing to do
 		if(data == null)
 		{
@@ -250,8 +252,8 @@ public class GridInputStream
 			// decompress if needed
 			data = GridOutputStream.unZip(blockSize, md, data);
 			// update LRU cache if enabled and found
-			if(data != null && parentBlockCache != null)
-				parentBlockCache.put(blockKey, data);
+			if(data != null && cache != null)
+				cache.put(blockKey, data);
 		}
 		return data;
 	}
@@ -266,17 +268,19 @@ public class GridInputStream
 	public void seek(long n)
 		throws IOException
 	{
+		GridInputStreamState state = tlsState.get();
 		if(logger.isLoggable(Level.FINE))
 		{
 			logger.log(Level.FINE, this.toString() + ":seek to " + n);
 		}
 		n = Math.min(n, md.getActualSize());
-		currentAbsolutePosition = 0;
+		state.currentAbsolutePosition = 0;
 		skip(n);
 	}
 	
 	public long getAbsolutePosition()
 	{
-		return currentAbsolutePosition;
+		GridInputStreamState state = tlsState.get();
+		return state.currentAbsolutePosition;
 	}
 }
