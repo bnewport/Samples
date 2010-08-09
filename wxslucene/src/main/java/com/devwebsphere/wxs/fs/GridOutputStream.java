@@ -24,6 +24,7 @@ import java.util.zip.InflaterInputStream;
 
 import com.devwebsphere.wxslucene.GridDirectory;
 import com.devwebsphere.wxslucene.jmx.LuceneFileMBeanImpl;
+import com.devwebsphere.wxssearch.ByteArrayKey;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 
@@ -32,7 +33,7 @@ public class GridOutputStream
 	static Logger logger = Logger.getLogger(GridOutputStream.class.getName());
 
 	WXSUtils utils;
-	WXSMap<String, byte[]> chunkMap;
+	WXSMap<ByteArrayKey, byte[]> chunkMap;
 	WXSMap<String, FileMetaData> mdMap;
 	String fileName;
 	long currentBucket;
@@ -40,12 +41,13 @@ public class GridOutputStream
 	int currentPosition;
 	long absolutePosition;
 	FileMetaData md;
-	Map<String, byte[]> asyncBuffers;
+	Map<ByteArrayKey, byte[]> asyncBuffers;
 	int blockSize;
 	int partitionMaxBatchSize;
 	String chunkMapName;
 	static ThreadLocalDeflator tlsDeflator = new ThreadLocalDeflator();
 	LuceneFileMBeanImpl mbean;
+	GridDirectory parentDirectory;
 
 	public FileMetaData getMetaData()
 	{
@@ -59,6 +61,7 @@ public class GridOutputStream
 	
 	public GridOutputStream(WXSUtils utils, GridFile file) throws FileNotFoundException 
 	{
+		parentDirectory = file.getParent();
 		mbean = GridDirectory.getLuceneFileMBeanManager().getBean(file.getParent().getName(), file.getName());
 		currentBucket = 0;
 		currentPosition = 0;
@@ -86,7 +89,7 @@ public class GridOutputStream
 	
 	public void enableAsyncWrite()
 	{
-		asyncBuffers = new HashMap<String, byte[]>();
+		asyncBuffers = new HashMap<ByteArrayKey, byte[]>();
 	}
 
 	static byte[] unZip(int blockSize, FileMetaData md, byte[] b)
@@ -139,7 +142,7 @@ public class GridOutputStream
 			logger.log(Level.FINE, "seek to " + n + " in " + fileName);
 		flushCurrentBuffer();
 		currentBucket = n / blockSize;
-		buffer = unZip(blockSize, md, chunkMap.get(GridInputStream.generateKey(fileName, currentBucket)));
+		buffer = unZip(blockSize, md, chunkMap.get(GridInputStream.generateKey(parentDirectory.getMbean(), fileName, currentBucket)));
 		if(buffer == null) // could be sparse
 		{
 			buffer = new byte[blockSize];
@@ -199,7 +202,7 @@ public class GridOutputStream
 	void flushCurrentBuffer()
 		throws IOException
 	{
-		String bucketKey = GridInputStream.generateKey(fileName, currentBucket);
+		ByteArrayKey bucketKey = GridInputStream.generateKey(parentDirectory.getMbean(), fileName, currentBucket);
 		byte[] obuffer = zip(blockSize, md, buffer);
 		if(asyncBuffers == null)
 			chunkMap.put(bucketKey, obuffer);

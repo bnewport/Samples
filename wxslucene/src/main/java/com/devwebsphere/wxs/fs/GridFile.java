@@ -17,6 +17,7 @@ import java.util.logging.Logger;
 
 import com.devwebsphere.wxslucene.GridDirectory;
 import com.devwebsphere.wxslucene.MTLRUCache;
+import com.devwebsphere.wxssearch.ByteArrayKey;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 
@@ -41,15 +42,7 @@ public class GridFile
 		fullPath = parent.getName() + "/" + pathname;
 		mdMap = client.getCache(MapNames.MD_MAP_PREFIX + parent.getName());
 		
-		// check the file meta data cache if it's enabled
-		MTLRUCache<String, FileMetaData> mdCache = parent.getFileMDcache();
-		if(mdCache != null)
-		{
-			md = mdCache.get(fullPath);
-		}
-		// if we can't find it in cache then look up in grid
-		if(md == null)
-			md = mdMap.get(fullPath);
+		md = mdMap.get(fullPath);
 		exists = (md != null);
 		
 		// doesnt exist so make a default one
@@ -57,12 +50,6 @@ public class GridFile
 		{
 			md = new FileMetaData();
 			md.setName(fullPath);
-		}
-		else
-		{
-			// update md cache if necessary
-			if(mdCache != null)
-				mdCache.put(fullPath, md);
 		}
 	}
 
@@ -205,12 +192,12 @@ public class GridFile
 		}
 		if(!exists)
 			return false;
-		WXSMap<String, byte[]> chunkMap = client.getCache(MapNames.CHUNK_MAP_PREFIX + parent.getName());
+		WXSMap<ByteArrayKey, byte[]> chunkMap = client.getCache(MapNames.CHUNK_MAP_PREFIX + parent.getName());
 		long numChunks = (md.getActualSize() / getParent().getBlockSize()) + 1;
-		ArrayList<String> chunks = new ArrayList<String>();
+		ArrayList<ByteArrayKey> chunks = new ArrayList<ByteArrayKey>();
 		for(long i = 0; i < numChunks; ++i)
 		{
-			chunks.add(GridInputStream.generateKey(fullPath, i));
+			chunks.add(GridInputStream.generateKey(getParent().getMbean(), fullPath, i));
 		}
 		chunkMap.removeAll(chunks);
 		mdMap.remove(fullPath);

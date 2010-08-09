@@ -35,4 +35,9 @@ public class ClientGridDirectory extends GridDirectory
 	{
 		super(WXSUtils.getDefaultUtils(), fileName);
 	}
+	
+	public String toString()
+	{
+		return "ClientGridDirectory:<" + getName() + ">";
+	}
 }

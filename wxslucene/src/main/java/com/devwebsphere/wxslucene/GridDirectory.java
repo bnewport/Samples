@@ -16,12 +16,13 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.lucene.index.IndexFileNameFilter;
+import org.apache.lucene.store.ChecksumIndexInput;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.NIOFSDirectory;
 
-import com.devwebsphere.wxs.fs.FileMetaData;
 import com.devwebsphere.wxs.fs.GridFile;
 import com.devwebsphere.wxs.fs.GridInputStream;
 import com.devwebsphere.wxs.fs.GridOutputStream;
@@ -29,6 +30,7 @@ import com.devwebsphere.wxs.fs.MapNames;
 import com.devwebsphere.wxslucene.jmx.LuceneDirectoryMBeanImpl;
 import com.devwebsphere.wxslucene.jmx.LuceneDirectoryMBeanManager;
 import com.devwebsphere.wxslucene.jmx.LuceneFileMBeanManager;
+import com.devwebsphere.wxssearch.ByteArrayKey;
 import com.devwebsphere.wxsutils.LazyMBeanManagerAtomicReference;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
@@ -58,8 +60,13 @@ public class GridDirectory extends Directory
 	WXSUtils client;
 	WXSMap<String, Set<String>> dirMap;
 	String name;
+	boolean verifyCopy = false;
 	
 	LuceneDirectoryMBeanImpl mbean;
+
+	public final LuceneDirectoryMBeanImpl getMbean() {
+		return mbean;
+	}
 
 	public static LuceneFileMBeanManager getLuceneFileMBeanManager()
 	{
@@ -133,7 +140,10 @@ public class GridDirectory extends Directory
 			WXSUtils c = WXSUtils.getDefaultUtils();
 			init(c, fileDirectoryName);
 			Directory diskDir = NIOFSDirectory.getDirectory(fileDirectoryName);
-			Directory.copy(diskDir, this, false);
+			if(mbean.isVerifyCopyMode())
+				GridDirectory.copy(diskDir, this, true);
+			else
+				Directory.copy(diskDir, this, false);
 		}
 		catch(Exception e)
 		{
@@ -157,7 +167,7 @@ public class GridDirectory extends Directory
 		init(client, directoryName);
 	}
 
-	public MTLRUCache<String, byte[]> getLRUBlockCache()
+	public MTLRUCache<ByteArrayKey, byte[]> getLRUBlockCache()
 	{
 		return mbean.getBlockLRUCache();
 	}
@@ -302,9 +312,77 @@ public class GridDirectory extends Directory
 	{
 		mbean.setCompressionEnabled(isCompressionEnabled);
 	}
-
-	public final MTLRUCache<String, FileMetaData> getFileMDcache() {
-		return mbean.getMdLRUCache();
+	
+	public String toString()
+	{
+		return "GridDirectory:<" + getName() + ">";
 	}
+	
+	static final int COPY_BUFFER_SIZE = 16384;
+	  
+	public static void copy(Directory src, GridDirectory dest, boolean closeDirSrc) throws IOException 
+	{
+		final String[] files = src.listAll();
+	    IndexFileNameFilter filter = IndexFileNameFilter.getFilter();
 
+	    byte[] buf = new byte[COPY_BUFFER_SIZE];
+	    for (int i = 0; i < files.length; i++) {
+
+	      if (!filter.accept(null, files[i]))
+	        continue;
+
+	      IndexOutput os = null;
+	      ChecksumIndexInput is = null;
+	      try {
+	        // create file in dest directory
+	        os = dest.createOutput(files[i]);
+	        // read current file
+	        is = new ChecksumIndexInput(src.openInput(files[i]));
+	        // and copy to dest directory
+	        long len = is.length();
+	        long readCount = 0;
+	        while (readCount < len) {
+	          int toRead = readCount + COPY_BUFFER_SIZE > len ? (int)(len - readCount) : COPY_BUFFER_SIZE;
+	          is.readBytes(buf, 0, toRead);
+	          os.writeBytes(buf, toRead);
+	          readCount += toRead;
+	        }
+	        long src_sum = is.getChecksum();
+	        os.flush();
+
+	        // this code can just compare the new file with the old one
+	        // to make sure it's copied correctly
+	        ChecksumIndexInput dst_check_stream = new ChecksumIndexInput(dest.openInput(files[i]));
+
+	        len = dst_check_stream.length();
+	        readCount = 0;
+	        while(readCount < len) {
+	            int toRead = readCount + COPY_BUFFER_SIZE > len ? (int)(len - readCount) : COPY_BUFFER_SIZE;
+	            dst_check_stream.readBytes(buf, 0, toRead);
+	            readCount += toRead;
+	        }
+	        long dst_sum = dst_check_stream.getChecksum();
+	        if(dst_sum == src_sum)
+	        {
+	        	logger.log(Level.INFO, "Verify " + files[i] + " was successful");
+	        }
+	        else
+	        {
+	        	logger.log(Level.INFO, "Verify " + files[i] + " failed");
+	        	throw new IllegalStateException("File " + files[i] + " failed verification");
+	        }
+	      } finally {
+	        // graceful cleanup
+	        try {
+	          if (os != null)
+	            os.close();
+	        } finally {
+	          if (is != null)
+	            is.close();
+	        }
+	      }
+	    }
+	    if(closeDirSrc)
+	    	src.close();
+	}
 }

@@ -12,12 +12,16 @@ package com.devwebsphere.wxs.fs;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxslucene.GridDirectory;
 import com.devwebsphere.wxslucene.MTLRUCache;
+import com.devwebsphere.wxslucene.jmx.LuceneDirectoryMBeanImpl;
 import com.devwebsphere.wxslucene.jmx.LuceneFileMBeanImpl;
+import com.devwebsphere.wxssearch.ByteArrayKey;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 
@@ -26,7 +30,7 @@ public class GridInputStream
 	static Logger logger = Logger.getLogger(GridInputStream.class.getName());
 	String fileName;
 	WXSUtils utils;
-	WXSMap<String, byte[]> streamMap;
+	WXSMap<ByteArrayKey, byte[]> streamMap;
 	WXSMap<String, FileMetaData> mdMap;
 	
 	ThreadLocalInputStreamState tlsState = new ThreadLocalInputStreamState();
@@ -67,13 +71,37 @@ public class GridInputStream
 		}
 	}
 
-	static String generateKey(String fileName, long bucket)
+	/**
+	 * This generates an MD5 hash of the full string key to save memory
+	 * and returns a constant size key
+	 * @param fileName
+	 * @param bucket
+	 * @return
+	 */
+	static ByteArrayKey generateKey(LuceneDirectoryMBeanImpl dirMBean, String fileName, long bucket)
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append(fileName);
 		sb.append("#");
 		sb.append(Long.toString(bucket));
-		return sb.toString();
+		if(dirMBean.isKeyAsDigestEnabled())
+		{
+			try
+			{
+				MessageDigest mdAlgorithm = MessageDigest.getInstance("MD5");
+				mdAlgorithm.update(sb.toString().getBytes());
+		
+				byte[] digest = mdAlgorithm.digest();
+				return new ByteArrayKey(digest);
+			}
+			catch(NoSuchAlgorithmException e)
+			{
+				logger.log(Level.WARNING, "MD5 digest algorithm not available");
+				return new ByteArrayKey(sb.toString().getBytes());
+			}
+		}
+		else
+			return new ByteArrayKey(sb.toString().getBytes());
 	}
 	
 	boolean areBytesAvailable()
@@ -135,11 +163,11 @@ public class GridInputStream
 	{
 		GridInputStreamState state = tlsState.get();
 		state.noteNewBlock(this, blockNum);
-		String blockKey = generateKey(fileName, blockNum);
+		ByteArrayKey blockKey = generateKey(parentDirectory.getMbean(), fileName, blockNum);
 		
 		// maintain an LRU cache of uncompressed blocks
 		byte[] data = null;
-		MTLRUCache<String, byte[]> cache = parentDirectory.getLRUBlockCache();
+		MTLRUCache<ByteArrayKey, byte[]> cache = parentDirectory.getLRUBlockCache();
 		if(cache != null)
 			data = cache.get(blockKey);
 		// if found in cache then nothing to do

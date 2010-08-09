@@ -7,16 +7,12 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import junit.framework.Assert;
+import java.util.concurrent.Executor;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Fieldable;
-import org.apache.lucene.index.IndexFileNameFilter;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
@@ -24,89 +20,17 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Searcher;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.store.ChecksumIndexInput;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.NIOFSDirectory;
 
-import com.devwebsphere.wxslucene.ClientGridDirectory;
 import com.devwebsphere.wxslucene.GridDirectory;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.MinMaxAvgMetric;
-import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.plugins.TransactionCallbackException;
 
 public class InMemoryExample 
 {
-	static final int BUFFER_SIZE = 16384;
-	  public static void copy(Directory src, GridDirectory dest, boolean closeDirSrc) throws IOException {
-		    final String[] files = src.listAll();
-		    dest.setAsyncEnabled(true);
-		    dest.setCompressionEnabled(true);
-		    try
-		    {
-			    IndexFileNameFilter filter = IndexFileNameFilter.getFilter();
-	
-			    byte[] buf = new byte[BUFFER_SIZE];
-			    for (int i = 0; i < files.length; i++) {
-	
-			      if (!filter.accept(null, files[i]))
-			        continue;
-	
-			      IndexOutput os = null;
-			      ChecksumIndexInput is = null;
-			      try {
-			        // create file in dest directory
-			        os = dest.createOutput(files[i]);
-			        // read current file
-			        is = new ChecksumIndexInput(src.openInput(files[i]));
-			        // and copy to dest directory
-			        long len = is.length();
-			        long readCount = 0;
-			        while (readCount < len) {
-			          int toRead = readCount + BUFFER_SIZE > len ? (int)(len - readCount) : BUFFER_SIZE;
-			          is.readBytes(buf, 0, toRead);
-			          os.writeBytes(buf, toRead);
-			          readCount += toRead;
-			        }
-			        long src_sum = is.getChecksum();
-			        os.flush();
-
-			        // this code can just compare the new file with the old one
-			        // to make sure it's copied correctly
-			        ChecksumIndexInput dst_check_stream = new ChecksumIndexInput(dest.openInput(files[i]));
-	
-			        long dst_length = dst_check_stream.length();
-			        Assert.assertEquals(len, dst_length);
-			        len = dst_check_stream.length();
-			        readCount = 0;
-			        while(readCount < len) {
-			            int toRead = readCount + BUFFER_SIZE > len ? (int)(len - readCount) : BUFFER_SIZE;
-			            dst_check_stream.readBytes(buf, 0, toRead);
-			            readCount += toRead;
-			        }
-			        long dst_sum = dst_check_stream.getChecksum();
-			        Assert.assertEquals(src_sum, dst_sum);
-			      } finally {
-			        // graceful cleanup
-			        try {
-			          if (os != null)
-			            os.close();
-			        } finally {
-			          if (is != null)
-			            is.close();
-			        }
-			      }
-			    }
-			    if(closeDirSrc)
-			      src.close();
-		    }
-		    finally
-		    {
-		    	dest.setAsyncEnabled(false);
-		    }
-		  }
 
 
     @SuppressWarnings("deprecation")
@@ -117,8 +41,16 @@ public class InMemoryExample
     	String indexFileName = "/Users/ibm/Downloads/index_hs0_2";
 	GridDirectory gidx = new GridDirectory(indexFileName);
 //        ClientGridDirectory gidx = new ClientGridDirectory(indexFileName);
-//        NIOFSDirectory gidx = new NIOFSDirectory(new File(indexFileName));
+        NIOFSDirectory didx = new NIOFSDirectory(new File(indexFileName));
+        
         Directory idx = gidx;
+        Executor exec = WXSUtils.getDefaultUtils().getExecutorService();
+
+        for(int i = 0; i < 0; ++i)
+        {
+        	SearcherThread t = new SearcherThread(idx);
+        	exec.execute(t);
+        }
     	
 
         try {
@@ -210,7 +142,7 @@ public class InMemoryExample
     /**
      * Searches for the given string in the "content" field
      */
-    private static TopDocs search(Searcher searcher, String fieldName, String value, MinMaxAvgMetric metric)
+    static TopDocs search(Searcher searcher, String fieldName, String value, MinMaxAvgMetric metric)
         throws ParseException, IOException {
 
     	Query query = new QueryParser(fieldName, new StandardAnalyzer()).parse(value);

@@ -18,9 +18,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.devwebsphere.wxs.fs.FileMetaData;
 import com.devwebsphere.wxslucene.GridDirectory;
 import com.devwebsphere.wxslucene.MTLRUCache;
+import com.devwebsphere.wxssearch.ByteArrayKey;
 import com.devwebsphere.wxsutils.jmx.SummaryMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.TabularAttribute;
 import com.devwebsphere.wxsutils.jmx.TabularKey;
@@ -29,8 +29,7 @@ public class LuceneDirectoryMBeanImpl implements LuceneDirectoryMBean
 {
 	static Logger logger = Logger.getLogger(LuceneDirectoryMBeanImpl.class.getName());
 	
-	volatile MTLRUCache<String, byte[]> blockLRUCache;
-	volatile MTLRUCache<String, FileMetaData> mdLRUCache;
+	volatile MTLRUCache<ByteArrayKey, byte[]> blockLRUCache;
 	
 	boolean isAsyncEnabled = false;
 	boolean isCompressionEnabled = true;
@@ -40,6 +39,18 @@ public class LuceneDirectoryMBeanImpl implements LuceneDirectoryMBean
 	
 	int block_cache_size;
 	
+	boolean verifyCopyMode = false;
+	
+	boolean isKeyAsDigestEnabled = true;
+	
+	public final boolean isKeyAsDigestEnabled() {
+		return isKeyAsDigestEnabled;
+	}
+
+	public final boolean isVerifyCopyMode() {
+		return verifyCopyMode;
+	}
+
 	AtomicLong numOpenInputs = new AtomicLong();
 	AtomicLong numOpenOutputs = new AtomicLong();
 	
@@ -56,7 +67,7 @@ public class LuceneDirectoryMBeanImpl implements LuceneDirectoryMBean
 	public final void setBlock_cache_size(Integer blockCacheSize) {
 		block_cache_size = blockCacheSize;
 		if(block_cache_size > 0)
-			blockLRUCache = new MTLRUCache<String, byte[]>(blockCacheSize);
+			blockLRUCache = new MTLRUCache<ByteArrayKey, byte[]>(blockCacheSize);
 		else
 			blockLRUCache = null;
 				
@@ -66,6 +77,31 @@ public class LuceneDirectoryMBeanImpl implements LuceneDirectoryMBean
 	String gridName;
 	String directoryName;	
 
+	/**
+	 * This looks for a property in the file. The property can be specified as:
+	 * directoryName.propName=XXXX
+	 * 
+	 * or
+	 * 
+	 * propName=XXXX
+	 * 
+	 * @param props
+	 * @param propSuffix
+	 * @param dflt
+	 * @return
+	 */
+	String getProperty(Properties props, String propSuffix, String dflt)
+	{
+		// try per directory property first
+		String value = props.getProperty(directoryName + "." + propSuffix, dflt);
+		if(value.equals(dflt))
+		{
+			// otherwise get default property
+			value = props.getProperty(propSuffix, dflt);
+		}
+		return value;
+	}
+	
 	public LuceneDirectoryMBeanImpl(String grid, String name)
 	{
 		gridName = grid;
@@ -75,25 +111,39 @@ public class LuceneDirectoryMBeanImpl implements LuceneDirectoryMBean
 		try
 		{
 			props.load(new FileInputStream(new File(GridDirectory.class.getResource("/wxslucene.properties").toURI())));
-			String value = props.getProperty("compression", "true");
+			
+			// compression can be done per directory
+			String value = getProperty(props, "compression", "true");
 			setCompressionEnabled(value.equalsIgnoreCase("true"));
 			value = props.getProperty("async_put", "true");
 			setAsyncEnabled(value.equalsIgnoreCase("true"));
-			value = props.getProperty("file_md_cache", "false");
-			if(value.equalsIgnoreCase("true"))
-			{
-				mdLRUCache = new MTLRUCache<String, FileMetaData>(512);
-				logger.log(Level.INFO, "File meta data cache of 512 enabled");
-			}
-			value = props.getProperty("block_size", "16384");
+			
+			// block_size can be done per directory
+			value = getProperty(props, "block_size", "16384");
 			setBlockSize(Integer.parseInt(value));
 			value = props.getProperty("partition_max_batch_size", "20");
 			setPartitionMaxBatchSize(Integer.parseInt(value));
-			value = props.getProperty("block_cache_size", "");
+
+			value = getProperty(props, "verify_copy", "");
+			if(value.equalsIgnoreCase("true"))
+			{
+				logger.log(Level.INFO, "Verify copy mode is true for directory " + name);
+				verifyCopyMode = true;
+			}
+			
+			value = getProperty(props, "key_as_digest", "");
+			if(value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false"))
+			{
+				isKeyAsDigestEnabled = value.equalsIgnoreCase("true");
+				logger.log(Level.INFO, "Key as Digest Mode is " + value + " for directory " + name);
+			}
+			
+			// block_cache can be done per directory
+			value = getProperty(props, "block_cache_size", "");
 			if(value.length() > 0)
 			{
 				block_cache_size = Integer.parseInt(value);
-				blockLRUCache = new MTLRUCache<String, byte[]>(block_cache_size);
+				blockLRUCache = new MTLRUCache<ByteArrayKey, byte[]>(block_cache_size);
 				logger.log(Level.INFO, "Local lru block cache set to " + block_cache_size + " blocks for directory " + name);
 			}
 			useDefaults = false;
@@ -236,24 +286,8 @@ public class LuceneDirectoryMBeanImpl implements LuceneDirectoryMBean
 			return 0.0;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.devwebsphere.wxslucene.jmx.LuceneDirectoryMBean#getMDCacheHitRate()
-	 */
-	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
-	public Double getMDCacheHitRate()
-	{
-		if(mdLRUCache != null)
-			return mdLRUCache.getHitRate();
-		else
-			return 0.0;
-	}
-
-	public final MTLRUCache<String, byte[]> getBlockLRUCache() {
+	public final MTLRUCache<ByteArrayKey, byte[]> getBlockLRUCache() {
 		return blockLRUCache;
-	}
-
-	public final MTLRUCache<String, FileMetaData> getMdLRUCache() {
-		return mdLRUCache;
 	}
 
 	@TabularAttribute

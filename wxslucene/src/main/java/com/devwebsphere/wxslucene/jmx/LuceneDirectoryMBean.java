@@ -32,8 +32,6 @@ public interface LuceneDirectoryMBean {
 
 	public Double getBlockHitRate();
 
-	public Double getMDCacheHitRate();
-
 	public Long getOpenInputCounter();
 	
 	public Long getOpenOutputCounter();
