@@ -23,6 +23,7 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 
+import com.devwebsphere.wxslucene.ClientGridDirectory;
 import com.devwebsphere.wxslucene.GridDirectory;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.MinMaxAvgMetric;
@@ -39,8 +40,8 @@ public class InMemoryExample
         // of the index.
         
     	String indexFileName = "/Users/ibm/Downloads/index_hs0_2";
-	GridDirectory gidx = new GridDirectory(indexFileName);
-//        ClientGridDirectory gidx = new ClientGridDirectory(indexFileName);
+//		GridDirectory gidx = new GridDirectory(indexFileName);
+        ClientGridDirectory gidx = new ClientGridDirectory(indexFileName);
         NIOFSDirectory didx = new NIOFSDirectory(new File(indexFileName));
         
         Directory idx = gidx;
@@ -90,11 +91,13 @@ public class InMemoryExample
 //            search(searcher, "progress or achievements");
             MinMaxAvgMetric qArtist = new MinMaxAvgMetric();
             MinMaxAvgMetric qCategory = new MinMaxAvgMetric();
-            for(int i = 0; i < 1000000; ++i)
+            int maxRuns = 1200;
+            String [] artists = {"U2", "MADONNA", "GAGA", "POLICE", "WHAM", "BEATLES", "STING"};
+            for(int i = 0; i < maxRuns; ++i)
             {
-	            TopDocs q1 = search(searcher, "ARTIST", "U2", qArtist);
+	            TopDocs q1 = search(searcher, "ARTIST", artists[i % artists.length], qArtist);
 	            TopDocs q2 = search(searcher, "CATEGORY_LIST", "19", qCategory);
-	            if(i % 100 == 0)
+	            if(i % 100 == 0 || (i + 1 == maxRuns))
 	            {
 	            	System.out.println("qArtist: " + qArtist.toString());
 	            	System.out.println("qCat: " + qCategory.toString());

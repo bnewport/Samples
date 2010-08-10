@@ -16,14 +16,39 @@ import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.jmx.MinMaxAvgMetric;
 
+/**
+ * GridInputStream can be shared between threads but it needs to track certain state
+ * for a specific thread. This class is stored in a ThreadLocal PER GridInputStream instance
+ * to avoid threads stepping on each other reading in parallel from a single
+ * GridInputStream instance.
+ * @author bnewport
+ *
+ */
 class GridInputStreamState
 {
 	static Logger logger = Logger.getLogger(GridInputStreamState.class.getName());
 	long currentBucket;
+	/**
+	 * The current position within the file.
+	 */
 	long currentAbsolutePosition;
+	/**
+	 * The current position with the current bucket
+	 */
 	int currentPosition;
+	
+	/**
+	 * The block read from the grid, usually block #currentBucket
+	 */
 	byte[] currentValue;
+	
+	/**
+	 * This tracks the block number of the previous block used for this thread
+	 */
 	long lastBlock = -1;
+	/**
+	 * This is used to detect sequential block fetches.
+	 */
 	int currentRun = 1;
 	
 	public GridInputStreamState()

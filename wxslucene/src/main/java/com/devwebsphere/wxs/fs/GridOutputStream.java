@@ -23,11 +23,17 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
 import com.devwebsphere.wxslucene.GridDirectory;
+import com.devwebsphere.wxslucene.jmx.LuceneDirectoryMBeanImpl;
 import com.devwebsphere.wxslucene.jmx.LuceneFileMBeanImpl;
 import com.devwebsphere.wxssearch.ByteArrayKey;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 
+/**
+ * This is used to write data to a file within the grid. This is NOT thread safe.
+ * @author bnewport
+ *
+ */
 public class GridOutputStream 
 {
 	static Logger logger = Logger.getLogger(GridOutputStream.class.getName());
@@ -98,6 +104,19 @@ public class GridOutputStream
 		byte[] o = null;
 		if(b != null && md.isCompressed())
 		{
+			o = unZip(blockSize, b);
+		}
+		else
+			o = b;
+		return o;
+	}
+
+	static byte[] unZip(int blockSize, byte[] b)
+		throws IOException
+	{
+		byte[] o = null;
+		if(b != null)
+		{
 			ByteArrayInputStream bis = new ByteArrayInputStream(b);
 			InflaterInputStream zis = new InflaterInputStream(bis);
 			o = new byte[blockSize];
@@ -117,22 +136,30 @@ public class GridOutputStream
 		return o;
 	}
 
-	static byte[] zip(int blockSize, FileMetaData md, byte[] b)
+	static byte[] zip(LuceneDirectoryMBeanImpl mbean, int blockSize, FileMetaData md, byte[] b)
 		throws IOException
 	{
 		if(md.isCompressed())
 		{
-			ByteArrayOutputStream bos = new ByteArrayOutputStream(blockSize);
-			Deflater deflater = tlsDeflator.get();
-			deflater.reset();
-			DeflaterOutputStream zos = new DeflaterOutputStream(bos, deflater);
-			zos.write(b);
-			zos.close();
-			bos.close();
-			return bos.toByteArray();
+			return zip(mbean, blockSize, b);
 		}
 		else
 			return b;
+	}
+	
+	static byte[] zip(LuceneDirectoryMBeanImpl mbean, int blockSize, byte[] b)
+	throws IOException
+	{
+		ByteArrayOutputStream bos = new ByteArrayOutputStream(blockSize);
+		Deflater deflater = tlsDeflator.get();
+		deflater.reset();
+		DeflaterOutputStream zos = new DeflaterOutputStream(bos, deflater);
+		zos.write(b);
+		zos.close();
+		bos.close();
+		byte[] rc = bos.toByteArray();
+		mbean.recordCompressionRatio(b.length, rc.length);
+		return rc;
 	}
 	
 	public void seek(long n)
@@ -203,7 +230,7 @@ public class GridOutputStream
 		throws IOException
 	{
 		ByteArrayKey bucketKey = GridInputStream.generateKey(parentDirectory.getMbean(), fileName, currentBucket);
-		byte[] obuffer = zip(blockSize, md, buffer);
+		byte[] obuffer = zip(parentDirectory.getMbean(), blockSize, md, buffer);
 		if(asyncBuffers == null)
 			chunkMap.put(bucketKey, obuffer);
 		else

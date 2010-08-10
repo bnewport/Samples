@@ -16,7 +16,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxslucene.GridDirectory;
-import com.devwebsphere.wxslucene.MTLRUCache;
 import com.devwebsphere.wxssearch.ByteArrayKey;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;

@@ -12,6 +12,8 @@ package com.devwebsphere.wxslucene;
 
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * LRUCache is a very simple cache concurrency size and is fully synchronized. This
@@ -25,18 +27,27 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class MTLRUCache <K,V>
 {
+	static Logger logger = Logger.getLogger(MTLRUCache.class.getName());
 	ArrayList<LRUCache<K,V>> caches;
 	final int numPaths = 31;
 	AtomicLong hitCounter = new AtomicLong();
 	AtomicLong missCounter = new AtomicLong();
+	String name;
+	boolean isHitRateLoggingEnabled;
 	
-	public MTLRUCache(int cacheSize)
+	public MTLRUCache(String name, int cacheSize, boolean showHitRate)
 	{
+		this.isHitRateLoggingEnabled = showHitRate;
+		this.name = name;
 		caches = new ArrayList<LRUCache<K,V>>(numPaths);
 		int isize = (cacheSize + caches.size() - 1) / numPaths;
 		for(int i = 0; i < numPaths; ++i)
 		{
 			caches.add(new LRUCache<K, V>(isize));
+		}
+		if(showHitRate)
+		{
+			logger.log(Level.INFO, "Hit rate logging enabled for " + name);
 		}
 	}
 
@@ -50,7 +61,24 @@ public class MTLRUCache <K,V>
 	{
 		V rc = getCacheForKey(k).get(k);
 		if(rc != null)
-			hitCounter.incrementAndGet();
+		{
+			long hits = hitCounter.incrementAndGet();
+			if(isHitRateLoggingEnabled && hits % 5000 == 0)
+			{
+				double hr = getHitRate();
+				int hrRounded = (int)(hr * 100);
+				boolean showHR = false;
+				// if its poor, show frequently
+				if(hr < 0.5)
+					showHR = true;
+				else
+					// otherwise, show infrequently
+					if(hits % 20000 == 0)
+						showHR = true;
+				if(showHR)
+					logger.log(Level.INFO, "Hit rate for " + name + " cache is " + hrRounded + "%");
+			}
+		}
 		return rc;
 	}
 	
@@ -64,6 +92,12 @@ public class MTLRUCache <K,V>
 	{
 		long hc = hitCounter.get();
 		long mc = missCounter.get();
+		return MTLRUCache.calculateHitRate(hc, mc);
+	}
+	
+	
+	static public double calculateHitRate(long hc, long mc)
+	{
 		long total = hc + mc;
 
 		if(total != 0)

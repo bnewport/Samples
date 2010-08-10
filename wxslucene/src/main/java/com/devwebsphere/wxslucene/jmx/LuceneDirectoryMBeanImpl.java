@@ -25,14 +25,65 @@ import com.devwebsphere.wxsutils.jmx.SummaryMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.TabularAttribute;
 import com.devwebsphere.wxsutils.jmx.TabularKey;
 
+/**
+ * There is one of these MBeans for each Directory. Multiple instance of
+ * GridDirectory for the same actual grid index share this one instance. All
+ * per directory metrics etc are kept in this MBean. 
+ * @author bnewport
+ *
+ */
 public class LuceneDirectoryMBeanImpl implements LuceneDirectoryMBean 
 {
 	static Logger logger = Logger.getLogger(LuceneDirectoryMBeanImpl.class.getName());
+
+	/**
+	 * This property enables the local block cache if specified. It
+	 * can be also specified per directory.
+	 */
+	static String OPT_BLOCK_CACHE_SIZE = "block_cache_size";
+	/**
+	 * This property compresses the local block cache if enabled
+	 */
+	static String OPT_COMPRESS_LOCAL_CACHE = "compress_block_cache";
+	/**
+	 * This turns on compression for blocks stored in the grid
+	 */
+	static String OPT_COMPRESSION = "compression";
+	/**
+	 * This batches writes to the grid for improved performance.
+	 */
+	static String OPT_ASYNC_PUT = "async_put";
+	/**
+	 * Each file is broken in a equal sized blocks and each block is stored
+	 * in the grid using the file#blocknum key.
+	 */
+	static String OPT_BLOCK_SIZE = "block_size";
+	/**
+	 * This checks if the copy in the grid is identical to the original copy
+	 */
+	static String OPT_VERIFY_COPY = "verify_copy";
+	/**
+	 * This shows infrequent metrics as INFO messages.
+	 */
+	static String OPT_LOG_HIT_RATE = "log_hit_rate";
+	/**
+	 * This stores the keys as a byte[16] instead of a string.
+	 */
+	static String OPT_KEY_AS_DIGEST = "key_as_digest";
+	static String OPT_PARTITION_MAX_BATCH_SIZE = "partition_max_batch_size";
 	
+	// this is usually globalBlockLRUCache unless the user
+	// overrides the cache size for a specific directory
 	volatile MTLRUCache<ByteArrayKey, byte[]> blockLRUCache;
+	// the block cache to share between directories
+	static MTLRUCache<ByteArrayKey, byte[]> globalBlockLRUCache;
 	
 	boolean isAsyncEnabled = false;
 	boolean isCompressionEnabled = true;
+	public final boolean isCacheCompressionEnabled() {
+		return isCacheCompressionEnabled;
+	}
+
 	int blockSize = 4096;
 	// This is how many puts we will batch PER partition
 	int partitionMaxBatchSize = 20;
@@ -43,6 +94,78 @@ public class LuceneDirectoryMBeanImpl implements LuceneDirectoryMBean
 	
 	boolean isKeyAsDigestEnabled = true;
 	
+	boolean isHitRateLoggingEnabled = false;
+	
+	boolean isCacheCompressionEnabled = false;
+	
+	/**
+	 * This tracks the number of block cache hits for any file for this directory
+	 */
+	AtomicLong hitCounter = new AtomicLong();
+	/**
+	 * This tracks the number of block cache misses for any file for this directory
+	 */
+	AtomicLong missCounter = new AtomicLong();
+
+	/**
+	 * WE count the number of bytes thrown in to the compressor
+	 */
+	AtomicLong unCompressedTotal = new AtomicLong();
+	/**
+	 * and how many bytes come out of the compressor for calculating
+	 * the ratio.
+	 */
+	AtomicLong compressedTotal = new AtomicLong();
+	
+	public void recordCompressionRatio(long bytesIn, long bytesOut)
+	{
+		unCompressedTotal.addAndGet(bytesIn);
+		compressedTotal.addAndGet(bytesOut);
+	}
+	
+	/**
+	 * This tracks block hit and misses against the cache for this
+	 * Directory only
+	 * @param isHit true if recording a hit otherwise it's a miss
+	 */
+	public void recordBlockCacheHit(boolean isHit)
+	{
+		if(isHit)
+		{
+			long hits = hitCounter.incrementAndGet();
+			if(isHitRateLoggingEnabled() && hits % 5000 == 0)
+			{
+				long misses = missCounter.get();
+				double hr = MTLRUCache.calculateHitRate(hits, misses);
+				int hrRounded = (int)(hr * 100);
+				boolean showHR = false;
+				// if its poor, show frequently
+				if(hr < 0.5)
+					showHR = true;
+				else
+					// otherwise, show infrequently
+					if(hits % 20000 == 0)
+						showHR = true;
+				if(showHR)
+				{
+					int compRate = 0;
+					if(unCompressedTotal.get() != 0)
+					{
+						compRate = (int)(100.0 *(double)compressedTotal.get() / (double)unCompressedTotal.get());
+					}
+					logger.log(Level.INFO, "Hit rate for " + directoryName + " Directory is " + hrRounded + "%, total reads " + (hits + misses) + ", Compress Rate:" + compRate + "%");
+				}
+			}
+		}
+		else
+			missCounter.incrementAndGet();
+	}
+	
+	
+	public final boolean isHitRateLoggingEnabled() {
+		return isHitRateLoggingEnabled;
+	}
+
 	public final boolean isKeyAsDigestEnabled() {
 		return isKeyAsDigestEnabled;
 	}
@@ -67,14 +190,21 @@ public class LuceneDirectoryMBeanImpl implements LuceneDirectoryMBean
 	public final void setBlock_cache_size(Integer blockCacheSize) {
 		block_cache_size = blockCacheSize;
 		if(block_cache_size > 0)
-			blockLRUCache = new MTLRUCache<ByteArrayKey, byte[]>(blockCacheSize);
+			blockLRUCache = new MTLRUCache<ByteArrayKey, byte[]>(directoryName, blockCacheSize, true);
 		else
 			blockLRUCache = null;
 				
-		logger.log(Level.INFO, "Block LRU Cache size changed to " + blockCacheSize);
+		logger.log(Level.INFO, "Block LRU Cache size for " + directoryName + " changed to " + blockCacheSize);
+		logger.log(Level.INFO, "Hitrate logging enabled for " + directoryName);
 	}
 
+	/**
+	 * The name of the grid for this directory.
+	 */
 	String gridName;
+	/**
+	 * The name of the directory stored here.
+	 */
 	String directoryName;	
 
 	/**
@@ -102,6 +232,92 @@ public class LuceneDirectoryMBeanImpl implements LuceneDirectoryMBean
 		return value;
 	}
 	
+	String getSpecificProperty(Properties props, String propSuffix, String dflt)
+	{
+		// try per directory property first
+		String value = props.getProperty(directoryName + "." + propSuffix, dflt);
+		return value;
+	}
+	
+	/**
+	 * This parses properties in wxslucene.properties related
+	 * to the remote grid configuration.
+	 * @param props
+	 */
+	private void processRemoteGridProperties(Properties props)
+	{
+		// compression can be done per directory
+		String value = getProperty(props, OPT_COMPRESSION, "true");
+		setCompressionEnabled(value.equalsIgnoreCase("true"));
+		value = props.getProperty(OPT_ASYNC_PUT, "true");
+		setAsyncEnabled(value.equalsIgnoreCase("true"));
+		
+		// block_size can be done per directory
+		value = getProperty(props, OPT_BLOCK_SIZE, "16384");
+		setBlockSize(Integer.parseInt(value));
+		value = props.getProperty(OPT_PARTITION_MAX_BATCH_SIZE, "20");
+		setPartitionMaxBatchSize(Integer.parseInt(value));
+		
+		value = getProperty(props, OPT_KEY_AS_DIGEST, "");
+		if(value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false"))
+		{
+			isKeyAsDigestEnabled = value.equalsIgnoreCase("true");
+			logger.log(Level.INFO, "Key as Digest Mode is " + value + " for directory " + directoryName);
+		}
+		
+	}
+	
+	/**
+	 * This parses wxslucene.properties for properties related
+	 * to the local block cache.
+	 * @param props
+	 */
+	private void processLocalCacheProperties(Properties props)
+	{
+		String value = getProperty(props, OPT_LOG_HIT_RATE, "");
+		if(value.equalsIgnoreCase("true"))
+			isHitRateLoggingEnabled = true;
+		
+		// global compress local cache setting
+		value = props.getProperty(OPT_COMPRESS_LOCAL_CACHE, "");
+		if(value.equalsIgnoreCase("true"))
+			isCacheCompressionEnabled = true;
+		
+		// if a global local cache is enabled then create it ONCE
+		value = props.getProperty(OPT_BLOCK_CACHE_SIZE, "");
+		if(value.length() > 0)
+		{
+			synchronized(LuceneDirectoryMBeanImpl.class)
+			{
+				block_cache_size = Integer.parseInt(value);
+				globalBlockLRUCache = new MTLRUCache<ByteArrayKey, byte[]>("Global Directory Cache", block_cache_size, isHitRateLoggingEnabled);
+				logger.log(Level.INFO, "Global lru block cache set to " + block_cache_size + " blocks");
+			}
+		}
+		
+		// if a specific cache size is set for this directory then
+		// can only specific specific cache compression IFF there is a specific block cache too
+		value = getSpecificProperty(props, OPT_BLOCK_CACHE_SIZE, "");
+		if(value.length() > 0)
+		{
+			block_cache_size = Integer.parseInt(value);
+			blockLRUCache = new MTLRUCache<ByteArrayKey, byte[]>(directoryName, block_cache_size, isHitRateLoggingEnabled);
+			logger.log(Level.INFO, "Local lru block cache set to " + block_cache_size + " blocks for directory " + directoryName);
+			value = getSpecificProperty(props, OPT_COMPRESS_LOCAL_CACHE, "");
+			if(value.equalsIgnoreCase("true"))
+				isCacheCompressionEnabled = true;
+		}
+		else
+			// otherwise reuse the global one
+			blockLRUCache = globalBlockLRUCache;
+		
+		if(isCacheCompressionEnabled)
+		{
+			logger.log(Level.INFO, "Local cache compression enabled for " + directoryName);
+		}
+		
+	}
+	
 	public LuceneDirectoryMBeanImpl(String grid, String name)
 	{
 		gridName = grid;
@@ -110,42 +326,20 @@ public class LuceneDirectoryMBeanImpl implements LuceneDirectoryMBean
 		boolean useDefaults = true;
 		try
 		{
+			String value;
 			props.load(new FileInputStream(new File(GridDirectory.class.getResource("/wxslucene.properties").toURI())));
-			
-			// compression can be done per directory
-			String value = getProperty(props, "compression", "true");
-			setCompressionEnabled(value.equalsIgnoreCase("true"));
-			value = props.getProperty("async_put", "true");
-			setAsyncEnabled(value.equalsIgnoreCase("true"));
-			
-			// block_size can be done per directory
-			value = getProperty(props, "block_size", "16384");
-			setBlockSize(Integer.parseInt(value));
-			value = props.getProperty("partition_max_batch_size", "20");
-			setPartitionMaxBatchSize(Integer.parseInt(value));
 
-			value = getProperty(props, "verify_copy", "");
+			processRemoteGridProperties(props);
+			
+			value = getProperty(props, OPT_VERIFY_COPY, "");
 			if(value.equalsIgnoreCase("true"))
 			{
 				logger.log(Level.INFO, "Verify copy mode is true for directory " + name);
 				verifyCopyMode = true;
 			}
+
+			processLocalCacheProperties(props);
 			
-			value = getProperty(props, "key_as_digest", "");
-			if(value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false"))
-			{
-				isKeyAsDigestEnabled = value.equalsIgnoreCase("true");
-				logger.log(Level.INFO, "Key as Digest Mode is " + value + " for directory " + name);
-			}
-			
-			// block_cache can be done per directory
-			value = getProperty(props, "block_cache_size", "");
-			if(value.length() > 0)
-			{
-				block_cache_size = Integer.parseInt(value);
-				blockLRUCache = new MTLRUCache<ByteArrayKey, byte[]>(block_cache_size);
-				logger.log(Level.INFO, "Local lru block cache set to " + block_cache_size + " blocks for directory " + name);
-			}
 			useDefaults = false;
 		}
 		catch(FileNotFoundException e)
@@ -166,7 +360,7 @@ public class LuceneDirectoryMBeanImpl implements LuceneDirectoryMBean
 			setCompressionEnabled(true);
 			// turn on async put by default
 			setAsyncEnabled(true);
-			setBlockSize(4096);
+			setBlockSize(16384);
 		}
 	}
 

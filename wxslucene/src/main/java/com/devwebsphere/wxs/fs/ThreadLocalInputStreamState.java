@@ -10,6 +10,12 @@
 //
 package com.devwebsphere.wxs.fs;
 
+/**
+ * This ThreadLocal tracks the InputStreamState for a GridInputStream. There
+ * is usually one instance of this PER GridInputStream instance.
+ * @author bnewport
+ *
+ */
 
 public class ThreadLocalInputStreamState extends ThreadLocal<GridInputStreamState>{
 

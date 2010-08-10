@@ -25,6 +25,12 @@ import com.devwebsphere.wxssearch.ByteArrayKey;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 
+/**
+ * This is used to read from a 'file' stored in the grid. This class is now thread safe
+ * as all per thread state is kept in a ThreadLocal.
+ * @author bnewport
+ *
+ */
 public class GridInputStream 
 {
 	static Logger logger = Logger.getLogger(GridInputStream.class.getName());
@@ -158,6 +164,12 @@ public class GridInputStream
 		return state.skip(this, n);
 	}
 
+	/**
+	 * This fetches a block from either the cache or the grid.
+	 * @param blockNum
+	 * @return
+	 * @throws IOException
+	 */
 	byte[] getBlock(long blockNum)
 		throws IOException
 	{
@@ -169,7 +181,13 @@ public class GridInputStream
 		byte[] data = null;
 		MTLRUCache<ByteArrayKey, byte[]> cache = parentDirectory.getLRUBlockCache();
 		if(cache != null)
-			data = cache.get(blockKey);
+		{
+			byte[] cdata = cache.get(blockKey);
+			if(parentDirectory.isCacheCompressionEnabled())
+				data = GridOutputStream.unZip(blockSize, cdata);
+			else
+				data = cdata;
+		}
 		// if found in cache then nothing to do
 		if(data == null)
 		{
@@ -179,7 +197,22 @@ public class GridInputStream
 			data = GridOutputStream.unZip(blockSize, md, data);
 			// update LRU cache if enabled and found
 			if(data != null && cache != null)
-				cache.put(blockKey, data);
+			{
+				parentDirectory.recordBlockCacheHit(false);
+				if(parentDirectory.isCacheCompressionEnabled())
+				{
+					// compress it to the cache always
+					byte[] newCompData = GridOutputStream.zip(parentDirectory.getMbean(), blockSize, data);
+					cache.put(blockKey, newCompData);
+				}
+				else
+					cache.put(blockKey, data);
+			}
+		}
+		else
+		{
+			if(cache != null)
+				parentDirectory.recordBlockCacheHit(true);
 		}
 		return data;
 	}

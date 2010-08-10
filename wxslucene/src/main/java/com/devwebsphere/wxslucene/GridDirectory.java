@@ -13,6 +13,7 @@ package com.devwebsphere.wxslucene;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -62,8 +63,24 @@ public class GridDirectory extends Directory
 	String name;
 	boolean verifyCopy = false;
 	
+	
 	LuceneDirectoryMBeanImpl mbean;
 
+	/**
+	 * This tracks block hit and misses against the cache for this
+	 * Directory only
+	 * @param isHit true if recording a hit otherwise it's a miss
+	 */
+	public void recordBlockCacheHit(boolean isHit)
+	{
+		mbean.recordBlockCacheHit(isHit);
+	}
+	
+	public boolean isCacheCompressionEnabled()
+	{
+		return mbean.isCacheCompressionEnabled();
+	}
+	
 	public final LuceneDirectoryMBeanImpl getMbean() {
 		return mbean;
 	}

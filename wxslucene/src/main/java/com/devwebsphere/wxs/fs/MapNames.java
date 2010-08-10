@@ -10,6 +10,12 @@
 //
 package com.devwebsphere.wxs.fs;
 
+/**
+ * Best practises
+ * Put your map names on an interface in one place. So here it is.
+ * @author bnewport
+ *
+ */
 public interface MapNames 
 {
 	/**

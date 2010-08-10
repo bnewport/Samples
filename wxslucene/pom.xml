@@ -4,7 +4,7 @@
 
   <groupId>com.devwebsphere</groupId>
   <artifactId>wxslucene</artifactId>
-  <version>1.1-SNAPSHOT</version>
+  <version>1.2-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>wxslucene</name>
