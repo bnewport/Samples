@@ -30,6 +30,15 @@ public class ClientGridDirectory extends GridDirectory
 {
 	static Logger logger = Logger.getLogger(ClientGridDirectory.class.getName());
 	
+	/**
+	 * This returns a Lucene Directory attached to a remote grid without copying
+	 * the indexes from the fileName. The file name MUST be the same string
+	 * used for the GridDirectory instance used to populate the remote grid.
+	 * @param fileName The folder containing the disk based lucene index
+	 * @throws FileNotFoundException
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 */
 	public ClientGridDirectory(String fileName)
 		throws FileNotFoundException, URISyntaxException, IOException
 	{

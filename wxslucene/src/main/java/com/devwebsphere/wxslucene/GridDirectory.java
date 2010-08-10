@@ -146,9 +146,12 @@ public class GridDirectory extends Directory
 	/**
 	 * This constructor obtains a grid connection using the wxsutils.properties file
 	 * loads a File based directory at the specified path and then copies it in to
-	 * the grid using a directory named after the file directory path.
+	 * the grid using a directory named after the file directory path. Once an index is
+	 * loaded then the ClientGridDirectory class can be used to attach to the
+	 * grid from that point onwards.
 	 * @param fileDirectoryName The location of the file index to copy.
 	 * @see WXSUtils#getDefaultUtils()
+	 * @see ClientGridDirectory
 	 */
 	public GridDirectory(String fileDirectoryName)
 	{

@@ -18,6 +18,11 @@ import org.apache.lucene.store.IndexInput;
 
 import com.devwebsphere.wxs.fs.GridInputStream;
 
+/**
+ * This is just a wrapper for a GridInputStream, I'm not sure of its purpose.
+ * @author bnewport
+ *
+ */
 public class GridIndexInput extends IndexInput 
 {
 	static Logger logger = Logger.getLogger(GridIndexOutput.class.getName());

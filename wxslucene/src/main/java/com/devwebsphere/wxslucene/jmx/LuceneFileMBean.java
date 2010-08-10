@@ -10,6 +10,12 @@
 //
 package com.devwebsphere.wxslucene.jmx;
 
+/**
+ * There is a LuceneFileMBean for each file in each directory used
+ * in a JVM.
+ * @author bnewport
+ *
+ */
 public interface LuceneFileMBean 
 {
 	public String getDirectoryName();

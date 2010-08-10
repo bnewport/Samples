@@ -17,6 +17,12 @@ import org.apache.lucene.store.IndexOutput;
 
 import com.devwebsphere.wxs.fs.GridOutputStream;
 
+/**
+ * This seems to just wrapper GridOutputStream. Doesn't seem to add
+ * a lot of value.
+ * @author bnewport
+ *
+ */
 public class GridIndexOutput extends IndexOutput 
 {
 	static Logger logger = Logger.getLogger(GridIndexOutput.class.getName());
