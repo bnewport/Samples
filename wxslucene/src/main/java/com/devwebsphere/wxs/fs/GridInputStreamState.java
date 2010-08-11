@@ -11,6 +11,10 @@
 package com.devwebsphere.wxs.fs;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -104,13 +108,67 @@ class GridInputStreamState
 		return rc;
 	}
 
-	public int privateRead(GridInputStream master, byte[] b) throws IOException 
+	void prefetchBlocks(final GridInputStream master, long beginOffset, long endOffset)
+	{
+		int beginBlock = (int)(beginOffset / (long)master.blockSize);
+		int endBlock = (int)(endOffset / (long)master.blockSize);
+
+		// if only one block don't bother doing it in parallel
+		// this also only works for now if a local cache is enabled
+		if(beginBlock == endBlock || master.parentDirectory.getLRUBlockCache() == null)
+			return;
+
+		if(logger.isLoggable(Level.FINE))
+		{
+			logger.log(Level.FINE, "Prefetching " + (endBlock - beginBlock + 1) + " blocks");
+		}
+		ArrayList<Future<byte[]>> blocks = new ArrayList<Future<byte[]>>();
+		for(int block = beginBlock; block <= endBlock; ++block)
+		{
+			final int blk = block;
+			Callable<byte[]> c = new Callable<byte[]>() 
+			{
+				int theBlock = blk;
+				public byte[] call()
+				{
+					try
+					{
+						byte[] rc = master.getBlock(theBlock);
+						return rc;
+					}
+					catch(Exception e)
+					{
+						logger.log(Level.SEVERE, "Exception prefetching block", e);
+						return null;
+					}
+				}
+			};
+			blocks.add(master.utils.getExecutorService().submit(c));
+		}
+		try
+		{
+			for(Future<byte[]> f : blocks)
+			{
+				byte[] waitBlock = f.get();
+			}
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.SEVERE, "Prefetch threads threw an exception", e);
+		}
+	}
+	
+	public int privateRead(final GridInputStream master, byte[] b) throws IOException 
 	{
 		if(!areBytesAvailable(master))
 			return -1;
 		
 		int toGo = b.length;
 		int offset = 0;
+
+		long beginOffset = currentAbsolutePosition;
+		long endOffset = currentAbsolutePosition + toGo - 1;
+		prefetchBlocks(master, beginOffset, endOffset);
 		
 		while(areBytesAvailable(master) && toGo > 0)
 		{

@@ -195,6 +195,11 @@ public class GridDirectory extends Directory
 	private void init(WXSUtils client, String directoryName)
 	{
 		this.client = client;
+		if(client == null)
+		{
+			logger.log(Level.SEVERE, "Cannot connect to grid");
+			throw new IllegalStateException("Cannot connect to grid");
+		}
 		mbean = luceneDirectoryMBeanManager.getLazyRef().getBean(client.getObjectGrid().getName(), directoryName);
 		dirMap = client.getCache(MapNames.DIR_MAP);
 		name = directoryName;

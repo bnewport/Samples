@@ -35,6 +35,13 @@ public class MTLRUCache <K,V>
 	String name;
 	boolean isHitRateLoggingEnabled;
 	
+	/**
+	 * This creates a named multi-threaded LRU cache of a certain maximum
+	 * size.
+	 * @param name The name of the cache for reporting purposes
+	 * @param cacheSize The maximum size of the cache in entries
+	 * @param showHitRate Whether stats messages are pushed to the log.
+	 */
 	public MTLRUCache(String name, int cacheSize, boolean showHitRate)
 	{
 		this.isHitRateLoggingEnabled = showHitRate;
@@ -57,6 +64,12 @@ public class MTLRUCache <K,V>
 		return caches.get(index);
 	}
 	
+	/**
+	 * Look up an entry in the cache. Output stats metrics
+	 * if needed
+	 * @param k
+	 * @return
+	 */
 	public V get(K k)
 	{
 		V rc = getCacheForKey(k).get(k);
@@ -82,6 +95,12 @@ public class MTLRUCache <K,V>
 		return rc;
 	}
 	
+	/**
+	 * This usually results in an entry being evicted to make room
+	 * for the new item. Thus, a put is basically a miss.
+	 * @param k
+	 * @param v
+	 */
 	public void put(K k, V v)
 	{
 		getCacheForKey(k).put(k, v);

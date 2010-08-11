@@ -8,6 +8,8 @@ import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -32,7 +34,7 @@ import com.ibm.websphere.objectgrid.plugins.TransactionCallbackException;
 
 public class InMemoryExample 
 {
-
+	static Logger logger = Logger.getLogger(InMemoryExample.class.getName());
 
     @SuppressWarnings("deprecation")
     public static void main(String[] args) throws TransactionCallbackException, ObjectGridException, IOException, URISyntaxException {
@@ -40,9 +42,10 @@ public class InMemoryExample
         // of the index.
         
     	String indexFileName = "/Users/ibm/Downloads/index_hs0_2";
+//    	String indexFileName = "/Users/ibm/Downloads/index_pc0_2";
 //		GridDirectory gidx = new GridDirectory(indexFileName);
         ClientGridDirectory gidx = new ClientGridDirectory(indexFileName);
-        NIOFSDirectory didx = new NIOFSDirectory(new File(indexFileName));
+//        NIOFSDirectory didx = new NIOFSDirectory(new File(indexFileName));
         
         Directory idx = gidx;
         Executor exec = WXSUtils.getDefaultUtils().getExecutorService();
@@ -52,8 +55,7 @@ public class InMemoryExample
         	SearcherThread t = new SearcherThread(idx);
         	exec.execute(t);
         }
-    	
-
+        
         try {
 //            // Make an writer to create the index
 //            IndexWriter writer =
@@ -92,7 +94,7 @@ public class InMemoryExample
             MinMaxAvgMetric qArtist = new MinMaxAvgMetric();
             MinMaxAvgMetric qCategory = new MinMaxAvgMetric();
             int maxRuns = 1200;
-            String [] artists = {"U2", "MADONNA", "GAGA", "POLICE", "WHAM", "BEATLES", "STING"};
+            String [] artists = {"U2", "MADONNA", "GAGA", "POLICE", "WHAM", "BEATLES", "STING", "PRESLEY", "PRINCE"};
             for(int i = 0; i < maxRuns; ++i)
             {
 	            TopDocs q1 = search(searcher, "ARTIST", artists[i % artists.length], qArtist);
@@ -111,13 +113,11 @@ public class InMemoryExample
 
             searcher.close();
         }
-        catch(IOException ioe) {
+        catch(Exception ioe) {
+        	logger.log(Level.SEVERE, "Exception caught", ioe);
             // In this example we aren't really doing an I/O, so this
             // exception should never actually be thrown.
             ioe.printStackTrace();
-        }
-        catch(ParseException pe) {
-            pe.printStackTrace();
         }
     }
 

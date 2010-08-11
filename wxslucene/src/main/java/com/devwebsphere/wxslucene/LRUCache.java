@@ -27,6 +27,10 @@ public class LRUCache<K,V>
 	private int cacheSize;
 	static final float hashTableLoadFactor = 0.75f;
 	
+	/**
+	 * This creates a non thread safe LRU cache of a certain size
+	 * @param cacheSize
+	 */
 	public LRUCache(int cacheSize)
 	{
 		this.cacheSize = cacheSize;
