@@ -838,7 +838,17 @@ public class WXSUtils
 		if(globalDefaultUtils == null)
 		{
 			Properties props = new Properties();
-			InputStream is = new FileInputStream(new File(WXSUtils.class.getResource("/wxsutils.properties").toURI()));
+			URL xmlURL = WXSUtils.class.getResource("/wxsutils.properties");
+			if(xmlURL == null)
+			{
+				xmlURL = WXSUtils.class.getResource("/META-INF/wxsutils.properties");
+			}
+			if(xmlURL == null)
+			{
+				logger.log(Level.SEVERE, "/[META-INF/]wxsutils.properties not found on classpath");
+				throw new FileNotFoundException("/[META-INF/]wxsutils.properties");
+			}
+			InputStream is = new FileInputStream(new File(xmlURL.toURI()));
 			props.load(is);
 			
 			String cep = props.getProperty("cep");
@@ -855,6 +865,13 @@ public class WXSUtils
 				dpXMLPath = "/deployment.xml";
 			if(gridName == null)
 				gridName = "Grid";
+			
+			int numThreads = -1;
+			String intValue = props.getProperty("threads");
+			if(intValue != null)
+			{
+				numThreads = Integer.parseInt(intValue);
+			}
 
 			try
 			{
@@ -869,7 +886,16 @@ public class WXSUtils
 					logger.log(Level.INFO, "Test Server; Grid = " + gridName + "; ogXMLPath = " + ogXMLPath + "; dpXMLPath = " + dpXMLPath);
 					grid = WXSUtils.startTestServer(gridName, ogXMLPath, dpXMLPath);
 				}
-				globalDefaultUtils = new WXSUtils(grid);
+				if(numThreads > 0)
+				{
+					ExecutorService p = Executors.newFixedThreadPool(numThreads);
+					logger.log(Level.INFO, "WXSUtils thread pool is " + numThreads + " threads");
+					globalDefaultUtils = new WXSUtils(grid, p);
+				}
+				else
+				{
+					globalDefaultUtils = new WXSUtils(grid);
+				}
 			}
 			catch(Exception e)
 			{
