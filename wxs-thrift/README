@@ -1,0 +1,14 @@
+This is a simple thrift gateway for WXS. The gateway runs as a J2SE application. You run one and then thrift clients can connect
+to the gateway and the gateway forwards the requests to a WXS behind the gateway. The wxsutils.properties file configured
+which grid the gateway will connect to.
+
+The operations supported are get/getAll, put/putAll, remove/removeAll. Each verb takes a map name as a parameter. The gateway
+automatically creates maps for any map names so you shouldn't need to edit any of the xml files to get started.
+
+Just start a WXS grid using the objectgrid.xml and deployment.xml in the test/resources folder. You can edit the deployment.xml
+to change partition count, replicas and so on.
+
+Next, start the gateway application
+
+Next, start your clients and connect to the gateway. The src/test/java folder has the TestAPIs test case for an example
+of a Java client.
