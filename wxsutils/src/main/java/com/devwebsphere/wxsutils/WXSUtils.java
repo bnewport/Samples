@@ -85,7 +85,7 @@ public class WXSUtils
 	static AtomicReference<ExecutorService> globalThreadPool = new AtomicReference<ExecutorService>();
 	ExecutorService threadPool;
 	
-	Map<String, WXSMap<?,?>> maps = new ConcurrentHashMap<String, WXSMap<?,?>>();
+	Map<String, WXSMapImpl<?,?>> maps = new ConcurrentHashMap<String, WXSMapImpl<?,?>>();
 
 	static LazyMBeanManagerAtomicReference<AgentMBeanManager> agentMBeanManager = new LazyMBeanManagerAtomicReference<AgentMBeanManager>(AgentMBeanManager.class);
 	static LazyMBeanManagerAtomicReference<LoaderMBeanManager> loaderMBeanManager = new LazyMBeanManagerAtomicReference<LoaderMBeanManager>(LoaderMBeanManager.class);
@@ -129,7 +129,19 @@ public class WXSUtils
 	{
 		return wxsMapMBeanManager.getLazyRef();
 	}
-	
+
+	/**
+	 * Make a new WXSUtils that can is independant of the original from a threading
+	 * point of view. This allows a thread using a WXSUtils to quickly make
+	 * another independant one.
+	 * @param utils The original WXSUtils instance in use
+	 */
+	public WXSUtils(WXSUtils utils)
+	{
+		this.grid = utils.getObjectGrid();
+		threadPool = utils.threadPool;
+		tls = new ThreadLocalSession(this);
+	}
 	/**
 	 * This constructs an instance of this helper class.
 	 * @param grid The grid to use with this instance. It is usually a client connection
@@ -150,14 +162,14 @@ public class WXSUtils
 	 */
 	public <K,V> WXSMap<K,V> getCache(String mapName)
 	{
-		WXSMap<K,V> rc = (WXSMap<K,V>)maps.get(mapName);
+		WXSMapImpl<K,V> rc = (WXSMapImpl<K,V>)maps.get(mapName);
 		if(rc == null)
 		{
 			try
 			{
 				if(grid.getSession().getMap(mapName) != null)
 				{
-					rc = new WXSMap<K,V>(this, mapName);
+					rc = new WXSMapImpl<K,V>(this, mapName);
 					maps.put(mapName, rc);
 				}
 				else
@@ -378,6 +390,43 @@ public class WXSUtils
 			if(!areAllFuturesTRUE(results))
 			{
 				logger.log(Level.SEVERE, "removeAll failed because of a server side exception");
+				throw new ObjectGridRuntimeException("removeAll failed");
+			}
+		}
+	}
+	/**
+	 * This invalidates the Keys from the grid in parallel as efficiently as possible. This has no impact
+	 * on a backend plugged in using a Loader. It just removes entries from the cache only.
+	 * @param <K> The key type to use
+	 * @param batch The keys to invalidate from the grid
+	 * @param bmap The map to store them in.
+	 */
+	public <K> void invalidateAll(Collection<K> batch, BackingMap bmap)
+	{
+		if(batch.size() > 0)
+		{
+			Map<Integer, List<K>> pmap = convertToPartitionEntryMap(bmap, batch);
+			Iterator<List<K>> items = pmap.values().iterator();
+			ArrayList<Future<?>> results = new ArrayList<Future<?>>();
+			CountDownLatch doneSignal = new CountDownLatch(pmap.size());
+			while(items.hasNext())
+			{
+				List<K> perPartitionEntries = items.next();
+				// we need one key for partition routing
+				// so get the first one
+				K key = perPartitionEntries.iterator().next();
+				
+				// invoke the agent to add the batch of records to the grid
+				InvalidateAgent<K> ra = new InvalidateAgent<K>();
+				ra.batch = perPartitionEntries;
+				Future<?> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ra, doneSignal));
+				results.add(fv);
+			}
+	
+			blockForAllFuturesToFinish(doneSignal);
+			if(!areAllFuturesTRUE(results))
+			{
+				logger.log(Level.SEVERE, "invalidateAll failed because of a server side exception");
 				throw new ObjectGridRuntimeException("removeAll failed");
 			}
 		}

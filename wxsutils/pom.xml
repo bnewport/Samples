@@ -4,7 +4,7 @@
   <groupId>com.billynewport.wxsutils</groupId>
   <artifactId>wxsutils</artifactId>
   <packaging>jar</packaging>
-  <version>1.5-SNAPSHOT</version>
+  <version>1.7-SNAPSHOT</version>
   <name>wxsutils</name>
   <url>http://maven.apache.org</url>
   <dependencies>
@@ -18,6 +18,23 @@
     	<groupId>com.ibm.websphere.objectgrid</groupId>
     	<artifactId>objectgrid-server</artifactId>
     	<version>7.1</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.apache.derby</groupId>
+    	<artifactId>derby</artifactId>
+    	<version>10.6.1.0</version>
+    	<scope>test</scope>
+    </dependency>
+    <dependency>
+    	<groupId>commons-dbcp</groupId>
+    	<artifactId>commons-dbcp</artifactId>
+    	<version>1.2.2</version>
+    	<scope>test</scope>
+    </dependency>
+    <dependency>
+    	<groupId>com.google.protobuf</groupId>
+    	<artifactId>protobuf-java</artifactId>
+    	<version>2.3.0</version>
     </dependency>
   </dependencies>
   <build>

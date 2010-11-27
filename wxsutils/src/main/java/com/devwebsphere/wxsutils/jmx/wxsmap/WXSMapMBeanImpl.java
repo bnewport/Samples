@@ -23,6 +23,7 @@ public class WXSMapMBeanImpl implements WXSMapMBean
 	MinMaxAvgMetric putMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric insertMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric removeMetric = new MinMaxAvgMetric();
+	MinMaxAvgMetric invalidateMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric containsMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric lockMetric = new MinMaxAvgMetric();
 	MinMaxAvgMetric unlockMetric = new MinMaxAvgMetric();
@@ -77,6 +78,11 @@ public class WXSMapMBeanImpl implements WXSMapMBean
 	public MinMaxAvgMetric getUnlockMetrics()
 	{
 		return unlockMetric;
+	}
+	
+	public MinMaxAvgMetric getInvalidateMetrics()
+	{
+		return invalidateMetric;
 	}
 	
 	/* (non-Javadoc)
@@ -450,4 +456,56 @@ public class WXSMapMBeanImpl implements WXSMapMBean
 		return new Double(unlockMetric.getTotalTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getGetExceptionCount()
+	 */
+	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
+	public Integer getInvalidateExceptionCount() 
+	{
+		return new Integer(invalidateMetric.getExceptionCount());
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getGetLastExceptionString()
+	 */
+	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
+	public String getInvalidateLastExceptionString() 
+	{
+		Throwable t = invalidateMetric.getLastException();
+		if(t != null)
+		{
+			return t.toString();
+		}
+		else
+			return "<>";
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getGetTimeAvgMS()
+	 */
+	@TabularAttribute
+	public Double getInvalidateTimeAvgMS() 
+	{
+		return new Double(invalidateMetric.getAvgTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getGetTimeMaxMS()
+	 */
+	@TabularAttribute
+	public Double getInvalidateTimeMaxMS() 
+	{
+		return new Double(invalidateMetric.getMaxTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getGetTimeMinMS()
+	 */
+	@TabularAttribute
+	public Double getInvalidateTimeMinMS() {
+		return new Double(invalidateMetric.getMinTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
+	}
+	/* (non-Javadoc)
+	 * @see com.devwebsphere.wxsutils.jmx.wxsmap.Aa#getGetTotalTimeMS()
+	 */
+	@TabularAttribute(mbean=SummaryMBeanImpl.MONITOR_MBEAN)
+	public Double getInvalidateTotalTimeMS() {
+		return new Double(invalidateMetric.getTotalTimeNS() / MinMaxAvgMetric.TIME_SCALE_NS_MS);
+	}
 }

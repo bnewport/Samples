@@ -97,4 +97,17 @@ public interface WXSMapMBean {
 	public Double getUnlockTimeMinMS();
 
 	public Double getUnlockTotalTimeMS();
+	
+	public Integer getInvalidateExceptionCount();
+
+	public String getInvalidateLastExceptionString();
+
+	public Double getInvalidateTimeAvgMS();
+
+	public Double getInvalidateTimeMaxMS();
+
+	public Double getInvalidateTimeMinMS();
+
+	public Double getInvalidateTotalTimeMS();
+
 }
