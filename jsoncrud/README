@@ -52,3 +52,10 @@ js> personMap.remove("bn")
 We can invalidate the entry like this:
 
 js> personMap.invalidate("bn")
+
+
+Preparation Instructions
+Add the jars to the grid classpath. Add a map called "Router" to your mapset. It is just used for routing, 
+no data is stored in it. The client doesn't need any application classes. Once this is done then you should
+be able to connect to the grid and work as described above
+
