@@ -657,13 +657,14 @@ public class WXSUtils
 	 * This connects to a remote WXS grid.
 	 * @param cep A comma seperated list of host:port pairs for the catalog service
 	 * @param gridName The name of the grid thats desired.
+	 * @param ogXMLPath The path to the objectgrid.xml file on the classpath or null
 	 * @return A client connection to the grid
 	 */
 	static public ObjectGrid connectClient(String cep, String gridName, String ogXMLpath) 
 	{
 		try
 		{
-			URL cog = WXSUtils.class.getClassLoader().getResource(ogXMLpath);
+			URL cog = (ogXMLpath != null) ? WXSUtils.class.getClassLoader().getResource(ogXMLpath) : null;
 			
 			ClientClusterContext ccc = ObjectGridManagerFactory.getObjectGridManager().connect(cep, null, cog);
 			ObjectGrid grid = ObjectGridManagerFactory.getObjectGridManager().getObjectGrid(ccc, gridName);
