@@ -1,0 +1,54 @@
+This is a command line utility that allows you to work with a remote grid and examine/manipulate it.
+It's built around a JavaScript shell. When you start the utility then you specify the grid you
+want to connect to:
+
+> jsonclient.sh -ch localhost -cp 2809 -grid Grid
+
+This will then connect to the grid and start up a JavaScript shell like this:
+
+Rhino 1.7 release 2 2009 03 22
+js> 
+
+At this point there is one global variable defined called 'grid'. You can use this to get instances
+of Maps in the remote grid. For example:
+
+js> personMap = grid.getMap("Person", "java.lang.String", "com.billy.Person")
+
+This stores a Map object instance for Person in the personMap variable. The map is stored remotely in
+the grid and uses a String for the key with a value using the class com.billy.Person
+
+Lets suppose your Person looks like this:
+
+public class Person implements Serializable 
+{
+	String firstName;
+	String middleInitial;
+	String surname;
+	Date dateOfBirth;
+	double creditLimit;
+	...
+}
+
+The class would have getters and setters define for the attributes.
+
+You can insert a Person entry using this:
+
+js> billy = {"firstName":"Billy", "surname":"Newport", "middleInitial":"Z", "creditLimit":"100.0"}
+js> personMap.put("bn", billy)
+
+This creates an entry in the map with the key "bn" and the value as shown. The value in the remote Map is a Person class instance.
+The JSON string above needs to have the same corresponding attributes as the Person POJO.
+
+We can modify the entry so have a different credit limit like this:
+
+js> p = personMap.get("bn")
+js> p.creditLimit = 200
+js> personMap.put("bn", p)
+
+We can remove the entry like this
+
+js> personMap.remove("bn")
+
+We can invalidate the entry like this:
+
+js> personMap.invalidate("bn")
