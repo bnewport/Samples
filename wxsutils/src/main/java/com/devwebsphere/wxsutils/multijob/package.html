@@ -1,0 +1,17 @@
+<html>
+<body>
+This is a package to make running sequential operations on all data in a grid easier.
+This framework basically lets you easily run a piece of code (SinglePartTask) within two provided nested loops. The outer loop has one
+iteration for each partition in the grid. The inner loop runs your code within the primary shard for the current partition
+until your code indicates that it is finished with the data in the partition. The JobExecutor is the users view of these
+loops. The loops are transparent to the user. The user simply calls JobExecutor.getNextResult and the looping is handled. The
+first time its called then the first partition is selected and the SinglePartTask is called to work on the first block of data
+in the partition. Each subsequent call to getNextResult should cause SinglePartTask to run against the next block and return
+a value for that until finally the last block for the partition is handled. The next call to getNextResult will then cause
+JobExecutor to move to the next partition and then loop over all blocks there in the same manner. Finally, all partitions
+are visited and then getNextResult will return null.<p/>
+An example of a SinglePartTask could be a simple query as in the "com.devwebsphere.wxsutils.multijob.ogql.GridQuery". Here the
+user specifies an object query expression and this statement is executed in each partition and a sequential subset of results
+in returned.
+</body>
+</html>

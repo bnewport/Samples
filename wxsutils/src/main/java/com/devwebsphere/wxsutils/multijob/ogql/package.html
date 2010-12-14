@@ -1,0 +1,31 @@
+<html>
+<body>
+This allows a query to run against all data inside a DataGrid.
+The GridQuery instance wraps a JobExecutor and allows a specific query to be executed against all data in the grid. The query
+is reexecuted each time getNextResult is called and another subset of the result is returned. Thus if there are 10 partitions
+with 500 records each and a simple query is executed to retrieve each record. If GridQuery was initialized to return
+100 records at a time then the query would be executed 5 times per partition. Each time the following block of records
+is returned to getNextResult as an ArrayList. First, records from 0..99 come back, then 100..199 comes back and so on. Thus
+the query would be executed 5 times per partition times 10 partitions or 500 times. Thus, the query if it will be executed
+a lot should be efficient. The query is also stateless. No per query state is kept on the grid side at all.<p/>
+Here is an example of its usage:
+
+<pre>
+GridQuery q = new GridQuery(ogclient, "select p from Person p", 100);
+ArrayList<Object> block = q.getNextResult();
+while(block != null)
+{
+	for(Object r : block)
+	{
+		Person p = (Person)r;
+		System.out.println(p.toString());
+		Assert.assertEquals(true, personSet.remove(p.getFirstName()));
+	}
+	block = q.getNextResult();
+}
+</pre>
+This will pull all records from the map Person to the client in blocks of 100 entries. The ArrayList returned from getNextResult
+can have no elements in it. This does not mean the query is complete. Only a null value indicates the end. The application
+should keep calling getNextResult until it returns null.
+</body>
+</html>
