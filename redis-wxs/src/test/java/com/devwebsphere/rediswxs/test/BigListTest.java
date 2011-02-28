@@ -12,7 +12,7 @@ public class BigListTest {
 	 */
 	public static void main(String[] args) 
 	{
-		R.initialize(null);
+		R.initialize();
 
 		long start = System.currentTimeMillis();
 		R.str_long.ltrim("biglist", 0);

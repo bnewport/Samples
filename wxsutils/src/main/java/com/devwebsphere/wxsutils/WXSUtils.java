@@ -340,7 +340,7 @@ public class WXSUtils
 			for(Future<?> f : results)
 			{
 				Boolean b = (Boolean)f.get();
-				if(!b)
+				if(b == null || b.equals(Boolean.FALSE))
 					return false;
 			}
 		}
@@ -707,7 +707,7 @@ public class WXSUtils
 				X x = (X) agentMgr.callReduceAgent(agent, Collections.singleton(key));
 				return x;
 			}
-			catch(Exception e)
+			catch(Throwable e)
 			{
 				logger.log(Level.SEVERE, "Exception in CallReduceAgentThread.call", e);
 			}
@@ -888,18 +888,20 @@ public class WXSUtils
 		if(globalDefaultUtils == null)
 		{
 			Properties props = new Properties();
-			URL xmlURL = WXSUtils.class.getResource("/wxsutils.properties");
-			if(xmlURL == null)
+			// BN Modified to use getResourceAsStream instead of FileInputStream
+			// BN so it works with property files in jars
+			InputStream is = WXSUtils.class.getResourceAsStream("/wxsutils.properties");
+			if(is == null)
 			{
-				xmlURL = WXSUtils.class.getResource("/META-INF/wxsutils.properties");
+				is = WXSUtils.class.getResourceAsStream("/META-INF/wxsutils.properties");
 			}
-			if(xmlURL == null)
+			if(is == null)
 			{
 				logger.log(Level.SEVERE, "/[META-INF/]wxsutils.properties not found on classpath");
 				throw new FileNotFoundException("/[META-INF/]wxsutils.properties");
 			}
-			InputStream is = new FileInputStream(new File(xmlURL.toURI()));
 			props.load(is);
+			is.close(); // BN added close
 			
 			String cep = props.getProperty("cep");
 			if(cep == null)

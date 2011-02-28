@@ -28,7 +28,7 @@ import com.ibm.websphere.objectgrid.TxID;
  */
 public abstract class BaseJDBCLoader
 {
-	String mapName = LoaderMBeanManager.UNKNOWN_MAP;
+	protected String mapName = LoaderMBeanManager.UNKNOWN_MAP;
 	
 	/**
 	 * This returns the table to use for the POJOs mapped using this Loader
@@ -47,7 +47,7 @@ public abstract class BaseJDBCLoader
 		this.tableName = tableName;
 	}
 
-	String tableName;
+	protected String tableName;
 
 	/**
 	 * This will create a JDBC Connection instance or return the current one associated with this
@@ -65,7 +65,7 @@ public abstract class BaseJDBCLoader
 		return cb.getConnection(tx);
 	}
 
-	static <I> void copyPojoListToBatch(Connection conn, String sql, ArrayList<I> list, ArrayList<Field> fields)
+	static public <I> void copyPojoListToBatch(Connection conn, String sql, ArrayList<I> list, ArrayList<Field> fields)
 		throws SQLException, IllegalAccessException, NoSuchFieldException
 	{
 		NamedParameterStatement s = new NamedParameterStatement(conn, sql);

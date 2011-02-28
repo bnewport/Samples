@@ -25,7 +25,6 @@ import java.util.logging.Logger;
 import com.devwebsphere.purequery.loader.ScalarKey;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanImpl;
-import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanManager;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.TxID;
@@ -96,7 +95,7 @@ public abstract class JDBCValueLoader<K,V> extends BaseJDBCLoader implements Loa
 			throws LoaderException, OptimisticCollisionException 
 	{
 		mapName = ls.getMapName();
-		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid(), mapName);
+		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid().getName(), mapName);
 		mbean.getBatchSizeMetrics().logTime(ls.size());
 		long startNS = System.nanoTime();
 		try
@@ -186,7 +185,7 @@ public abstract class JDBCValueLoader<K,V> extends BaseJDBCLoader implements Loa
 	 */
 	public List get(TxID tx, List keys, boolean arg2) throws LoaderException 
 	{
-		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid(), mapName);
+		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid().getName(), mapName);
 		long startNS = System.nanoTime();
 		try
 		{

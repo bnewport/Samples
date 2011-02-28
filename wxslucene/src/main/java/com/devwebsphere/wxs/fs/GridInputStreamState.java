@@ -12,8 +12,9 @@ package com.devwebsphere.wxs.fs;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -62,7 +63,7 @@ class GridInputStreamState
 		currentValue = null;
 	}
 
-	boolean areBytesAvailable(GridInputStream master)
+	boolean areBytesAvailable(GridInputStream master, Map<Long, byte[]> bMap)
 	throws IOException
 	{
 		if(currentAbsolutePosition == master.md.getActualSize())
@@ -78,7 +79,15 @@ class GridInputStreamState
 			// if not first block in file then advance otherwise fetch first block
 			if(currentAbsolutePosition > 0)
 				currentBucket++;
-			currentValue = master.getBlock(currentBucket);
+			
+			// check prefetch cache
+			if(bMap != null)
+				currentValue = bMap.get(new Long(currentBucket));
+			else
+				currentValue = null;
+			// fetch if not found in prefetch
+			if(currentValue == null)
+				currentValue = master.getBlock(currentBucket);
 			if(currentValue == null)
 			{
 				currentValue = new byte[master.blockSize];
@@ -95,7 +104,7 @@ class GridInputStreamState
 	public int read(GridInputStream master) throws IOException 
 	{
 		int rc = -1;
-		if(areBytesAvailable(master))
+		if(areBytesAvailable(master, null))
 		{
 			rc = currentValue[currentPosition++];
 			++currentAbsolutePosition;
@@ -108,15 +117,23 @@ class GridInputStreamState
 		return rc;
 	}
 
-	void prefetchBlocks(final GridInputStream master, long beginOffset, long endOffset)
+	/**
+	 * If more than a single block is required for a byte range then fetch the blocks in parallel
+	 * and keep the blocks in a prefetch Map keyed by block number.
+	 * @param master
+	 * @param beginOffset
+	 * @param endOffset
+	 * @return
+	 */
+	Map<Long, byte[]> prefetchBlocks(final GridInputStream master, long beginOffset, long endOffset)
 	{
 		int beginBlock = (int)(beginOffset / (long)master.blockSize);
 		int endBlock = (int)(endOffset / (long)master.blockSize);
 
 		// if only one block don't bother doing it in parallel
 		// this also only works for now if a local cache is enabled
-		if(beginBlock == endBlock || master.parentDirectory.getLRUBlockCache() == null)
-			return;
+		if(beginBlock == endBlock)
+			return null;
 
 		if(logger.isLoggable(Level.FINE))
 		{
@@ -145,32 +162,37 @@ class GridInputStreamState
 			};
 			blocks.add(master.utils.getExecutorService().submit(c));
 		}
+		Map<Long, byte[]> bMap = new HashMap<Long, byte[]>();
 		try
 		{
+			long blockNum = beginBlock;
 			for(Future<byte[]> f : blocks)
 			{
 				byte[] waitBlock = f.get();
+				bMap.put(new Long(blockNum++), waitBlock);
 			}
+			return bMap;
 		}
 		catch(Exception e)
 		{
 			logger.log(Level.SEVERE, "Prefetch threads threw an exception", e);
+			return null;
 		}
 	}
 	
 	public int privateRead(final GridInputStream master, byte[] b) throws IOException 
 	{
-		if(!areBytesAvailable(master))
-			return -1;
-		
 		int toGo = b.length;
 		int offset = 0;
 
 		long beginOffset = currentAbsolutePosition;
 		long endOffset = currentAbsolutePosition + toGo - 1;
-		prefetchBlocks(master, beginOffset, endOffset);
+		Map<Long, byte[]> prefetchMap = prefetchBlocks(master, beginOffset, endOffset);
 		
-		while(areBytesAvailable(master) && toGo > 0)
+		if(!areBytesAvailable(master, prefetchMap))
+			return -1;
+		
+		while(areBytesAvailable(master, prefetchMap) && toGo > 0)
 		{
 			int bytesAvailable = currentValue.length - currentPosition;
 			if(bytesAvailable < toGo)

@@ -256,7 +256,7 @@ public class JSMap
 		Session sess = ogclient.getSession();
 		AgentManager amgr = sess.getMap(ROUTING_MAP).getAgentManager();
 		
-		Map<String, String> map = amgr.callMapAgent(agent, Collections.singleton(agent.keyString));
+		Map<String, String> map = amgr.callMapAgent(agent, Collections.singleton(new Integer(agent.keyString).hashCode()));
 		String result = map.get(agent.keyString);
 		return result;
 	}

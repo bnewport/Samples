@@ -56,7 +56,7 @@ public class Benchmark {
 	 */
 	public static void main(String[] args) 
 	{
-		R.initialize(null);
+		R.initialize();
 		final Long orig_value = new Long(0);
 		
 		Runnable t = new BenchSetThread(orig_value);

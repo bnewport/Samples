@@ -10,10 +10,14 @@
 //
 package com.devwebsphere.rediswxs;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+
+import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
 
 /**
@@ -51,11 +55,10 @@ public class R
 
 	/**
 	 * This MUST be called when your application starts to initialize the client
-	 * If the cep is null then a grid is started within the client JVM to host the
-	 * grid servers locally. This is useful for debugging
-	 * @param cep The catalog service end points (h:p,h:p,h:p)
+	 * wxsutils.properties must be used to configure how to attach to the grid
+	 * This is useful for debugging
 	 */
-	static public void initialize(String cep)
+	static public void initialize()
 	{
 		// initialize multi meta data dictionary
 		metaData = new AtomicReference<Map<Class<?>,MultiMetaData<?>>>();
@@ -63,7 +66,14 @@ public class R
 		
 		// shared client connect to the grid, this actually contains
 		// two connections, one with near cache and one without
-		r = new RedisClient(cep);
+		try
+		{
+			r = new RedisClient();
+		}
+		catch(Exception e)
+		{
+			throw new ObjectGridRuntimeException(e);
+		}
 		// create non caches adapters sharing the no near cache client
 		str_str = new RedisMapWithStringKeyAdapter<String>(CacheUsage.NONEARCACHE, String.class, r);
 		str_long = new RedisMapWithStringKeyAdapter<Long>(CacheUsage.NONEARCACHE, Long.class, r);

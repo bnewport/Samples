@@ -15,7 +15,6 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 import com.devwebsphere.rediswxs.R;
-import com.devwebsphere.rediswxs.RedisClient;
 
 
 /**
@@ -47,7 +46,7 @@ public class InitializeGridListener implements ServletContextListener {
 	public void contextInitialized(ServletContextEvent c) 
 	{
 		String cep = c.getServletContext().getInitParameter("grid-catalog-endpoints");
-		R.initialize(cep);
+		R.initialize();
 	}
 
 }

@@ -39,7 +39,7 @@ public class Push implements MapGridAgent
 			ScalarKey sk = (ScalarKey)key;
 			key = sk.getKey();
 		}
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid(), this.getClass().getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
 		long startNS = System.nanoTime();
 		try
 		{

@@ -38,7 +38,7 @@ public class SetIsMember extends BaseAgent<String> implements MapGridAgent
 			ScalarKey sk = (ScalarKey)key;
 			key = sk.getKey();
 		}
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid(), this.getClass().getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
 		long startNS = System.nanoTime();
 		HashSet<Serializable> s = fetchSetEntry(sess, (String)key, map);
 		if(s != null)

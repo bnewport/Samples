@@ -23,7 +23,7 @@
     	<groupId>com.ibm.websphere.objectgrid</groupId>
     	<artifactId>objectgrid-server</artifactId>
     	<version>7.1</version>
-    	<scope>provided</scope>
+<!--    	<scope>provided</scope> -->
     </dependency>
   </dependencies>
   <build>

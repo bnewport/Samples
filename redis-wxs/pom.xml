@@ -4,24 +4,26 @@
   <groupId>com.devwebsphere</groupId>
   <artifactId>redis-wxs</artifactId>
   <packaging>jar</packaging>
-  <version>1.1-SNAPSHOT</version>
+  <version>1.3-SNAPSHOT</version>
   <name>redis-wxs</name>
   <url>http://maven.apache.org</url>
   <dependencies>
     <dependency>
     	<groupId>com.ibm.websphere.objectgrid</groupId>
     	<artifactId>objectgrid-server</artifactId>
-    	<version>7.0.0.2</version>
+    	<version>7.1</version>
+    	<scope>provided</scope>
     </dependency>
     <dependency>
     	<groupId>geronimo-spec</groupId>
     	<artifactId>geronimo-spec-servlet</artifactId>
     	<version>2.4-rc4</version>
+    	<scope>provided</scope>
     </dependency>
     <dependency>
     	<groupId>com.billynewport.wxsutils</groupId>
     	<artifactId>wxsutils</artifactId>
-    	<version>1.0-SNAPSHOT</version>
+    	<version>[1.4-SNAPSHOT,]</version>
     </dependency>
     <dependency>
     	<groupId>com.ibm</groupId>
@@ -32,11 +34,6 @@
     	<groupId>commons-dbcp</groupId>
     	<artifactId>commons-dbcp</artifactId>
     	<version>1.2.2</version>
-    </dependency>
-    <dependency>
-    	<groupId>com.ibm</groupId>
-    	<artifactId>ibm-objectgrid-spring</artifactId>
-    	<version>7.0.0.1</version>
     </dependency>
     <dependency>
     	<groupId>mysql</groupId>
@@ -53,6 +50,12 @@
     	<artifactId>junit</artifactId>
     	<version>4.7</version>
     	<scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>com.ibm</groupId>
+        <artifactId>objectgrid-spring</artifactId>
+        <version>7.1</version>
+    	<scope>provided</scope>
     </dependency>
   </dependencies>
   <build>

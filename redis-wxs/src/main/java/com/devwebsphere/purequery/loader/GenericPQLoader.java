@@ -158,7 +158,7 @@ public class GenericPQLoader extends BasePQLoader implements Loader
 			throws LoaderException, OptimisticCollisionException 
 	{
 		mapName = ls.getMapName();
-		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid(), ls.getMapName());
+		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid().getName(), ls.getMapName());
 		mbean.getBatchSizeMetrics().logTime(ls.size());
 		long startNS = System.nanoTime();
 		// get the Data instance for this transaction
@@ -286,7 +286,7 @@ public class GenericPQLoader extends BasePQLoader implements Loader
 	@SuppressWarnings("unchecked")
 	public List get(TxID tx, List keys, boolean arg2) throws LoaderException 
 	{
-		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid(), mapName);
+		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid().getName(), mapName);
 		try
 		{
 			mbean.getGetSizeMetrics().logTime(keys.size());

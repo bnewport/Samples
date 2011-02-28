@@ -14,6 +14,7 @@ Licensed Materials - Property of IBM
  xsi:schemaLocation="http://ibm.com/ws/objectgrid/config ../objectGrid.xsd"
  xmlns="http://ibm.com/ws/objectgrid/config">
 
+<!-- lockStrategy="PESSIMISTIC"  -->
     <objectGrids>
         <objectGrid name="Grid">
             <backingMap name="M.*" template="true" lockStrategy="PESSIMISTIC" copyMode="COPY_TO_BYTES"/>

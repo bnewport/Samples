@@ -176,7 +176,7 @@ public class GenericJDBCLoader extends BaseJDBCLoader implements Loader, SetLoad
 			throws LoaderException, OptimisticCollisionException 
 	{
 		mapName = ls.getMapName();
-		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid(), ls.getMapName());
+		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid().getName(), ls.getMapName());
 		mbean.getBatchSizeMetrics().logTime(ls.size());
 		long startNS = System.nanoTime();
 		// start a hetero batch.
@@ -285,7 +285,7 @@ public class GenericJDBCLoader extends BaseJDBCLoader implements Loader, SetLoad
 	@SuppressWarnings("unchecked")
 	public List get(TxID tx, List keys, boolean arg2) throws LoaderException 
 	{
-		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid(), mapName);
+		LoaderMBeanImpl mbean = WXSUtils.getLoaderMBeanManager().getBean(tx.getSession().getObjectGrid().getName(), mapName);
 		try
 		{
 			mbean.getGetSizeMetrics().logTime(keys.size());

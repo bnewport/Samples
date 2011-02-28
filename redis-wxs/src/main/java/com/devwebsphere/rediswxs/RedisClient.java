@@ -10,8 +10,9 @@
 //
 package com.devwebsphere.rediswxs;
 
+import java.io.IOException;
 import java.io.Serializable;
-import java.net.URL;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Hashtable;
@@ -41,7 +42,6 @@ import com.devwebsphere.rediswxs.agent.set.SetMembers;
 import com.devwebsphere.rediswxs.jmx.RedisMBean;
 import com.devwebsphere.rediswxs.jmx.RedisMBeanImpl;
 import com.devwebsphere.wxsutils.WXSUtils;
-import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanManager;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
@@ -148,28 +148,12 @@ public class RedisClient implements IRedisLowLevel
 	 * host:port pairs for the catalog servers for WXS.
 	 * @param cep Comma seperated host:port pairs OR null
 	 */
-	RedisClient(String cep)
+	RedisClient()
+		throws IOException, URISyntaxException
 	{
-		if(cep != null)
-		{
-			// use the client og override xml file with the near cache disabled
-			nocacheog = WXSUtils.connectClient(cep, "Grid", "/clientobjectgrid.xml");
-			// use the client og override xml file with the near cache turned on
-			cacheog = nocacheog;
-//			cacheog = WXSUtils.connectClient(cep, "Grid", "/clientwithcacheobjectgrid.xml");
-		}
-		else
-		{
-			// start a local WXS catalog and container for debugging
-//			String ogxml = "/objectgrid_writethrough.xml";
-
-			String depxml = "/deployment.xml";
-			String ogxml = "/objectgrid_jdbc_writethrough.xml";
-			cacheog = WXSUtils.startTestServer("Grid", ogxml, depxml);
-			nocacheog = cacheog;
-//			nocacheog = WXSUtils.connectClient("localhost:2809", "Grid", "/clientobjectgrid.xml");
-		}
-		wxsutils = new WXSUtils(nocacheog);
+		wxsutils = WXSUtils.getDefaultUtils();
+		nocacheog = wxsutils.getObjectGrid();
+		cacheog = wxsutils.getObjectGrid();
 		initializeJMX();
 	}
 

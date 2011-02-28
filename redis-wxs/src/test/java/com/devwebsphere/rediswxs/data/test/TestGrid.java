@@ -16,7 +16,7 @@ public class TestGrid
 	@BeforeClass
 	public static void setupGrid()
 	{
-		R.initialize(null);
+		R.initialize();
 	}
 
 	@Test

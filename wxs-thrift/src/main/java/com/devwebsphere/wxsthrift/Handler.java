@@ -16,9 +16,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.devwebsphere.wxssearch.ByteArrayKey;
 import com.devwebsphere.wxsthrift.gen.WxsGatewayService;
@@ -27,7 +28,7 @@ import com.devwebsphere.wxsutils.WXSUtils;
 
 public class Handler implements WxsGatewayService.Iface
 {
-	static Logger logger = Logger.getLogger(Handler.class.getName());
+	static Logger logger = LoggerFactory.getLogger(Handler.class);
 	
 	WXSUtils client;
 	Map<String, String> mapNames = new ConcurrentHashMap<String, String>();

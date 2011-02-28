@@ -13,22 +13,23 @@ package com.devwebsphere.wxsthrift;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.server.THsHaServer;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.devwebsphere.wxsthrift.gen.WxsGatewayService;
 import com.devwebsphere.wxsutils.WXSUtils;
 
 public class WxsThriftServer 
 {
-	static Logger logger = Logger.getLogger(WxsThriftServer.class.getName());
+	static Logger logger = LoggerFactory.getLogger(WxsThriftServer.class);
 
 	/**
 	 * @param args
@@ -39,7 +40,7 @@ public class WxsThriftServer
 		WXSUtils client = WXSUtils.getDefaultUtils();
 		if(client == null)
 		{
-			logger.log(Level.SEVERE, "Cannot connect to grid, check wxsutils.properties");
+			logger.error("Cannot connect to grid, check wxsutils.properties");
 			return;
 		}
 		
@@ -47,7 +48,7 @@ public class WxsThriftServer
 		final WxsGatewayService.Processor processor = new WxsGatewayService.Processor(
 		        new Handler(client));
 		final TServer server = new THsHaServer(processor, socket,
-		        new TFramedTransport.Factory(), new TCompactProtocol.Factory());
+		        new TFramedTransport.Factory(), new TBinaryProtocol.Factory());
 		
 		server.serve();	
 	}

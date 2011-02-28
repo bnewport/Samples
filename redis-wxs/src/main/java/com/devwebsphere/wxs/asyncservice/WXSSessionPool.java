@@ -239,5 +239,9 @@ final public class WXSSessionPool
 		public void setRequestRetryTimeout(long arg0) {
 			s.setRequestRetryTimeout(arg0);
 		}
+
+		public boolean isSessionHandleSet() {
+			return s.isSessionHandleSet();
+		}
 	}
 }

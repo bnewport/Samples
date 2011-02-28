@@ -114,7 +114,7 @@ public class GridInputStream
 		throws IOException
 	{
 		GridInputStreamState state = tlsState.get();
-		return state.areBytesAvailable(this);
+		return state.areBytesAvailable(this, null);
 	}
 	
 	public int read() throws IOException 

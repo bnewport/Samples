@@ -35,7 +35,7 @@ public class Incr implements MapGridAgent
 
 	public Object process(Session sess, ObjectMap map, Object key) 
 	{
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid(), this.getClass().getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
 		long startNS = System.nanoTime();
 		try
 		{

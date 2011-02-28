@@ -98,7 +98,6 @@ public class JSONPUDIGatewayAgent implements MapGridAgent
 		return remoteMap;
 	}
 	
-	@Override
 	/**
 	 * This is called to execute the gateway operation. This method constructs POJOs from
 	 * the JSON key and value strings and then invokes a grid operation
@@ -154,7 +153,6 @@ public class JSONPUDIGatewayAgent implements MapGridAgent
 	/**
 	 * Not used
 	 */
-	@Override
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {
 		// TODO Auto-generated method stub
 		return null;

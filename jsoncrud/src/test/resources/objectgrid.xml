@@ -17,7 +17,16 @@ Licensed Materials - Property of IBM
     <objectGrids>
         <objectGrid name="Grid">
             <backingMap name="Person"  lockStrategy="PESSIMISTIC" copyMode="COPY_TO_BYTES"/>
-            <backingMap name="Router"  lockStrategy="PESSIMISTIC" copyMode="COPY_TO_BYTES"/>
+            <backingMap name="Router"  lockStrategy="PESSIMISTIC" />
+            <!-- This map is used by the JobQuery framework, no data is stored in it -->
+            <backingMap name="RouterKeyI32"  lockStrategy="PESSIMISTIC" />
+            
+            <!-- Specify the query schema, this is required and specific to each grid, customize this -->
+	      	<querySchema>
+	         	<mapSchemas>
+	           		<mapSchema mapName="Person" valueClass="com.devwebsphere.Person" accessType="FIELD"/>
+	         	</mapSchemas>
+	      	</querySchema>
         </objectGrid>
     </objectGrids>
 

@@ -9,7 +9,6 @@ either for customer's own internal use or for redistribution by customer, as par
 application, in customer's own products.
 Licensed Materials - Property of IBM
 5724-J34 (C) COPYRIGHT International Business Machines Corp. 2009
-{bug 17856: Blah}
 -->
 
 <objectGridConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

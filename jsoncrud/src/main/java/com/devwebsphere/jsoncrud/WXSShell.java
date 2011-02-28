@@ -45,14 +45,12 @@ public class WXSShell {
 			Context ctxt = Context.enter();
 			ErrorReporter reporter = new ErrorReporter() {
 				
-				@Override
 				public void warning(String arg0, String arg1, int arg2, String arg3,
 						int arg4) 
 				{
 					System.out.println("WARNING");
 				}
 				
-				@Override
 				public EvaluatorException runtimeError(String arg0, String arg1, int arg2,
 						String arg3, int arg4) {
 					System.out.println("RUNTIMEERROR");
@@ -60,7 +58,6 @@ public class WXSShell {
 					return null;
 				}
 				
-				@Override
 				public void error(String msg, String file, int linenum, String arg3, int arg4) {
 					System.out.println("ERROR:" + msg);
 				}
