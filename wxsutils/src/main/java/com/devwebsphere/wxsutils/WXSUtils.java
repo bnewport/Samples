@@ -869,7 +869,7 @@ public class WXSUtils
 	 * property file wxsutils.properties on the classpath. The grid name and path to objectgrid.xml file must
 	 * always be specified. If a remote grid connection is required then a cep must be specified also. If
 	 * a local intra JVM test grid should be started then omit the cep property and specify a deployment
-	 * xml file path.
+	 * xml file path. Any unexpected exceptions are wrapped in an {@link ObjectGridRuntimeException}
 	 * 
 	 * This can be called multiple times and the same WXSUtils instance is returned. It's a JVM wide instance
 	 * 
@@ -881,6 +881,7 @@ public class WXSUtils
 	 * @throws FileNotFoundException
 	 * @throws URISyntaxException
 	 * @throws IOException
+	 * @throws ObjectGridRuntimeException
 	 */
 	static synchronized public WXSUtils getDefaultUtils()
 		throws FileNotFoundException, URISyntaxException, IOException
@@ -949,9 +950,10 @@ public class WXSUtils
 					globalDefaultUtils = new WXSUtils(grid);
 				}
 			}
-			catch(Exception e)
+			catch(Throwable e)
 			{
 				logger.log(Level.SEVERE, "Cannot connect to grid ", e);
+				throw new ObjectGridRuntimeException(e); // BN don't swallow these, rethrow them
 			}
 		}
 		return globalDefaultUtils;
