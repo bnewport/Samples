@@ -864,6 +864,17 @@ public class WXSUtils
 	
 	static WXSUtils globalDefaultUtils;
 	
+	static private InputStream findWXSPropertyFile(ClassLoader cl, boolean useRootSlash)
+	{
+		String prefix = useRootSlash ? "/" : "";
+		InputStream is = cl.getResourceAsStream(prefix + "wxsutils.properties");
+		if(is == null)
+		{
+			is = cl.getResourceAsStream(prefix + "META-INF/wxsutils.properties");
+		}
+		return is;
+	}
+	
 	/**
 	 * This is a helper method to return a configured grid connection. The configuration is specified in the
 	 * property file wxsutils.properties on the classpath. The grid name and path to objectgrid.xml file must
@@ -891,10 +902,27 @@ public class WXSUtils
 			Properties props = new Properties();
 			// BN Modified to use getResourceAsStream instead of FileInputStream
 			// BN so it works with property files in jars
-			InputStream is = WXSUtils.class.getResourceAsStream("/wxsutils.properties");
+			// now using context class loader for when its a shared lib
+			ClassLoader cl = Thread.currentThread().getContextClassLoader();
+			boolean usingTCCL = true;
+			if(cl == null)
+			{
+				cl = WXSUtils.class.getClassLoader();
+				usingTCCL = false;
+			}
+			InputStream is = findWXSPropertyFile(cl, false);
 			if(is == null)
 			{
-				is = WXSUtils.class.getResourceAsStream("/META-INF/wxsutils.properties");
+				is = findWXSPropertyFile(WXSUtils.class.getClassLoader(), false);
+				usingTCCL = false;
+			}
+			if(usingTCCL)
+			{
+				logger.log(Level.INFO, "Property file locate using Thread Context Loader " + cl.toString());
+			}
+			else
+			{
+				logger.log(Level.INFO, "Property file locate using class loader for WXSUtils " + cl.toString());
 			}
 			if(is == null)
 			{
