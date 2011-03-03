@@ -26,6 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -281,6 +282,71 @@ public class WXSUtils
 		internalPutAll(batch, bmap, true);
 	}
 
+	public <K,V> Map<K, Boolean> cond_putAll(Map<K,V> original, Map<K,V> updated, BackingMap bmap)
+	{
+		if(updated.size() != original.size())
+			throw new ObjectGridRuntimeException("Maps are different sizes");
+		Set<K> origKeys = original.keySet();
+		Set<K> updatedKeys = updated.keySet();
+		if(!origKeys.equals(updatedKeys))
+		{
+			throw new ObjectGridRuntimeException("Maps have different keys");
+		}
+		if(updated.size() > 0)
+		{
+			Map<Integer, Map<K,V>> origPmap = convertToPartitionEntryMap(bmap, original);
+			Iterator<Map.Entry<Integer,Map<K,V>>> origItems = origPmap.entrySet().iterator();
+			Map<Integer, Map<K,V>> updPmap = convertToPartitionEntryMap(bmap, updated);
+			
+			ArrayList<Future<Map<K, Boolean>>> results = new ArrayList<Future<Map<K, Boolean>>>();
+			CountDownLatch doneSignal = new CountDownLatch(origPmap.size());
+			while(origItems.hasNext())
+			{
+				Map.Entry<Integer,Map<K,V>> origPerPartitionEntries = origItems.next();
+				Map<K,V> updPerPartitionEntries = updPmap.get(origPerPartitionEntries.getKey());
+				if(updPerPartitionEntries == null)
+				{
+					System.out.println("OOPS");
+				}
+				// we need one key for partition routing
+				// so get the first one
+				K key = origPerPartitionEntries.getValue().keySet().iterator().next();
+				
+				// invoke the agent to add the batch of records to the grid
+				ConditionalPutAgent<K,V> ia = new ConditionalPutAgent<K,V>();
+				ia.batchBefore = origPerPartitionEntries.getValue();
+				ia.newValues = updPerPartitionEntries;
+				// Insert all keys for one partition using the first key as a routing key
+				Future<Map<K, Boolean>> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ia, doneSignal));
+				results.add(fv);
+			}
+	
+			blockForAllFuturesToFinish(doneSignal);
+			
+			HashMap<K, Boolean> rc = new HashMap<K, Boolean>();
+			try
+			{
+				for(Future<Map<K, Boolean>> f : results)
+				{
+					Map<K, Boolean> b = f.get();
+					if(b.size() == 0)
+						return b;
+					else
+						rc.putAll(b);
+				}
+			}
+			catch(Exception e)
+			{
+				logger.log(Level.SEVERE, "Unexpected exception in cond_PutAll collecting results", e);
+				rc.clear();
+				return rc;
+			}
+			return rc;
+		}
+		else
+			return new HashMap<K, Boolean>();
+	}
+	
 	/**
 	 * This inserts the entries in the map. If the entries exist already then
 	 * this method will fail.

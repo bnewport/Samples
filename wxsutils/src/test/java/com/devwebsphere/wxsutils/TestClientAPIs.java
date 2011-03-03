@@ -22,6 +22,7 @@ import org.junit.Test;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
+import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
 /**
  * This test connects to a grid running on the same box. Use the gettingstarted example
@@ -112,6 +113,62 @@ public class TestClientAPIs
 			for(Map.Entry<String, String> e : rc.entrySet())
 			{
 				Assert.assertNull(e.getValue());
+			}
+		}
+	}
+	
+	@Test
+	public void testCond_PutAll()
+	{
+		clearMap();
+		Map<String, String> original = new HashMap<String, String>();
+		for(int i = 0; i < 10; ++i)
+		{
+			original.put("" + i, "V" + i);
+		}
+		utils.putAll(original, bmFarMap3);
+		
+		Map<String, String> newValues = new HashMap<String, String>();
+		for(int i = 0; i < 11; ++i)
+		{
+			newValues.put("" + i, "N" + i);
+		}
+		WXSMap<String, String> map = utils.getCache(bmFarMap3.getName());
+		map.put("4", "DIFFERENT");
+
+		// try with maps different size, orig = 10, new = 11
+		try
+		{
+			Map<String, Boolean> rc = utils.cond_putAll(original, newValues, bmFarMap3);
+			Assert.fail("Should have thrown exception");
+		}
+		catch(ObjectGridRuntimeException e)
+		{
+			// this is expected
+		}
+		// now make maps same size
+		original.put("10", "DUMMY");
+		Map<String, Boolean> rc = utils.cond_putAll(original, newValues, bmFarMap3);
+		Assert.assertNotNull(rc);
+		for(Map.Entry<String, Boolean> e : rc.entrySet())
+		{
+			Boolean b = rc.get(e.getKey());
+			Assert.assertNotNull(b);
+			if(e.getKey().equals("4"))
+				Assert.assertFalse(b);
+			else
+				Assert.assertTrue(b);
+		}
+		for(int i = 0; i < 11; ++i)
+		{
+			String v = map.get("" + i);
+			if(i != 4)
+			{
+				Assert.assertEquals("N" + i, v);
+			}
+			else
+			{
+				Assert.assertEquals("DIFFERENT", v);
 			}
 		}
 	}

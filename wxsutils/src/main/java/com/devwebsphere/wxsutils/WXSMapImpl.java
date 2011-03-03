@@ -171,6 +171,16 @@ public class WXSMapImpl <K,V> extends WXSMap<K, V>
 		utils.putAll(batch, bmap);
 		mbean.getPutMetrics().logTime(System.nanoTime() - start);
 	}
+	
+	public Map<K, Boolean> cond_putAll(Map<K,V> originalValues, Map<K,V> newValues)
+	{
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
+		long start = System.nanoTime();
+		Map<K, Boolean> rc = utils.cond_putAll(originalValues, newValues, bmap);
+		mbean.getPutMetrics().logTime(System.nanoTime() - start);
+		return rc;
+	}
+
 
 	/**
 	 * Parallel insert all the entries. This does a real insert, not a put (get/update)

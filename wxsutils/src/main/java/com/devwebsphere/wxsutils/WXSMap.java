@@ -50,6 +50,16 @@ public abstract class WXSMap<K,V> {
 	 * @param batch
 	 */
 	abstract public void putAll(Map<K,V> batch);
+
+	/**
+	 * This will update the entries to the newValue only if the current value for the
+	 * key matches the original value or if absent. True is returned for each key changed
+	 * during this operation
+	 * @param originalValues The original value to check against
+	 * @param newValues The new value to be used if the entry value is unchanged compared with original
+	 * @return A true for each updated key entry
+	 */
+	abstract public Map<K, Boolean> cond_putAll(Map<K,V> originalValues, Map<K,V> newValues);
 	
 	/**
 	 * Parallel insert all the entries. This does a real insert, not a put (get/update)
