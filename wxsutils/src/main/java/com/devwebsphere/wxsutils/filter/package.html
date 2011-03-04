@@ -1,0 +1,31 @@
+<html>
+<body>
+This is a criteria style API to filter POJOs.
+
+<h3>Introduction</h3>
+The easiest way to think of it is an expression or filter that can check if a VALUE matches a boolean expression or not. 
+The expression can consist of relational and logical statements about attributes of the value.
+
+The first thing to realize is that this is generic. It works with or without WebSphere eXtreme Scale. The value doesn't 
+need to be a POJO, it can be anything so long as a way to extract the named attributes is also provided.<p/>
+<h3>Usage</h3>
+Lets assume you have a Customer POJO with a first name and surname attributes available as public fields. We want to write
+a filter that checks if the Customer is "Billy Newport". We first construct the filter like this:
+<pre>
+		FilterBuilder fb = new FilterBuilder();
+		ValuePath fn = new PojoPropertyPath("FirstName");
+		ValuePath sn = new PojoFieldPath("surname");
+		
+		Filter f = fb.and(fb.eq(fn, "Billy"), fb.eq(sn, "Newport"));
+		
+		Assert.assertEquals(f.filter(c), true);
+</pre>
+Here, you can see us create the Filter using the FilterBuilder. We create two Path objects that know given a Customer
+how to extract the FirstName and surname attributes. FirstName is extracted using the getter method, surname using the
+field directly. Notice capitalization is important here. The field approach also requires public fields for now.<p/>
+Next, we code up "x.firstName == 'Billy' && x.surname == 'Newport'" using the FilterBuilder. The FilterBuilder returns
+a Filter directly that can be used to then check if an object works with the filter. Note, this would work with any POJO
+so long as it had two correctly named attributes. The Filter is also serializable and so can be easily send around the network
+or stored in a WXS Map.<p/>
+The filter can be easily then used to check a POJO by simply providing the POJO instance to the Filter#filter method.
+</body></html>
