@@ -15,6 +15,13 @@ import java.lang.reflect.Method;
 import com.devwebsphere.wxsutils.filter.ValuePath;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
+/**
+ * This fetches the named attribute using the appropriately
+ * named getter method on the class. The attribute name
+ * MUST be capitalized.
+ * @author bnewport
+ *
+ */
 public class PojoPropertyPath implements ValuePath 
 {
 	/**

@@ -15,6 +15,12 @@ import java.lang.reflect.Field;
 import com.devwebsphere.wxsutils.filter.ValuePath;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
+/**
+ * This fetches the named attributed from a POJO assuming
+ * there is a public field on the class of that name.
+ * @author bnewport
+ *
+ */
 public class PojoFieldPath implements ValuePath 
 {
 	/**

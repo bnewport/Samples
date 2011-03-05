@@ -65,21 +65,13 @@ public class FilterBuilder
 	
 	public Filter and(Filter... conjList)
 	{
-		Filter a = new TrueFilter();
-		for(Filter q : conjList)
-		{
-			a = new AndFilter(a, q);
-		}
+		Filter a = new AndFilter(conjList);
 		return a;
 	}
 	
 	public Filter or(Filter... orList)
 	{
-		Filter a = new FalseFilter();
-		for(Filter q : orList)
-		{
-			a = new OrFilter(a, q);
-		}
+		Filter a = new OrFilter(orList);
 		return a;
 	}
 	

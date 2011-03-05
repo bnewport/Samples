@@ -17,13 +17,11 @@ package com.devwebsphere.wxsutils.filter;
  */
 public abstract class BinaryLogicalFilter extends Filter 
 {
-	Filter left;
-	Filter right;
+	Filter[] flist;
 
-	public BinaryLogicalFilter(Filter l, Filter r)
+	public BinaryLogicalFilter(Filter... l)
 	{
-		left = l;
-		right = r;
+		flist = l;
 	}
 	
 }

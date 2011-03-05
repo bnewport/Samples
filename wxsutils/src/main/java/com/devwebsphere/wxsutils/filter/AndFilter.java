@@ -22,17 +22,21 @@ public class AndFilter extends BinaryLogicalFilter
 	 */
 	private static final long serialVersionUID = -2814315378888140544L;
 
-	public AndFilter(Filter left, Filter right)
+	public AndFilter(Filter... list)
 	{
-		super(left, right);
+		super(list);
 	}
 	
 	@Override
 	public boolean filter(Object o) 
 	{
-		boolean l = left.filter(o);
-		boolean r = right.filter(o);
-		return l && r;
+		boolean rc = true;
+		for(Filter f : flist)
+		{
+			rc = rc && f.filter(o);
+			if(!rc) break;
+		}
+		return rc;
 	}
 
 }

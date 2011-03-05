@@ -22,17 +22,21 @@ public class OrFilter extends BinaryLogicalFilter
 	 */
 	private static final long serialVersionUID = -6535676992614300637L;
 
-	public OrFilter(Filter left, Filter right)
+	public OrFilter(Filter... list)
 	{
-		super(left, right);
+		super(list);
 	}
 	
 	@Override
 	public boolean filter(Object fo) 
 	{
-		boolean l = left.filter(fo);
-		boolean r = right.filter(fo);
-		return l || r;
+		boolean rc = false;
+		for(Filter f : flist)
+		{
+			rc = rc || f.filter(fo);
+			if(rc) break;
+		}
+		return rc;
 	}
 
 }
