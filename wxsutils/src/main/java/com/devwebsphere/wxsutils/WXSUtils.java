@@ -304,10 +304,6 @@ public class WXSUtils
 			{
 				Map.Entry<Integer,Map<K,V>> origPerPartitionEntries = origItems.next();
 				Map<K,V> updPerPartitionEntries = updPmap.get(origPerPartitionEntries.getKey());
-				if(updPerPartitionEntries == null)
-				{
-					System.out.println("OOPS");
-				}
 				// we need one key for partition routing
 				// so get the first one
 				K key = origPerPartitionEntries.getValue().keySet().iterator().next();

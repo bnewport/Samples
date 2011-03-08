@@ -53,5 +53,8 @@ public class PojoPropertyPath implements ValuePath
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
-
+	public String toString()
+	{
+		return ".get" + propertyName + "()";
+	}
 }

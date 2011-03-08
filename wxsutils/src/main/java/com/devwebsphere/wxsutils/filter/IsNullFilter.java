@@ -33,4 +33,8 @@ public class IsNullFilter extends Filter
 		return v.get(fo) == null;
 	}
 
+	public String toString()
+	{
+		return v.toString() + " ISNULL ";
+	}
 }

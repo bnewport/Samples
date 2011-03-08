@@ -34,4 +34,8 @@ public class GTEQFilter extends CompareFilter
 		return (a != null) ? a.compareTo(o) >= 0 : true;
 	}
 
+	public String toString()
+	{
+		return createString(" >= ");
+	}
 }

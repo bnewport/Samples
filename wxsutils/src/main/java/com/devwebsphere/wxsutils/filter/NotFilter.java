@@ -34,4 +34,8 @@ public class NotFilter extends Filter
 		return !f.filter(fo);
 	}
 
+	public String toString()
+	{
+		return "!" + f.toString();
+	}
 }

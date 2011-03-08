@@ -26,4 +26,8 @@ public abstract class CompareFilter extends Filter
 		this.o = o;
 	}
 
+	protected String createString(String op)
+	{
+		return v.toString() + " " + op + " " + o.toString();
+	}
 }

@@ -33,4 +33,8 @@ public class FalseFilter extends Filter {
 		return false;
 	}
 
+	public String toString()
+	{
+		return "FALSE";
+	}
 }

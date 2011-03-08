@@ -24,4 +24,15 @@ public abstract class BinaryLogicalFilter extends Filter
 		flist = l;
 	}
 	
+	protected String createString(String op)
+	{
+		StringBuilder sb = new StringBuilder();
+		for(int i = 0; i < flist.length;++i)
+		{
+			sb.append(flist[i].toString());
+			if(i != flist.length - 1)
+				sb.append(" " + op + " ");
+		}
+		return sb.toString();
+	}
 }

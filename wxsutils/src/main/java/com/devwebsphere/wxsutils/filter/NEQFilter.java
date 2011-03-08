@@ -31,4 +31,8 @@ public class NEQFilter extends CompareFilter
 		Object a = v.get(fo);
 		return (a != null) ? !a.equals(o) : false;
 	}
+	public String toString()
+	{
+		return createString(" != ");
+	}
 }

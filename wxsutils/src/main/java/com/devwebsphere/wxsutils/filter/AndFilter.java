@@ -39,4 +39,8 @@ public class AndFilter extends BinaryLogicalFilter
 		return rc;
 	}
 
+	public String toString()
+	{
+		return createString("AND");
+	}
 }

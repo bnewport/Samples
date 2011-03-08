@@ -32,4 +32,8 @@ public class TrueFilter extends Filter {
 		return true;
 	}
 
+	public String toString()
+	{
+		return "TRUE";
+	}
 }

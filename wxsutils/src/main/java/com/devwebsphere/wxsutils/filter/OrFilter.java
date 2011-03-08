@@ -39,4 +39,8 @@ public class OrFilter extends BinaryLogicalFilter
 		return rc;
 	}
 
+	public String toString()
+	{
+		return createString("OR");
+	}
 }
