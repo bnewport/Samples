@@ -10,8 +10,6 @@ package com.devwebsphere.wxsutils.multijob;
 //All Rights Reserved * Licensed Materials - Property of IBM
 //
 
-
-
 public interface MultipartTask<V,R>
 {
 	/**

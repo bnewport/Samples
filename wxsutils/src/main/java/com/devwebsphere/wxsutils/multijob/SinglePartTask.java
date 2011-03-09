@@ -32,4 +32,10 @@ public interface SinglePartTask<V,R> extends Serializable
 	 * @return
 	 */
 	R extractResult(V rawRC);
+	
+	/**
+	 * This tests of the result has any data
+	 * @return
+	 */
+	boolean isResultEmpty(R result);
 }

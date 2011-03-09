@@ -78,4 +78,9 @@ public class GridQueryPartitionTask implements SinglePartTask<ArrayList<Object>,
 		lastExtractWasFull = (rc.size() == limit);
 		return rc;
 	}
+
+	public boolean isResultEmpty(ArrayList<Object> result) {
+		return result.isEmpty();
+	}
+	
 }
