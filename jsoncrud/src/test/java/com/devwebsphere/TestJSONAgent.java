@@ -69,6 +69,18 @@ public class TestJSONAgent
 	}
 
 	@Test
+	public void testPut()
+		throws Exception
+	{
+//		clearMap();
+		String personJSON = "{\"firstName\":\"Pedro\",\"middleInitial\":\"A\",\"surname\":\"Platinum\",\"dateOfBirth\":\"Mar 28, 3868 12:00:00 AM\",\"creditLimit\":10000.0}";
+		String keyString = "\"bnewport\""; // note double quotes around string
+		
+		JSMap.put(ogclient, PERSON_MAP, String.class.getName(), Person.class.getName(), keyString, personJSON);
+		
+	}
+
+	@Test
 	public void testJSShell()
 		throws Exception
 	{
@@ -116,15 +128,5 @@ public class TestJSONAgent
 		}
 	}
 	
-	@Test
-	public void testPut()
-		throws Exception
-	{
-//		clearMap();
-		String personJSON = "{\"firstName\":\"Pedro\",\"middleInitial\":\"A\",\"surname\":\"Platinum\",\"dateOfBirth\":\"Mar 28, 3868 12:00:00 AM\",\"creditLimit\":10000.0}";
-		String keyString = "\"bnewport\""; // note double quotes around string
-		
-		Object oldValue = JSMap.put(ogclient, PERSON_MAP, String.class.getName(), Person.class.getName(), keyString, personJSON);
-	}
 	
 }

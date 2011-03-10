@@ -256,8 +256,10 @@ public class JSMap
 		Session sess = ogclient.getSession();
 		AgentManager amgr = sess.getMap(ROUTING_MAP).getAgentManager();
 		
-		Map<String, String> map = amgr.callMapAgent(agent, Collections.singleton(new Integer(agent.keyString).hashCode()));
-		String result = map.get(agent.keyString);
+		// use the key hash to route request to a random partition
+		Integer fakeKey = new Integer(agent.keyString.hashCode());
+		Map<String, String> map = amgr.callMapAgent(agent, Collections.singleton(fakeKey));
+		String result = map.get(fakeKey);
 		return result;
 	}
 	
