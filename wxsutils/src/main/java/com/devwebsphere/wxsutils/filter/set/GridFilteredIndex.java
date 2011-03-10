@@ -175,14 +175,16 @@ public class GridFilteredIndex<K,V> implements MultipartTask<Map<K,V>, Map<K,V>>
 	 * are eq/lt/lte/gt/gte.
 	 * @param ogclient
 	 * @param mapName
+	 * @param indexName
 	 * @param filter
 	 * @param op
 	 * @param v
 	 */
-	public GridFilteredIndex(ObjectGrid ogclient, String mapName, Filter filter, Operation op, Serializable v)
+	public GridFilteredIndex(ObjectGrid ogclient, String mapName, String indexName, Filter filter, Operation op, Serializable v)
 	{
 		this.mapName = mapName;
 		this.filter = filter;
+		this.indexName = indexName;
 		this.op = op;
 		if(op == Operation.btwn)
 			throw new ObjectGridRuntimeException("Between needs two values");
@@ -194,13 +196,15 @@ public class GridFilteredIndex<K,V> implements MultipartTask<Map<K,V>, Map<K,V>>
 	 * This allows a between index operation followed by a filter
 	 * @param ogclient
 	 * @param mapName
+	 * @param indexName
 	 * @param filter
 	 * @param v1
 	 * @param v2
 	 */
-	public GridFilteredIndex(ObjectGrid ogclient, String mapName, Filter filter, Serializable v1, Serializable v2)
+	public GridFilteredIndex(ObjectGrid ogclient, String mapName, String indexName, Filter filter, Serializable v1, Serializable v2)
 	{
 		this.mapName = mapName;
+		this.indexName = indexName;
 		this.filter = filter;
 		this.op = Operation.btwn;
 		this.value1 = v1;

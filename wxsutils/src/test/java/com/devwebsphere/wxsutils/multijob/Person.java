@@ -12,6 +12,7 @@ package com.devwebsphere.wxsutils.multijob;
 
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.util.Date;
 
 public class Person implements Serializable 
@@ -26,6 +27,28 @@ public class Person implements Serializable
 	Date dateOfBirth;
 	double creditLimit;
 	
+	public String toString()
+	{
+		try
+		{
+			StringBuilder sb = new StringBuilder();
+			Field[] fields = this.getClass().getDeclaredFields();
+			sb.append("[[" + this.getClass().getName() + ":::");
+			for(Field f : fields)
+			{
+				f.setAccessible(true);
+				Object value = f.get(this);
+				value = (value != null) ? value.toString() : "NULL";
+				sb.append(f.getName() + "=" + value + "::");
+			}
+			sb.append("]]");
+			return sb.toString();
+		}
+		catch(Exception e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
 	public final String getFirstName() {
 		return firstName;
 	}
