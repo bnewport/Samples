@@ -6,9 +6,6 @@ import java.util.Map;
 
 import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.filter.set.GridFilteredIndex;
-import com.devwebsphere.wxsutils.filter.set.GridFilteredIndex.Operation;
-import com.devwebsphere.wxsutils.multijob.JobExecutor;
-import com.devwebsphere.wxsutils.multijob.Person;
 
 /**
  * This is a simplified interface to a WXS Map. It throws runtime exceptions and is completely
