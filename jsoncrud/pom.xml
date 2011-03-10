@@ -39,7 +39,7 @@
     <dependency>
     	<groupId>com.billynewport.wxsutils</groupId>
     	<artifactId>wxsutils</artifactId>
-    	<version>1.8-SNAPSHOT</version>
+    	<version>1.10-SNAPSHOT</version>
     </dependency>
     <dependency>
     	<groupId>rhino</groupId>

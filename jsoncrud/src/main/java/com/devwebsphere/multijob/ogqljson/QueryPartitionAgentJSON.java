@@ -78,4 +78,8 @@ public class QueryPartitionAgentJSON implements SinglePartTask<ArrayList<String>
 		lastExtractWasFull = (rc.size() == limit);
 		return rc;
 	}
+
+	public boolean isResultEmpty(ArrayList<String> arg0) {
+		return arg0.isEmpty();
+	}
 }
