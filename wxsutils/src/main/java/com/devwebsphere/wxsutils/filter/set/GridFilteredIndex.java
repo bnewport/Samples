@@ -31,6 +31,8 @@ import com.ibm.websphere.objectgrid.plugins.index.MapRangeIndex;
 /**
  * This executes a filtered single index search across all partitions, one partition
  * at a time serially. The filter is applied against the V, not the key. It uses the MultiJob framework.
+ * The getNextResult method should be called to get all valid results. Keep calling getNextResult
+ * until it returns null. There is usually one call per partition.
  * @author bnewport
  *
  * @param <K>
@@ -237,5 +239,10 @@ public class GridFilteredIndex<K,V> implements MultipartTask<Map<K,V>, Map<K,V>>
 	public Map<K,V> getNextResult()
 	{
 		return je.getNextResult();
+	}
+	
+	public JobExecutor<Map<K,V>, Map<K,V>> getJE()
+	{
+		return je;
 	}
 }

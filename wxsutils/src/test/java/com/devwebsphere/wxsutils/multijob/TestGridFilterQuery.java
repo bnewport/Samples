@@ -106,7 +106,7 @@ public class TestGridFilterQuery
 
 		// find all surnames < "M" with credit limit < 1000000
 		String value = "M";
-		GridFilteredIndex<String, Person> q = new GridFilteredIndex<String, Person>(utils.getObjectGrid(), PERSON_MAP, "surname", f, Operation.lt, value);
+		GridFilteredIndex<String, Person> q = map.lt("surname", value, f);
 		Map<String, Person> block = q.getNextResult();
 
 		// count iterations

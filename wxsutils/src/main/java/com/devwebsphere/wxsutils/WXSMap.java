@@ -1,7 +1,14 @@
 package com.devwebsphere.wxsutils;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
+
+import com.devwebsphere.wxsutils.filter.Filter;
+import com.devwebsphere.wxsutils.filter.set.GridFilteredIndex;
+import com.devwebsphere.wxsutils.filter.set.GridFilteredIndex.Operation;
+import com.devwebsphere.wxsutils.multijob.JobExecutor;
+import com.devwebsphere.wxsutils.multijob.Person;
 
 /**
  * This is a simplified interface to a WXS Map. It throws runtime exceptions and is completely
@@ -111,4 +118,56 @@ public abstract class WXSMap<K,V> {
 	 * @param k The name of the lock
 	 */
 	abstract public void unlock(K k);
+
+	/**
+	 * This finds all entries with an indexed attribute < a value and filters the results
+	 * @param indexName
+	 * @param v
+	 * @param f
+	 * @return
+	 */
+	abstract public GridFilteredIndex<K,V> lt(String indexName, Serializable v, Filter f);
+	
+	/**
+	 * This finds all entries with an indexed attribute <= a value and filters the results
+	 * @param indexName
+	 * @param v
+	 * @param f
+	 * @return
+	 */
+	abstract public GridFilteredIndex<K,V> lte(String indexName, Serializable v, Filter f);
+	
+	/**
+	 * This finds all entries with an indexed attribute > a value and filters the results
+	 * @param indexName
+	 * @param v
+	 * @param f
+	 * @return
+	 */
+	abstract public GridFilteredIndex<K,V> gt(String indexName, Serializable v, Filter f);
+	/**
+	 * This finds all entries with an indexed attribute >= a and filters the results
+	 * @param indexName
+	 * @param v
+	 * @param f
+	 * @return
+	 */
+	abstract public GridFilteredIndex<K,V> gte(String indexName, Serializable v, Filter f);
+	/**
+	 * This finds all entries with an indexed attribute = a value and filters the results
+	 * @param indexName
+	 * @param v
+	 * @param f
+	 * @return
+	 */
+	abstract public GridFilteredIndex<K,V> eq(String indexName, Serializable v, Filter f);
+	/**
+	 * This finds all entries with an indexed attribute between low and high and filters the results
+	 * @param indexName
+	 * @param low
+	 * @param high
+	 * @param f
+	 * @return
+	 */
+	abstract public GridFilteredIndex<K,V> btwn(String indexName, Serializable low, Serializable high, Filter f);
 }
