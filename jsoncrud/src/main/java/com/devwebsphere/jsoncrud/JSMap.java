@@ -25,6 +25,7 @@ import com.google.gson.Gson;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.AgentManager;
+import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 
 /**
  * This is used by the Javascript shell to manipulate entries in this Map.
@@ -64,6 +65,11 @@ public class JSMap
 	 */
 	Context ctxt;
 	Scriptable scope;
+	
+	public String toString()
+	{
+		return "jsmap:[mapName=" + mapName + ",key=" + keyClazz + ",value=" + valueClazz+"]";
+	}
 
 	/**
 	 * This takes a Rhino object and converts it to a Java version using Maps
@@ -258,9 +264,13 @@ public class JSMap
 		
 		// use the key hash to route request to a random partition
 		Integer fakeKey = new Integer(agent.keyString.hashCode());
-		Map<String, String> map = amgr.callMapAgent(agent, Collections.singleton(fakeKey));
-		String result = map.get(fakeKey);
-		return result;
+		Map<String, Object> map = amgr.callMapAgent(agent, Collections.singleton(fakeKey));
+		Object result = map.get(fakeKey);
+		if(result instanceof EntryErrorValue)
+		{
+			System.out.println("Error executing code on grid side: " + result.toString());
+		}
+		return (result instanceof String) ? result.toString() : "\"ibm_error\"";
 	}
 	
 	/**
