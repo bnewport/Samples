@@ -14,7 +14,7 @@ import com.devwebsphere.wxsutils.filter.set.GridFilteredIndex;
  *
  */
 
-public abstract class WXSMap<K,V> {
+public abstract interface WXSMap<K,V> {
 	/**
 	 * Clear the Map
 	 */

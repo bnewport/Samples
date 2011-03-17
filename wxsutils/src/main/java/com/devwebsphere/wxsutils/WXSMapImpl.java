@@ -22,9 +22,6 @@ import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.filter.set.GridFilteredIndex;
 import com.devwebsphere.wxsutils.filter.set.GridFilteredIndex.Operation;
 import com.devwebsphere.wxsutils.jmx.wxsmap.WXSMapMBeanImpl;
-import com.devwebsphere.wxsutils.multijob.JobExecutor;
-import com.ibm.websphere.objectgrid.BackingMap;
-import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
@@ -35,22 +32,13 @@ import com.ibm.websphere.objectgrid.Session;
  * Map methods like put, bulk methods and so on.
  *
  */
-public class WXSMapImpl <K,V> extends WXSMap<K, V>
+public class WXSMapImpl <K,V> extends WXSBaseMap implements WXSMap<K, V>
 {
 	static Logger logger = Logger.getLogger(WXSMapImpl.class.getName());
-	BackingMap bmap;
-	ThreadLocalSession tls;
-	WXSUtils utils;
-	String mapName;
-	ObjectGrid grid;
 	
 	protected WXSMapImpl(WXSUtils utils, String mapName)
 	{
-		this.mapName = mapName;
-		this.utils = utils;
-		grid = utils.getObjectGrid();
-		bmap = utils.grid.getMap(mapName);
-		tls = new ThreadLocalSession(utils);
+		super(utils, mapName);
 	}
 
 	/**
@@ -360,39 +348,33 @@ public class WXSMapImpl <K,V> extends WXSMap<K, V>
 		mbean.getUnlockMetrics().logTime(System.nanoTime() - start);
 	}
 
-	@Override
 	public GridFilteredIndex<K, V> btwn(String indexName, Serializable low,
 			Serializable high, Filter f) {
 		GridFilteredIndex<K, V> g = new GridFilteredIndex<K, V>(tls.getObjectGrid(), mapName, indexName, f, low, high);
 		return g;
 	}
 
-	@Override
 	public GridFilteredIndex<K, V> eq(String indexName, Serializable v, Filter f) {
 		GridFilteredIndex<K, V> g = new GridFilteredIndex<K, V>(tls.getObjectGrid(), mapName, indexName, f, Operation.eq, v);
 		return g;
 	}
 
-	@Override
 	public GridFilteredIndex<K, V> gt(String indexName, Serializable v, Filter f) {
 		GridFilteredIndex<K, V> g = new GridFilteredIndex<K, V>(tls.getObjectGrid(), mapName, indexName, f, Operation.gt, v);
 		return g;
 	}
 
-	@Override
 	public GridFilteredIndex<K, V> gte(String indexName, Serializable v,
 			Filter f) {
 		GridFilteredIndex<K, V> g = new GridFilteredIndex<K, V>(tls.getObjectGrid(), mapName, indexName, f, Operation.gte, v);
 		return g;
 	}
 
-	@Override
 	public GridFilteredIndex<K, V> lt(String indexName, Serializable v, Filter f) {
 		GridFilteredIndex<K, V> g = new GridFilteredIndex<K, V>(tls.getObjectGrid(), mapName, indexName, f, Operation.lt, v);
 		return g;
 	}
 
-	@Override
 	public GridFilteredIndex<K, V> lte(String indexName, Serializable v,
 			Filter f) {
 		GridFilteredIndex<K, V> g = new GridFilteredIndex<K, V>(tls.getObjectGrid(), mapName, indexName, f, Operation.lte, v);

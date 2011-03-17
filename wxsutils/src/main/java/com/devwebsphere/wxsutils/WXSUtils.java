@@ -10,11 +10,10 @@
 //
 package com.devwebsphere.wxsutils;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -86,7 +85,7 @@ public class WXSUtils
 	static AtomicReference<ExecutorService> globalThreadPool = new AtomicReference<ExecutorService>();
 	ExecutorService threadPool;
 	
-	Map<String, WXSMapImpl<?,?>> maps = new ConcurrentHashMap<String, WXSMapImpl<?,?>>();
+	Map<String, WXSBaseMap> maps = new ConcurrentHashMap<String, WXSBaseMap>();
 
 	static LazyMBeanManagerAtomicReference<AgentMBeanManager> agentMBeanManager = new LazyMBeanManagerAtomicReference<AgentMBeanManager>(AgentMBeanManager.class);
 	static LazyMBeanManagerAtomicReference<LoaderMBeanManager> loaderMBeanManager = new LazyMBeanManagerAtomicReference<LoaderMBeanManager>(LoaderMBeanManager.class);
@@ -155,6 +154,70 @@ public class WXSUtils
 		tls = new ThreadLocalSession(this);
 	}
 
+	public <K,V extends Serializable> WXSMapOfLists<K,V> getMapOfLists(String mapName)
+	{
+		WXSBaseMap bmap = maps.get(mapName);
+		if(bmap != null && !(bmap instanceof WXSMapOfListsImpl))
+		{
+			throw new ObjectGridRuntimeException(mapName + " is not a list");
+		}
+		WXSMapOfListsImpl<K,V> rc = (WXSMapOfListsImpl<K,V>)bmap;
+		if(rc == null)
+		{
+			try
+			{
+				if(grid.getSession().getMap(mapName) != null)
+				{
+					rc = new WXSMapOfListsImpl<K,V>(this, mapName);
+					maps.put(mapName, rc);
+				}
+				else
+				{
+					logger.log(Level.SEVERE, "Unknown map of lists " + mapName);
+					throw new ObjectGridRuntimeException("Unknown map of lists:" + mapName);
+				}
+			}
+			catch(ObjectGridException e)
+			{
+				logger.log(Level.SEVERE, "Exception", e);
+				throw new ObjectGridRuntimeException(e);
+			}
+		}
+		return rc;
+	}
+	
+	public <K,V extends Serializable> WXSMapOfSets<K,V> getMapOfSets(String mapName)
+	{
+		WXSBaseMap bmap = maps.get(mapName);
+		if(bmap != null && !(bmap instanceof WXSMapOfSetsImpl))
+		{
+			throw new ObjectGridRuntimeException(mapName + " is not a set");
+		}
+		WXSMapOfSetsImpl<K,V> rc = (WXSMapOfSetsImpl<K,V>)bmap;
+		if(rc == null)
+		{
+			try
+			{
+				if(grid.getSession().getMap(mapName) != null)
+				{
+					rc = new WXSMapOfSetsImpl<K,V>(this, mapName);
+					maps.put(mapName, rc);
+				}
+				else
+				{
+					logger.log(Level.SEVERE, "Unknown map of sets " + mapName);
+					throw new ObjectGridRuntimeException("Unknown map of sets:" + mapName);
+				}
+			}
+			catch(ObjectGridException e)
+			{
+				logger.log(Level.SEVERE, "Exception", e);
+				throw new ObjectGridRuntimeException(e);
+			}
+		}
+		return rc;
+	}
+	
 	/**
 	 * This returns a simplified Map object to interact with the
 	 * data in a cache.
@@ -163,7 +226,12 @@ public class WXSUtils
 	 */
 	public <K,V> WXSMap<K,V> getCache(String mapName)
 	{
-		WXSMapImpl<K,V> rc = (WXSMapImpl<K,V>)maps.get(mapName);
+		WXSBaseMap bmap = maps.get(mapName);
+		if(bmap != null && !(bmap instanceof WXSMapImpl))
+		{
+			throw new ObjectGridRuntimeException(mapName + " is not a KV map");
+		}
+		WXSMapImpl<K,V> rc = (WXSMapImpl<K,V>)bmap;
 		if(rc == null)
 		{
 			try

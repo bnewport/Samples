@@ -182,6 +182,57 @@ public class TestClientAPIs
 		Map<String, String> emptyMap = new HashMap<String, String>();
 		utils.putAll(emptyMap, bmFarMap3);
 	}
+	
+	@Test
+	public void testListOperations()
+	{
+		WXSMapOfLists<String, String> map = utils.getMapOfLists("List");
+		Assert.assertNotNull(map);
+		String key = "TEST";
+		ArrayList<String> list = map.remove(key);
+		Assert.assertNull(list);
+		int numItems = 10;
+		for(int i = 0; i < numItems; ++i)
+		{
+			map.rpush(key, "" + i);
+			Assert.assertEquals(i + 1, map.llen(key));
+		}
+		map.rtrim(key, numItems - 2);
+		Assert.assertEquals(numItems - 2, map.llen(key));
+		String item2 = map.rpop(key);
+		Assert.assertEquals("" + (numItems - 3), item2);
+		map.rpush(key, "" + (numItems - 3));
+		map.rpush(key, "" + (numItems - 2));
+		map.rpush(key, "" + (numItems - 1));
+		Assert.assertEquals(numItems, map.llen(key));
+		
+		ArrayList<String> subList = map.lrange(key, 2, 4);
+		Assert.assertEquals(3, subList.size());
+		for(int i = 0; i < 3; ++i)
+		{
+			Assert.assertEquals("" + (i + 2), subList.get(i));
+		}
+		for(int i = 0; i < numItems; ++i)
+		{
+			String v = map.lpop(key);
+			Assert.assertEquals("" + i, v);
+			Assert.assertEquals(numItems - (i + 1), map.llen(key));
+		}
+		map.remove(key);
+		Assert.assertEquals(0, map.llen(key));
+		
+		for(int i = 0; i < numItems; ++i)
+		{
+			map.lpush(key, "" + i);
+			Assert.assertEquals(i + 1, map.llen(key));
+		}
+		for(int i = 0; i < numItems; ++i)
+		{
+			String v = map.rpop(key);
+			Assert.assertEquals("" + i, v);
+			Assert.assertEquals(numItems - (i + 1), map.llen(key));
+		}
+	}
 	/**
 	 * This does a simple stress test against the grid.
 	 */
