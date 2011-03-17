@@ -2,6 +2,7 @@ package com.devwebsphere.wxsutils.jmx.listset;
 
 public interface WXSMapOfListsMBean {
 	public String getMapName();
+	public String getGridName();
 	
 	public Integer getLenExceptionCount();
 	public String getLenLastExceptionString();

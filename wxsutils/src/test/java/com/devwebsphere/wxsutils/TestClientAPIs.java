@@ -13,6 +13,7 @@ package com.devwebsphere.wxsutils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Assert;
 
@@ -233,6 +234,39 @@ public class TestClientAPIs
 			Assert.assertEquals(numItems - (i + 1), map.llen(key));
 		}
 	}
+	
+	@Test
+	public void testSetOperations()
+	{
+		WXSMapOfSets<String, String> map = utils.getMapOfSets("Set");
+		Assert.assertNotNull(map);
+		String key = "TEST";
+		
+		Assert.assertNull(map.get(key));
+		
+		int numKeys = 10;
+		for(int i = 0; i < numKeys; ++i)
+		{
+			map.add(key, "" + i);
+			Assert.assertEquals(i + 1, map.size(key));
+			Assert.assertTrue(map.contains(key, true, "" + i));
+		}
+		map.add(key, "" + 0);
+		Assert.assertEquals(numKeys, map.size(key));
+		map.remove(key, "" + 0);
+		Assert.assertFalse(map.contains(key, true, "" + 0));
+		Assert.assertEquals(numKeys - 1, map.size(key));
+		Set<String> values = map.get(key);
+		Assert.assertNotNull(values);
+		for(int i = 1; i < numKeys; ++i)
+		{
+			Assert.assertTrue(values.contains("" + i));
+		}
+		map.remove(key);
+		Assert.assertNull(map.get(key));
+		Assert.assertEquals(0, map.size(key));
+	}
+	
 	/**
 	 * This does a simple stress test against the grid.
 	 */

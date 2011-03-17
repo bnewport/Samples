@@ -10,7 +10,7 @@
 //
 package com.devwebsphere.wxsutils;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * This allows a client to interact with a WXS Map that is treated
@@ -29,7 +29,20 @@ public interface WXSMapOfSets<K,V> {
 	 * @param value The value to add to the set
 	 * @return TRUE if successful
 	 */
-	public boolean sadd(K key, V value);
+	public void add(K key, V... value);
+
+	/**
+	 * This adds the values to the set BUT if the current set
+	 * is maxSize entries or bigger then the current value
+	 * is returned and the set is set to only the values. Normally
+	 * the empty set is returned if the existing set is smaller
+	 * than maxSize entries
+	 * @param key
+	 * @param maxSize
+	 * @param values
+	 * @return
+	 */
+	public Set<V> addAndFlush(K key, int maxSize, V... values);
 
 	/**
 	 * This removes a value from the set named key.
@@ -37,7 +50,7 @@ public interface WXSMapOfSets<K,V> {
 	 * @param value The value to remove from the set
 	 * @return TRUE if the value was found
 	 */
-	public boolean srem(K key, V value);
+	public void remove(K key, V... value);
 
 	/**
 	 * This returns the number of values in the set
@@ -45,20 +58,27 @@ public interface WXSMapOfSets<K,V> {
 	 * @param key The name of the set
 	 * @return The size of the set or 0 if empty
 	 */
-	public int scard(K key);
+	public int size(K key);
 
 	/**
-	 * This tests of the value is present in the set for the key.
+	 * This tests if all values are present in the set for the key.
 	 * @param key The key for the set
-	 * @param value The value to test for inclusion
-	 * @return true if the element is present in the set
+	 * @param testAll If true then return true if all values present otherwise any members are present
+	 * @param value The values to test for inclusion
+	 * @return true if the elements are present in the set
 	 */
-	public boolean sismember(K key, V value);
+	public boolean contains(K key, boolean testAll, V... values);
 
 	/**
 	 * This returns all the members of the set for the key.
 	 * @param key The key for the set
 	 * @return The list of entries. It's empty if the set doesn't exist
 	 */
-	public List<V> smembers(K key);
+	public Set<V> get(K key);
+
+	/**
+	 * This removes the set with the specified key if it exists
+	 * @param key
+	 */
+	public Set<V> remove(K key);
 }
