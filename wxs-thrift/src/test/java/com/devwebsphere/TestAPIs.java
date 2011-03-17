@@ -10,6 +10,8 @@
 //
 package com.devwebsphere;
 
+import java.nio.ByteBuffer;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.TFramedTransport;
@@ -42,11 +44,12 @@ public class TestAPIs
 	public void testPut()
 		throws TException
 	{
-		byte[] original = "Newport".getBytes();
-		client.put("map", "Billy".getBytes(), original);
+		ByteBuffer original = ByteBuffer.wrap("Newport".getBytes());
+		ByteBuffer key = ByteBuffer.wrap("Billy".getBytes());
+		client.put("map", key, original);
 		
-		byte[] value = client.get("map", "Billy".getBytes());
+		ByteBuffer value = client.get("map", key);
 		
-		Assert.assertArrayEquals(original, value);
+		Assert.assertArrayEquals(original.array(), value.array());
 	}
 }

@@ -10,6 +10,7 @@
 //
 package com.devwebsphere.wxsthrift;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -33,9 +34,21 @@ public class Handler implements WxsGatewayService.Iface
 	WXSUtils client;
 	Map<String, String> mapNames = new ConcurrentHashMap<String, String>();
 	
+	static ByteBuffer emptyByteBuffer = ByteBuffer.wrap(new byte[0]);
+	
 	public Handler(WXSUtils c)
 	{
 		client = c;
+	}
+	
+	byte[] toByteArray(ByteBuffer a)
+	{
+		// not sure if thrift will tolerate us moving the position in the supplied bytebuffer
+		// so use a readonly copy.
+		ByteBuffer copy = a.asReadOnlyBuffer();
+		byte[] rc = new byte[copy.remaining()];
+		copy.get(rc);
+		return rc;
 	}
 	
 	WXSMap<ByteArrayKey, byte[]> getWXSMap(String mapName)
@@ -53,53 +66,66 @@ public class Handler implements WxsGatewayService.Iface
 		return map;
 	}
 	
-	public byte[] get(String mapName, byte[] key) throws TException 
+	/**
+	 * Can't return null here so return an empty ByteBuffer to indicate key not found
+	 */
+	public ByteBuffer get(String mapName, ByteBuffer key) throws TException 
 	{
 		WXSMap<ByteArrayKey, byte[]> map = getWXSMap(mapName);
-		return map.get(new ByteArrayKey(key));
+		byte[] rc = map.get(new ByteArrayKey(toByteArray(key)));
+		if(rc != null)
+			return ByteBuffer.wrap(rc);
+		else
+			return emptyByteBuffer;
 	}
 
-	public List<byte[]> getAll(String mapName, List<byte[]> keyList)
+	/**
+	 * An empty ByteBuffer indicates key not found for that particular key
+	 */
+	public List<ByteBuffer> getAll(String mapName, List<ByteBuffer> keyList)
 			throws TException 
 	{
 		WXSMap<ByteArrayKey, byte[]> map = getWXSMap(mapName);
 		ArrayList<ByteArrayKey> kl = new ArrayList<ByteArrayKey>();
-		for(byte[] k : keyList) kl.add(new ByteArrayKey(k));
+		for(ByteBuffer k : keyList) kl.add(new ByteArrayKey(toByteArray(k)));
 		Map<ByteArrayKey, byte[]> rc = map.getAll(kl);
 		
-		ArrayList<byte[]> results = new ArrayList<byte[]>();
+		ArrayList<ByteBuffer> results = new ArrayList<ByteBuffer>();
 		for(ByteArrayKey k : kl)
-			results.add(rc.get(k));
+		{
+			byte[] v = rc.get(k);
+			results.add((v != null) ? ByteBuffer.wrap(rc.get(k)) : emptyByteBuffer);
+		}
 		return results;
 	}
 
-	public void put(String mapName, byte[] key, byte[] value) throws TException {
+	public void put(String mapName, ByteBuffer key, ByteBuffer value) throws TException {
 		WXSMap<ByteArrayKey, byte[]> map = getWXSMap(mapName);
-		map.put(new ByteArrayKey(key), value);
+		map.put(new ByteArrayKey(toByteArray(key)), toByteArray(value));
 	}
 
-	public void putAll(String mapName, List<byte[]> keys, List<byte[]> values)
+	public void putAll(String mapName, List<ByteBuffer> keys, List<ByteBuffer> values)
 			throws TException {
 		WXSMap<ByteArrayKey, byte[]> map = getWXSMap(mapName);
 		Map<ByteArrayKey, byte[]> m = new HashMap<ByteArrayKey, byte[]>();
-		Iterator<byte[]> iter = values.iterator();
-		for(byte[] key : keys)
+		Iterator<ByteBuffer> iter = values.iterator();
+		for(ByteBuffer key : keys)
 		{
-			m.put(new ByteArrayKey(key), iter.next());
+			m.put(new ByteArrayKey(toByteArray(key)), toByteArray(iter.next()));
 		}
 		map.putAll(m);
 	}
 
-	public void remove(String mapName, byte[] key) throws TException {
+	public void remove(String mapName, ByteBuffer key) throws TException {
 		WXSMap<ByteArrayKey, byte[]> map = getWXSMap(mapName);
-		map.remove(new ByteArrayKey(key));
+		map.remove(new ByteArrayKey(toByteArray(key)));
 	}
 
-	public void removeAll(String mapName, List<byte[]> keyList)
+	public void removeAll(String mapName, List<ByteBuffer> keyList)
 			throws TException {
 		WXSMap<ByteArrayKey, byte[]> map = getWXSMap(mapName);
 		ArrayList<ByteArrayKey> kl = new ArrayList<ByteArrayKey>();
-		for(byte[] k : keyList) kl.add(new ByteArrayKey(k));
+		for(ByteBuffer k : keyList) kl.add(new ByteArrayKey(toByteArray(k)));
 		map.removeAll(kl);
 	}
 

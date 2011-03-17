@@ -18,7 +18,6 @@ import com.devwebsphere.rediswxs.data.list.ListHead;
 import com.devwebsphere.rediswxs.data.list.ListItemKey;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
-import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;

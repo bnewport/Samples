@@ -15,29 +15,48 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
 public class WxsGatewayService {
 
   public interface Iface {
 
-    public byte[] get(String mapName, byte[] key) throws TException;
+    public ByteBuffer get(String mapName, ByteBuffer key) throws TException;
 
-    public void remove(String mapName, byte[] key) throws TException;
+    public void remove(String mapName, ByteBuffer key) throws TException;
 
-    public void put(String mapName, byte[] key, byte[] value) throws TException;
+    public void put(String mapName, ByteBuffer key, ByteBuffer value) throws TException;
 
-    public List<byte[]> getAll(String mapName, List<byte[]> keyList) throws TException;
+    public List<ByteBuffer> getAll(String mapName, List<ByteBuffer> keyList) throws TException;
 
-    public void removeAll(String mapName, List<byte[]> keyList) throws TException;
+    public void removeAll(String mapName, List<ByteBuffer> keyList) throws TException;
 
-    public void putAll(String mapName, List<byte[]> keys, List<byte[]> values) throws TException;
+    public void putAll(String mapName, List<ByteBuffer> keys, List<ByteBuffer> values) throws TException;
+
+  }
+
+  public interface AsyncIface {
+
+    public void get(String mapName, ByteBuffer key, AsyncMethodCallback<AsyncClient.get_call> resultHandler) throws TException;
+
+    public void remove(String mapName, ByteBuffer key, AsyncMethodCallback<AsyncClient.remove_call> resultHandler) throws TException;
+
+    public void put(String mapName, ByteBuffer key, ByteBuffer value, AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws TException;
+
+    public void getAll(String mapName, List<ByteBuffer> keyList, AsyncMethodCallback<AsyncClient.getAll_call> resultHandler) throws TException;
+
+    public void removeAll(String mapName, List<ByteBuffer> keyList, AsyncMethodCallback<AsyncClient.removeAll_call> resultHandler) throws TException;
+
+    public void putAll(String mapName, List<ByteBuffer> keys, List<ByteBuffer> values, AsyncMethodCallback<AsyncClient.putAll_call> resultHandler) throws TException;
 
   }
 
@@ -78,13 +97,13 @@ public class WxsGatewayService {
       return this.oprot_;
     }
 
-    public byte[] get(String mapName, byte[] key) throws TException
+    public ByteBuffer get(String mapName, ByteBuffer key) throws TException
     {
       send_get(mapName, key);
       return recv_get();
     }
 
-    public void send_get(String mapName, byte[] key) throws TException
+    public void send_get(String mapName, ByteBuffer key) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("get", TMessageType.CALL, ++seqid_));
       get_args args = new get_args();
@@ -95,7 +114,7 @@ public class WxsGatewayService {
       oprot_.getTransport().flush();
     }
 
-    public byte[] recv_get() throws TException
+    public ByteBuffer recv_get() throws TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -115,13 +134,13 @@ public class WxsGatewayService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get failed: unknown result");
     }
 
-    public void remove(String mapName, byte[] key) throws TException
+    public void remove(String mapName, ByteBuffer key) throws TException
     {
       send_remove(mapName, key);
       recv_remove();
     }
 
-    public void send_remove(String mapName, byte[] key) throws TException
+    public void send_remove(String mapName, ByteBuffer key) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("remove", TMessageType.CALL, ++seqid_));
       remove_args args = new remove_args();
@@ -149,13 +168,13 @@ public class WxsGatewayService {
       return;
     }
 
-    public void put(String mapName, byte[] key, byte[] value) throws TException
+    public void put(String mapName, ByteBuffer key, ByteBuffer value) throws TException
     {
       send_put(mapName, key, value);
       recv_put();
     }
 
-    public void send_put(String mapName, byte[] key, byte[] value) throws TException
+    public void send_put(String mapName, ByteBuffer key, ByteBuffer value) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("put", TMessageType.CALL, ++seqid_));
       put_args args = new put_args();
@@ -184,13 +203,13 @@ public class WxsGatewayService {
       return;
     }
 
-    public List<byte[]> getAll(String mapName, List<byte[]> keyList) throws TException
+    public List<ByteBuffer> getAll(String mapName, List<ByteBuffer> keyList) throws TException
     {
       send_getAll(mapName, keyList);
       return recv_getAll();
     }
 
-    public void send_getAll(String mapName, List<byte[]> keyList) throws TException
+    public void send_getAll(String mapName, List<ByteBuffer> keyList) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("getAll", TMessageType.CALL, ++seqid_));
       getAll_args args = new getAll_args();
@@ -201,7 +220,7 @@ public class WxsGatewayService {
       oprot_.getTransport().flush();
     }
 
-    public List<byte[]> recv_getAll() throws TException
+    public List<ByteBuffer> recv_getAll() throws TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -221,13 +240,13 @@ public class WxsGatewayService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "getAll failed: unknown result");
     }
 
-    public void removeAll(String mapName, List<byte[]> keyList) throws TException
+    public void removeAll(String mapName, List<ByteBuffer> keyList) throws TException
     {
       send_removeAll(mapName, keyList);
       recv_removeAll();
     }
 
-    public void send_removeAll(String mapName, List<byte[]> keyList) throws TException
+    public void send_removeAll(String mapName, List<ByteBuffer> keyList) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("removeAll", TMessageType.CALL, ++seqid_));
       removeAll_args args = new removeAll_args();
@@ -255,13 +274,13 @@ public class WxsGatewayService {
       return;
     }
 
-    public void putAll(String mapName, List<byte[]> keys, List<byte[]> values) throws TException
+    public void putAll(String mapName, List<ByteBuffer> keys, List<ByteBuffer> values) throws TException
     {
       send_putAll(mapName, keys, values);
       recv_putAll();
     }
 
-    public void send_putAll(String mapName, List<byte[]> keys, List<byte[]> values) throws TException
+    public void send_putAll(String mapName, List<ByteBuffer> keys, List<ByteBuffer> values) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("putAll", TMessageType.CALL, ++seqid_));
       putAll_args args = new putAll_args();
@@ -291,6 +310,235 @@ public class WxsGatewayService {
     }
 
   }
+  public static class AsyncClient extends TAsyncClient implements AsyncIface {
+    public static class Factory implements TAsyncClientFactory<AsyncClient> {
+      private TAsyncClientManager clientManager;
+      private TProtocolFactory protocolFactory;
+      public Factory(TAsyncClientManager clientManager, TProtocolFactory protocolFactory) {
+        this.clientManager = clientManager;
+        this.protocolFactory = protocolFactory;
+      }
+      public AsyncClient getAsyncClient(TNonblockingTransport transport) {
+        return new AsyncClient(protocolFactory, clientManager, transport);
+      }
+    }
+
+    public AsyncClient(TProtocolFactory protocolFactory, TAsyncClientManager clientManager, TNonblockingTransport transport) {
+      super(protocolFactory, clientManager, transport);
+    }
+
+    public void get(String mapName, ByteBuffer key, AsyncMethodCallback<get_call> resultHandler) throws TException {
+      checkReady();
+      get_call method_call = new get_call(mapName, key, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_call extends TAsyncMethodCall {
+      private String mapName;
+      private ByteBuffer key;
+      public get_call(String mapName, ByteBuffer key, AsyncMethodCallback<get_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.mapName = mapName;
+        this.key = key;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get", TMessageType.CALL, 0));
+        get_args args = new get_args();
+        args.setMapName(mapName);
+        args.setKey(key);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public ByteBuffer getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get();
+      }
+    }
+
+    public void remove(String mapName, ByteBuffer key, AsyncMethodCallback<remove_call> resultHandler) throws TException {
+      checkReady();
+      remove_call method_call = new remove_call(mapName, key, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class remove_call extends TAsyncMethodCall {
+      private String mapName;
+      private ByteBuffer key;
+      public remove_call(String mapName, ByteBuffer key, AsyncMethodCallback<remove_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.mapName = mapName;
+        this.key = key;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("remove", TMessageType.CALL, 0));
+        remove_args args = new remove_args();
+        args.setMapName(mapName);
+        args.setKey(key);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_remove();
+      }
+    }
+
+    public void put(String mapName, ByteBuffer key, ByteBuffer value, AsyncMethodCallback<put_call> resultHandler) throws TException {
+      checkReady();
+      put_call method_call = new put_call(mapName, key, value, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class put_call extends TAsyncMethodCall {
+      private String mapName;
+      private ByteBuffer key;
+      private ByteBuffer value;
+      public put_call(String mapName, ByteBuffer key, ByteBuffer value, AsyncMethodCallback<put_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.mapName = mapName;
+        this.key = key;
+        this.value = value;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("put", TMessageType.CALL, 0));
+        put_args args = new put_args();
+        args.setMapName(mapName);
+        args.setKey(key);
+        args.setValue(value);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_put();
+      }
+    }
+
+    public void getAll(String mapName, List<ByteBuffer> keyList, AsyncMethodCallback<getAll_call> resultHandler) throws TException {
+      checkReady();
+      getAll_call method_call = new getAll_call(mapName, keyList, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class getAll_call extends TAsyncMethodCall {
+      private String mapName;
+      private List<ByteBuffer> keyList;
+      public getAll_call(String mapName, List<ByteBuffer> keyList, AsyncMethodCallback<getAll_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.mapName = mapName;
+        this.keyList = keyList;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("getAll", TMessageType.CALL, 0));
+        getAll_args args = new getAll_args();
+        args.setMapName(mapName);
+        args.setKeyList(keyList);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<ByteBuffer> getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getAll();
+      }
+    }
+
+    public void removeAll(String mapName, List<ByteBuffer> keyList, AsyncMethodCallback<removeAll_call> resultHandler) throws TException {
+      checkReady();
+      removeAll_call method_call = new removeAll_call(mapName, keyList, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class removeAll_call extends TAsyncMethodCall {
+      private String mapName;
+      private List<ByteBuffer> keyList;
+      public removeAll_call(String mapName, List<ByteBuffer> keyList, AsyncMethodCallback<removeAll_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.mapName = mapName;
+        this.keyList = keyList;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("removeAll", TMessageType.CALL, 0));
+        removeAll_args args = new removeAll_args();
+        args.setMapName(mapName);
+        args.setKeyList(keyList);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_removeAll();
+      }
+    }
+
+    public void putAll(String mapName, List<ByteBuffer> keys, List<ByteBuffer> values, AsyncMethodCallback<putAll_call> resultHandler) throws TException {
+      checkReady();
+      putAll_call method_call = new putAll_call(mapName, keys, values, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class putAll_call extends TAsyncMethodCall {
+      private String mapName;
+      private List<ByteBuffer> keys;
+      private List<ByteBuffer> values;
+      public putAll_call(String mapName, List<ByteBuffer> keys, List<ByteBuffer> values, AsyncMethodCallback<putAll_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.mapName = mapName;
+        this.keys = keys;
+        this.values = values;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("putAll", TMessageType.CALL, 0));
+        putAll_args args = new putAll_args();
+        args.setMapName(mapName);
+        args.setKeys(keys);
+        args.setValues(values);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_putAll();
+      }
+    }
+
+  }
+
   public static class Processor implements TProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class.getName());
     public Processor(Iface iface)
@@ -494,7 +742,7 @@ public class WxsGatewayService {
     private static final TField KEY_FIELD_DESC = new TField("key", TType.STRING, (short)2);
 
     public String mapName;
-    public byte[] key;
+    public ByteBuffer key;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
@@ -575,7 +823,7 @@ public class WxsGatewayService {
 
     public get_args(
       String mapName,
-      byte[] key)
+      ByteBuffer key)
     {
       this();
       this.mapName = mapName;
@@ -590,8 +838,8 @@ public class WxsGatewayService {
         this.mapName = other.mapName;
       }
       if (other.isSetKey()) {
-        this.key = new byte[other.key.length];
-        System.arraycopy(other.key, 0, key, 0, other.key.length);
+        this.key = TBaseHelper.copyBinary(other.key);
+;
       }
     }
 
@@ -599,9 +847,10 @@ public class WxsGatewayService {
       return new get_args(this);
     }
 
-    @Deprecated
-    public get_args clone() {
-      return new get_args(this);
+    @Override
+    public void clear() {
+      this.mapName = null;
+      this.key = null;
     }
 
     public String getMapName() {
@@ -629,10 +878,20 @@ public class WxsGatewayService {
     }
 
     public byte[] getKey() {
-      return this.key;
+      setKey(TBaseHelper.rightSize(key));
+      return key.array();
+    }
+
+    public ByteBuffer BufferForKey() {
+      return key;
     }
 
     public get_args setKey(byte[] key) {
+      setKey(ByteBuffer.wrap(key));
+      return this;
+    }
+
+    public get_args setKey(ByteBuffer key) {
       this.key = key;
       return this;
     }
@@ -666,15 +925,11 @@ public class WxsGatewayService {
         if (value == null) {
           unsetKey();
         } else {
-          setKey((byte[])value);
+          setKey((ByteBuffer)value);
         }
         break;
 
       }
-    }
-
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
     }
 
     public Object getFieldValue(_Fields field) {
@@ -689,12 +944,12 @@ public class WxsGatewayService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case MAP_NAME:
         return isSetMapName();
@@ -702,10 +957,6 @@ public class WxsGatewayService {
         return isSetKey();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -735,7 +986,7 @@ public class WxsGatewayService {
       if (this_present_key || that_present_key) {
         if (!(this_present_key && that_present_key))
           return false;
-        if (!java.util.Arrays.equals(this.key, that.key))
+        if (!this.key.equals(that.key))
           return false;
       }
 
@@ -759,7 +1010,8 @@ public class WxsGatewayService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMapName()) {        lastComparison = TBaseHelper.compareTo(this.mapName, typedOther.mapName);
+      if (isSetMapName()) {
+        lastComparison = TBaseHelper.compareTo(this.mapName, typedOther.mapName);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -768,12 +1020,17 @@ public class WxsGatewayService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetKey()) {        lastComparison = TBaseHelper.compareTo(this.key, typedOther.key);
+      if (isSetKey()) {
+        lastComparison = TBaseHelper.compareTo(this.key, typedOther.key);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -846,12 +1103,7 @@ public class WxsGatewayService {
       if (this.key == null) {
         sb.append("null");
       } else {
-          int __key_size = Math.min(this.key.length, 128);
-          for (int i = 0; i < __key_size; i++) {
-            if (i != 0) sb.append(" ");
-            sb.append(Integer.toHexString(this.key[i]).length() > 1 ? Integer.toHexString(this.key[i]).substring(Integer.toHexString(this.key[i]).length() - 2).toUpperCase() : "0" + Integer.toHexString(this.key[i]).toUpperCase());
-          }
-          if (this.key.length > 128) sb.append(" ...");
+        TBaseHelper.toString(this.key, sb);
       }
       first = false;
       sb.append(")");
@@ -869,7 +1121,7 @@ public class WxsGatewayService {
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
 
-    public byte[] success;
+    public ByteBuffer success;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
@@ -944,7 +1196,7 @@ public class WxsGatewayService {
     }
 
     public get_result(
-      byte[] success)
+      ByteBuffer success)
     {
       this();
       this.success = success;
@@ -955,8 +1207,8 @@ public class WxsGatewayService {
      */
     public get_result(get_result other) {
       if (other.isSetSuccess()) {
-        this.success = new byte[other.success.length];
-        System.arraycopy(other.success, 0, success, 0, other.success.length);
+        this.success = TBaseHelper.copyBinary(other.success);
+;
       }
     }
 
@@ -964,16 +1216,26 @@ public class WxsGatewayService {
       return new get_result(this);
     }
 
-    @Deprecated
-    public get_result clone() {
-      return new get_result(this);
+    @Override
+    public void clear() {
+      this.success = null;
     }
 
     public byte[] getSuccess() {
-      return this.success;
+      setSuccess(TBaseHelper.rightSize(success));
+      return success.array();
+    }
+
+    public ByteBuffer BufferForSuccess() {
+      return success;
     }
 
     public get_result setSuccess(byte[] success) {
+      setSuccess(ByteBuffer.wrap(success));
+      return this;
+    }
+
+    public get_result setSuccess(ByteBuffer success) {
       this.success = success;
       return this;
     }
@@ -999,15 +1261,11 @@ public class WxsGatewayService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((byte[])value);
+          setSuccess((ByteBuffer)value);
         }
         break;
 
       }
-    }
-
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
     }
 
     public Object getFieldValue(_Fields field) {
@@ -1019,21 +1277,17 @@ public class WxsGatewayService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1054,7 +1308,7 @@ public class WxsGatewayService {
       if (this_present_success || that_present_success) {
         if (!(this_present_success && that_present_success))
           return false;
-        if (!java.util.Arrays.equals(this.success, that.success))
+        if (!this.success.equals(that.success))
           return false;
       }
 
@@ -1078,12 +1332,17 @@ public class WxsGatewayService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -1135,12 +1394,7 @@ public class WxsGatewayService {
       if (this.success == null) {
         sb.append("null");
       } else {
-          int __success_size = Math.min(this.success.length, 128);
-          for (int i = 0; i < __success_size; i++) {
-            if (i != 0) sb.append(" ");
-            sb.append(Integer.toHexString(this.success[i]).length() > 1 ? Integer.toHexString(this.success[i]).substring(Integer.toHexString(this.success[i]).length() - 2).toUpperCase() : "0" + Integer.toHexString(this.success[i]).toUpperCase());
-          }
-          if (this.success.length > 128) sb.append(" ...");
+        TBaseHelper.toString(this.success, sb);
       }
       first = false;
       sb.append(")");
@@ -1160,7 +1414,7 @@ public class WxsGatewayService {
     private static final TField KEY_FIELD_DESC = new TField("key", TType.STRING, (short)2);
 
     public String mapName;
-    public byte[] key;
+    public ByteBuffer key;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
@@ -1241,7 +1495,7 @@ public class WxsGatewayService {
 
     public remove_args(
       String mapName,
-      byte[] key)
+      ByteBuffer key)
     {
       this();
       this.mapName = mapName;
@@ -1256,8 +1510,8 @@ public class WxsGatewayService {
         this.mapName = other.mapName;
       }
       if (other.isSetKey()) {
-        this.key = new byte[other.key.length];
-        System.arraycopy(other.key, 0, key, 0, other.key.length);
+        this.key = TBaseHelper.copyBinary(other.key);
+;
       }
     }
 
@@ -1265,9 +1519,10 @@ public class WxsGatewayService {
       return new remove_args(this);
     }
 
-    @Deprecated
-    public remove_args clone() {
-      return new remove_args(this);
+    @Override
+    public void clear() {
+      this.mapName = null;
+      this.key = null;
     }
 
     public String getMapName() {
@@ -1295,10 +1550,20 @@ public class WxsGatewayService {
     }
 
     public byte[] getKey() {
-      return this.key;
+      setKey(TBaseHelper.rightSize(key));
+      return key.array();
+    }
+
+    public ByteBuffer BufferForKey() {
+      return key;
     }
 
     public remove_args setKey(byte[] key) {
+      setKey(ByteBuffer.wrap(key));
+      return this;
+    }
+
+    public remove_args setKey(ByteBuffer key) {
       this.key = key;
       return this;
     }
@@ -1332,15 +1597,11 @@ public class WxsGatewayService {
         if (value == null) {
           unsetKey();
         } else {
-          setKey((byte[])value);
+          setKey((ByteBuffer)value);
         }
         break;
 
       }
-    }
-
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
     }
 
     public Object getFieldValue(_Fields field) {
@@ -1355,12 +1616,12 @@ public class WxsGatewayService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case MAP_NAME:
         return isSetMapName();
@@ -1368,10 +1629,6 @@ public class WxsGatewayService {
         return isSetKey();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1401,7 +1658,7 @@ public class WxsGatewayService {
       if (this_present_key || that_present_key) {
         if (!(this_present_key && that_present_key))
           return false;
-        if (!java.util.Arrays.equals(this.key, that.key))
+        if (!this.key.equals(that.key))
           return false;
       }
 
@@ -1425,7 +1682,8 @@ public class WxsGatewayService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMapName()) {        lastComparison = TBaseHelper.compareTo(this.mapName, typedOther.mapName);
+      if (isSetMapName()) {
+        lastComparison = TBaseHelper.compareTo(this.mapName, typedOther.mapName);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1434,12 +1692,17 @@ public class WxsGatewayService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetKey()) {        lastComparison = TBaseHelper.compareTo(this.key, typedOther.key);
+      if (isSetKey()) {
+        lastComparison = TBaseHelper.compareTo(this.key, typedOther.key);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -1512,12 +1775,7 @@ public class WxsGatewayService {
       if (this.key == null) {
         sb.append("null");
       } else {
-          int __key_size = Math.min(this.key.length, 128);
-          for (int i = 0; i < __key_size; i++) {
-            if (i != 0) sb.append(" ");
-            sb.append(Integer.toHexString(this.key[i]).length() > 1 ? Integer.toHexString(this.key[i]).substring(Integer.toHexString(this.key[i]).length() - 2).toUpperCase() : "0" + Integer.toHexString(this.key[i]).toUpperCase());
-          }
-          if (this.key.length > 128) sb.append(" ...");
+        TBaseHelper.toString(this.key, sb);
       }
       first = false;
       sb.append(")");
@@ -1610,18 +1868,13 @@ public class WxsGatewayService {
       return new remove_result(this);
     }
 
-    @Deprecated
-    public remove_result clone() {
-      return new remove_result(this);
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       }
-    }
-
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
     }
 
     public Object getFieldValue(_Fields field) {
@@ -1630,19 +1883,15 @@ public class WxsGatewayService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1675,6 +1924,10 @@ public class WxsGatewayService {
       remove_result typedOther = (remove_result)other;
 
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -1728,8 +1981,8 @@ public class WxsGatewayService {
     private static final TField VALUE_FIELD_DESC = new TField("value", TType.STRING, (short)3);
 
     public String mapName;
-    public byte[] key;
-    public byte[] value;
+    public ByteBuffer key;
+    public ByteBuffer value;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
@@ -1815,8 +2068,8 @@ public class WxsGatewayService {
 
     public put_args(
       String mapName,
-      byte[] key,
-      byte[] value)
+      ByteBuffer key,
+      ByteBuffer value)
     {
       this();
       this.mapName = mapName;
@@ -1832,12 +2085,12 @@ public class WxsGatewayService {
         this.mapName = other.mapName;
       }
       if (other.isSetKey()) {
-        this.key = new byte[other.key.length];
-        System.arraycopy(other.key, 0, key, 0, other.key.length);
+        this.key = TBaseHelper.copyBinary(other.key);
+;
       }
       if (other.isSetValue()) {
-        this.value = new byte[other.value.length];
-        System.arraycopy(other.value, 0, value, 0, other.value.length);
+        this.value = TBaseHelper.copyBinary(other.value);
+;
       }
     }
 
@@ -1845,9 +2098,11 @@ public class WxsGatewayService {
       return new put_args(this);
     }
 
-    @Deprecated
-    public put_args clone() {
-      return new put_args(this);
+    @Override
+    public void clear() {
+      this.mapName = null;
+      this.key = null;
+      this.value = null;
     }
 
     public String getMapName() {
@@ -1875,10 +2130,20 @@ public class WxsGatewayService {
     }
 
     public byte[] getKey() {
-      return this.key;
+      setKey(TBaseHelper.rightSize(key));
+      return key.array();
+    }
+
+    public ByteBuffer BufferForKey() {
+      return key;
     }
 
     public put_args setKey(byte[] key) {
+      setKey(ByteBuffer.wrap(key));
+      return this;
+    }
+
+    public put_args setKey(ByteBuffer key) {
       this.key = key;
       return this;
     }
@@ -1899,10 +2164,20 @@ public class WxsGatewayService {
     }
 
     public byte[] getValue() {
-      return this.value;
+      setValue(TBaseHelper.rightSize(value));
+      return value.array();
+    }
+
+    public ByteBuffer BufferForValue() {
+      return value;
     }
 
     public put_args setValue(byte[] value) {
+      setValue(ByteBuffer.wrap(value));
+      return this;
+    }
+
+    public put_args setValue(ByteBuffer value) {
       this.value = value;
       return this;
     }
@@ -1936,7 +2211,7 @@ public class WxsGatewayService {
         if (value == null) {
           unsetKey();
         } else {
-          setKey((byte[])value);
+          setKey((ByteBuffer)value);
         }
         break;
 
@@ -1944,15 +2219,11 @@ public class WxsGatewayService {
         if (value == null) {
           unsetValue();
         } else {
-          setValue((byte[])value);
+          setValue((ByteBuffer)value);
         }
         break;
 
       }
-    }
-
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
     }
 
     public Object getFieldValue(_Fields field) {
@@ -1970,12 +2241,12 @@ public class WxsGatewayService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case MAP_NAME:
         return isSetMapName();
@@ -1985,10 +2256,6 @@ public class WxsGatewayService {
         return isSetValue();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -2018,7 +2285,7 @@ public class WxsGatewayService {
       if (this_present_key || that_present_key) {
         if (!(this_present_key && that_present_key))
           return false;
-        if (!java.util.Arrays.equals(this.key, that.key))
+        if (!this.key.equals(that.key))
           return false;
       }
 
@@ -2027,7 +2294,7 @@ public class WxsGatewayService {
       if (this_present_value || that_present_value) {
         if (!(this_present_value && that_present_value))
           return false;
-        if (!java.util.Arrays.equals(this.value, that.value))
+        if (!this.value.equals(that.value))
           return false;
       }
 
@@ -2051,7 +2318,8 @@ public class WxsGatewayService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMapName()) {        lastComparison = TBaseHelper.compareTo(this.mapName, typedOther.mapName);
+      if (isSetMapName()) {
+        lastComparison = TBaseHelper.compareTo(this.mapName, typedOther.mapName);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2060,7 +2328,8 @@ public class WxsGatewayService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetKey()) {        lastComparison = TBaseHelper.compareTo(this.key, typedOther.key);
+      if (isSetKey()) {
+        lastComparison = TBaseHelper.compareTo(this.key, typedOther.key);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2069,12 +2338,17 @@ public class WxsGatewayService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetValue()) {        lastComparison = TBaseHelper.compareTo(this.value, typedOther.value);
+      if (isSetValue()) {
+        lastComparison = TBaseHelper.compareTo(this.value, typedOther.value);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -2159,12 +2433,7 @@ public class WxsGatewayService {
       if (this.key == null) {
         sb.append("null");
       } else {
-          int __key_size = Math.min(this.key.length, 128);
-          for (int i = 0; i < __key_size; i++) {
-            if (i != 0) sb.append(" ");
-            sb.append(Integer.toHexString(this.key[i]).length() > 1 ? Integer.toHexString(this.key[i]).substring(Integer.toHexString(this.key[i]).length() - 2).toUpperCase() : "0" + Integer.toHexString(this.key[i]).toUpperCase());
-          }
-          if (this.key.length > 128) sb.append(" ...");
+        TBaseHelper.toString(this.key, sb);
       }
       first = false;
       if (!first) sb.append(", ");
@@ -2172,12 +2441,7 @@ public class WxsGatewayService {
       if (this.value == null) {
         sb.append("null");
       } else {
-          int __value_size = Math.min(this.value.length, 128);
-          for (int i = 0; i < __value_size; i++) {
-            if (i != 0) sb.append(" ");
-            sb.append(Integer.toHexString(this.value[i]).length() > 1 ? Integer.toHexString(this.value[i]).substring(Integer.toHexString(this.value[i]).length() - 2).toUpperCase() : "0" + Integer.toHexString(this.value[i]).toUpperCase());
-          }
-          if (this.value.length > 128) sb.append(" ...");
+        TBaseHelper.toString(this.value, sb);
       }
       first = false;
       sb.append(")");
@@ -2270,18 +2534,13 @@ public class WxsGatewayService {
       return new put_result(this);
     }
 
-    @Deprecated
-    public put_result clone() {
-      return new put_result(this);
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       }
-    }
-
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
     }
 
     public Object getFieldValue(_Fields field) {
@@ -2290,19 +2549,15 @@ public class WxsGatewayService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -2335,6 +2590,10 @@ public class WxsGatewayService {
       put_result typedOther = (put_result)other;
 
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -2387,7 +2646,7 @@ public class WxsGatewayService {
     private static final TField KEY_LIST_FIELD_DESC = new TField("keyList", TType.LIST, (short)2);
 
     public String mapName;
-    public List<byte[]> keyList;
+    public List<ByteBuffer> keyList;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
@@ -2469,7 +2728,7 @@ public class WxsGatewayService {
 
     public getAll_args(
       String mapName,
-      List<byte[]> keyList)
+      List<ByteBuffer> keyList)
     {
       this();
       this.mapName = mapName;
@@ -2484,10 +2743,10 @@ public class WxsGatewayService {
         this.mapName = other.mapName;
       }
       if (other.isSetKeyList()) {
-        List<byte[]> __this__keyList = new ArrayList<byte[]>();
-        for (byte[] other_element : other.keyList) {
-          byte[] temp_binary_element = new byte[other_element.length];
-          System.arraycopy(other_element, 0, temp_binary_element, 0, other_element.length);
+        List<ByteBuffer> __this__keyList = new ArrayList<ByteBuffer>();
+        for (ByteBuffer other_element : other.keyList) {
+          ByteBuffer temp_binary_element = TBaseHelper.copyBinary(other_element);
+;
           __this__keyList.add(temp_binary_element);
         }
         this.keyList = __this__keyList;
@@ -2498,9 +2757,10 @@ public class WxsGatewayService {
       return new getAll_args(this);
     }
 
-    @Deprecated
-    public getAll_args clone() {
-      return new getAll_args(this);
+    @Override
+    public void clear() {
+      this.mapName = null;
+      this.keyList = null;
     }
 
     public String getMapName() {
@@ -2531,22 +2791,22 @@ public class WxsGatewayService {
       return (this.keyList == null) ? 0 : this.keyList.size();
     }
 
-    public java.util.Iterator<byte[]> getKeyListIterator() {
+    public java.util.Iterator<ByteBuffer> getKeyListIterator() {
       return (this.keyList == null) ? null : this.keyList.iterator();
     }
 
-    public void addToKeyList(byte[] elem) {
+    public void addToKeyList(ByteBuffer elem) {
       if (this.keyList == null) {
-        this.keyList = new ArrayList<byte[]>();
+        this.keyList = new ArrayList<ByteBuffer>();
       }
       this.keyList.add(elem);
     }
 
-    public List<byte[]> getKeyList() {
+    public List<ByteBuffer> getKeyList() {
       return this.keyList;
     }
 
-    public getAll_args setKeyList(List<byte[]> keyList) {
+    public getAll_args setKeyList(List<ByteBuffer> keyList) {
       this.keyList = keyList;
       return this;
     }
@@ -2580,15 +2840,11 @@ public class WxsGatewayService {
         if (value == null) {
           unsetKeyList();
         } else {
-          setKeyList((List<byte[]>)value);
+          setKeyList((List<ByteBuffer>)value);
         }
         break;
 
       }
-    }
-
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
     }
 
     public Object getFieldValue(_Fields field) {
@@ -2603,12 +2859,12 @@ public class WxsGatewayService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case MAP_NAME:
         return isSetMapName();
@@ -2616,10 +2872,6 @@ public class WxsGatewayService {
         return isSetKeyList();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -2673,7 +2925,8 @@ public class WxsGatewayService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMapName()) {        lastComparison = TBaseHelper.compareTo(this.mapName, typedOther.mapName);
+      if (isSetMapName()) {
+        lastComparison = TBaseHelper.compareTo(this.mapName, typedOther.mapName);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2682,12 +2935,17 @@ public class WxsGatewayService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetKeyList()) {        lastComparison = TBaseHelper.compareTo(this.keyList, typedOther.keyList);
+      if (isSetKeyList()) {
+        lastComparison = TBaseHelper.compareTo(this.keyList, typedOther.keyList);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -2711,10 +2969,10 @@ public class WxsGatewayService {
             if (field.type == TType.LIST) {
               {
                 TList _list0 = iprot.readListBegin();
-                this.keyList = new ArrayList<byte[]>(_list0.size);
+                this.keyList = new ArrayList<ByteBuffer>(_list0.size);
                 for (int _i1 = 0; _i1 < _list0.size; ++_i1)
                 {
-                  byte[] _elem2;
+                  ByteBuffer _elem2;
                   _elem2 = iprot.readBinary();
                   this.keyList.add(_elem2);
                 }
@@ -2748,7 +3006,7 @@ public class WxsGatewayService {
         oprot.writeFieldBegin(KEY_LIST_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRING, this.keyList.size()));
-          for (byte[] _iter3 : this.keyList)
+          for (ByteBuffer _iter3 : this.keyList)
           {
             oprot.writeBinary(_iter3);
           }
@@ -2795,7 +3053,7 @@ public class WxsGatewayService {
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
 
-    public List<byte[]> success;
+    public List<ByteBuffer> success;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
@@ -2871,7 +3129,7 @@ public class WxsGatewayService {
     }
 
     public getAll_result(
-      List<byte[]> success)
+      List<ByteBuffer> success)
     {
       this();
       this.success = success;
@@ -2882,10 +3140,10 @@ public class WxsGatewayService {
      */
     public getAll_result(getAll_result other) {
       if (other.isSetSuccess()) {
-        List<byte[]> __this__success = new ArrayList<byte[]>();
-        for (byte[] other_element : other.success) {
-          byte[] temp_binary_element = new byte[other_element.length];
-          System.arraycopy(other_element, 0, temp_binary_element, 0, other_element.length);
+        List<ByteBuffer> __this__success = new ArrayList<ByteBuffer>();
+        for (ByteBuffer other_element : other.success) {
+          ByteBuffer temp_binary_element = TBaseHelper.copyBinary(other_element);
+;
           __this__success.add(temp_binary_element);
         }
         this.success = __this__success;
@@ -2896,31 +3154,31 @@ public class WxsGatewayService {
       return new getAll_result(this);
     }
 
-    @Deprecated
-    public getAll_result clone() {
-      return new getAll_result(this);
+    @Override
+    public void clear() {
+      this.success = null;
     }
 
     public int getSuccessSize() {
       return (this.success == null) ? 0 : this.success.size();
     }
 
-    public java.util.Iterator<byte[]> getSuccessIterator() {
+    public java.util.Iterator<ByteBuffer> getSuccessIterator() {
       return (this.success == null) ? null : this.success.iterator();
     }
 
-    public void addToSuccess(byte[] elem) {
+    public void addToSuccess(ByteBuffer elem) {
       if (this.success == null) {
-        this.success = new ArrayList<byte[]>();
+        this.success = new ArrayList<ByteBuffer>();
       }
       this.success.add(elem);
     }
 
-    public List<byte[]> getSuccess() {
+    public List<ByteBuffer> getSuccess() {
       return this.success;
     }
 
-    public getAll_result setSuccess(List<byte[]> success) {
+    public getAll_result setSuccess(List<ByteBuffer> success) {
       this.success = success;
       return this;
     }
@@ -2946,15 +3204,11 @@ public class WxsGatewayService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((List<byte[]>)value);
+          setSuccess((List<ByteBuffer>)value);
         }
         break;
 
       }
-    }
-
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
     }
 
     public Object getFieldValue(_Fields field) {
@@ -2966,21 +3220,17 @@ public class WxsGatewayService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -3025,12 +3275,17 @@ public class WxsGatewayService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -3047,10 +3302,10 @@ public class WxsGatewayService {
             if (field.type == TType.LIST) {
               {
                 TList _list4 = iprot.readListBegin();
-                this.success = new ArrayList<byte[]>(_list4.size);
+                this.success = new ArrayList<ByteBuffer>(_list4.size);
                 for (int _i5 = 0; _i5 < _list4.size; ++_i5)
                 {
-                  byte[] _elem6;
+                  ByteBuffer _elem6;
                   _elem6 = iprot.readBinary();
                   this.success.add(_elem6);
                 }
@@ -3078,7 +3333,7 @@ public class WxsGatewayService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRING, this.success.size()));
-          for (byte[] _iter7 : this.success)
+          for (ByteBuffer _iter7 : this.success)
           {
             oprot.writeBinary(_iter7);
           }
@@ -3119,7 +3374,7 @@ public class WxsGatewayService {
     private static final TField KEY_LIST_FIELD_DESC = new TField("keyList", TType.LIST, (short)2);
 
     public String mapName;
-    public List<byte[]> keyList;
+    public List<ByteBuffer> keyList;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
@@ -3201,7 +3456,7 @@ public class WxsGatewayService {
 
     public removeAll_args(
       String mapName,
-      List<byte[]> keyList)
+      List<ByteBuffer> keyList)
     {
       this();
       this.mapName = mapName;
@@ -3216,10 +3471,10 @@ public class WxsGatewayService {
         this.mapName = other.mapName;
       }
       if (other.isSetKeyList()) {
-        List<byte[]> __this__keyList = new ArrayList<byte[]>();
-        for (byte[] other_element : other.keyList) {
-          byte[] temp_binary_element = new byte[other_element.length];
-          System.arraycopy(other_element, 0, temp_binary_element, 0, other_element.length);
+        List<ByteBuffer> __this__keyList = new ArrayList<ByteBuffer>();
+        for (ByteBuffer other_element : other.keyList) {
+          ByteBuffer temp_binary_element = TBaseHelper.copyBinary(other_element);
+;
           __this__keyList.add(temp_binary_element);
         }
         this.keyList = __this__keyList;
@@ -3230,9 +3485,10 @@ public class WxsGatewayService {
       return new removeAll_args(this);
     }
 
-    @Deprecated
-    public removeAll_args clone() {
-      return new removeAll_args(this);
+    @Override
+    public void clear() {
+      this.mapName = null;
+      this.keyList = null;
     }
 
     public String getMapName() {
@@ -3263,22 +3519,22 @@ public class WxsGatewayService {
       return (this.keyList == null) ? 0 : this.keyList.size();
     }
 
-    public java.util.Iterator<byte[]> getKeyListIterator() {
+    public java.util.Iterator<ByteBuffer> getKeyListIterator() {
       return (this.keyList == null) ? null : this.keyList.iterator();
     }
 
-    public void addToKeyList(byte[] elem) {
+    public void addToKeyList(ByteBuffer elem) {
       if (this.keyList == null) {
-        this.keyList = new ArrayList<byte[]>();
+        this.keyList = new ArrayList<ByteBuffer>();
       }
       this.keyList.add(elem);
     }
 
-    public List<byte[]> getKeyList() {
+    public List<ByteBuffer> getKeyList() {
       return this.keyList;
     }
 
-    public removeAll_args setKeyList(List<byte[]> keyList) {
+    public removeAll_args setKeyList(List<ByteBuffer> keyList) {
       this.keyList = keyList;
       return this;
     }
@@ -3312,15 +3568,11 @@ public class WxsGatewayService {
         if (value == null) {
           unsetKeyList();
         } else {
-          setKeyList((List<byte[]>)value);
+          setKeyList((List<ByteBuffer>)value);
         }
         break;
 
       }
-    }
-
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
     }
 
     public Object getFieldValue(_Fields field) {
@@ -3335,12 +3587,12 @@ public class WxsGatewayService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case MAP_NAME:
         return isSetMapName();
@@ -3348,10 +3600,6 @@ public class WxsGatewayService {
         return isSetKeyList();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -3405,7 +3653,8 @@ public class WxsGatewayService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMapName()) {        lastComparison = TBaseHelper.compareTo(this.mapName, typedOther.mapName);
+      if (isSetMapName()) {
+        lastComparison = TBaseHelper.compareTo(this.mapName, typedOther.mapName);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3414,12 +3663,17 @@ public class WxsGatewayService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetKeyList()) {        lastComparison = TBaseHelper.compareTo(this.keyList, typedOther.keyList);
+      if (isSetKeyList()) {
+        lastComparison = TBaseHelper.compareTo(this.keyList, typedOther.keyList);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -3443,10 +3697,10 @@ public class WxsGatewayService {
             if (field.type == TType.LIST) {
               {
                 TList _list8 = iprot.readListBegin();
-                this.keyList = new ArrayList<byte[]>(_list8.size);
+                this.keyList = new ArrayList<ByteBuffer>(_list8.size);
                 for (int _i9 = 0; _i9 < _list8.size; ++_i9)
                 {
-                  byte[] _elem10;
+                  ByteBuffer _elem10;
                   _elem10 = iprot.readBinary();
                   this.keyList.add(_elem10);
                 }
@@ -3480,7 +3734,7 @@ public class WxsGatewayService {
         oprot.writeFieldBegin(KEY_LIST_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRING, this.keyList.size()));
-          for (byte[] _iter11 : this.keyList)
+          for (ByteBuffer _iter11 : this.keyList)
           {
             oprot.writeBinary(_iter11);
           }
@@ -3602,18 +3856,13 @@ public class WxsGatewayService {
       return new removeAll_result(this);
     }
 
-    @Deprecated
-    public removeAll_result clone() {
-      return new removeAll_result(this);
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       }
-    }
-
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
     }
 
     public Object getFieldValue(_Fields field) {
@@ -3622,19 +3871,15 @@ public class WxsGatewayService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -3667,6 +3912,10 @@ public class WxsGatewayService {
       removeAll_result typedOther = (removeAll_result)other;
 
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -3720,8 +3969,8 @@ public class WxsGatewayService {
     private static final TField VALUES_FIELD_DESC = new TField("values", TType.LIST, (short)3);
 
     public String mapName;
-    public List<byte[]> keys;
-    public List<byte[]> values;
+    public List<ByteBuffer> keys;
+    public List<ByteBuffer> values;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
@@ -3809,8 +4058,8 @@ public class WxsGatewayService {
 
     public putAll_args(
       String mapName,
-      List<byte[]> keys,
-      List<byte[]> values)
+      List<ByteBuffer> keys,
+      List<ByteBuffer> values)
     {
       this();
       this.mapName = mapName;
@@ -3826,19 +4075,19 @@ public class WxsGatewayService {
         this.mapName = other.mapName;
       }
       if (other.isSetKeys()) {
-        List<byte[]> __this__keys = new ArrayList<byte[]>();
-        for (byte[] other_element : other.keys) {
-          byte[] temp_binary_element = new byte[other_element.length];
-          System.arraycopy(other_element, 0, temp_binary_element, 0, other_element.length);
+        List<ByteBuffer> __this__keys = new ArrayList<ByteBuffer>();
+        for (ByteBuffer other_element : other.keys) {
+          ByteBuffer temp_binary_element = TBaseHelper.copyBinary(other_element);
+;
           __this__keys.add(temp_binary_element);
         }
         this.keys = __this__keys;
       }
       if (other.isSetValues()) {
-        List<byte[]> __this__values = new ArrayList<byte[]>();
-        for (byte[] other_element : other.values) {
-          byte[] temp_binary_element = new byte[other_element.length];
-          System.arraycopy(other_element, 0, temp_binary_element, 0, other_element.length);
+        List<ByteBuffer> __this__values = new ArrayList<ByteBuffer>();
+        for (ByteBuffer other_element : other.values) {
+          ByteBuffer temp_binary_element = TBaseHelper.copyBinary(other_element);
+;
           __this__values.add(temp_binary_element);
         }
         this.values = __this__values;
@@ -3849,9 +4098,11 @@ public class WxsGatewayService {
       return new putAll_args(this);
     }
 
-    @Deprecated
-    public putAll_args clone() {
-      return new putAll_args(this);
+    @Override
+    public void clear() {
+      this.mapName = null;
+      this.keys = null;
+      this.values = null;
     }
 
     public String getMapName() {
@@ -3882,22 +4133,22 @@ public class WxsGatewayService {
       return (this.keys == null) ? 0 : this.keys.size();
     }
 
-    public java.util.Iterator<byte[]> getKeysIterator() {
+    public java.util.Iterator<ByteBuffer> getKeysIterator() {
       return (this.keys == null) ? null : this.keys.iterator();
     }
 
-    public void addToKeys(byte[] elem) {
+    public void addToKeys(ByteBuffer elem) {
       if (this.keys == null) {
-        this.keys = new ArrayList<byte[]>();
+        this.keys = new ArrayList<ByteBuffer>();
       }
       this.keys.add(elem);
     }
 
-    public List<byte[]> getKeys() {
+    public List<ByteBuffer> getKeys() {
       return this.keys;
     }
 
-    public putAll_args setKeys(List<byte[]> keys) {
+    public putAll_args setKeys(List<ByteBuffer> keys) {
       this.keys = keys;
       return this;
     }
@@ -3921,22 +4172,22 @@ public class WxsGatewayService {
       return (this.values == null) ? 0 : this.values.size();
     }
 
-    public java.util.Iterator<byte[]> getValuesIterator() {
+    public java.util.Iterator<ByteBuffer> getValuesIterator() {
       return (this.values == null) ? null : this.values.iterator();
     }
 
-    public void addToValues(byte[] elem) {
+    public void addToValues(ByteBuffer elem) {
       if (this.values == null) {
-        this.values = new ArrayList<byte[]>();
+        this.values = new ArrayList<ByteBuffer>();
       }
       this.values.add(elem);
     }
 
-    public List<byte[]> getValues() {
+    public List<ByteBuffer> getValues() {
       return this.values;
     }
 
-    public putAll_args setValues(List<byte[]> values) {
+    public putAll_args setValues(List<ByteBuffer> values) {
       this.values = values;
       return this;
     }
@@ -3970,7 +4221,7 @@ public class WxsGatewayService {
         if (value == null) {
           unsetKeys();
         } else {
-          setKeys((List<byte[]>)value);
+          setKeys((List<ByteBuffer>)value);
         }
         break;
 
@@ -3978,15 +4229,11 @@ public class WxsGatewayService {
         if (value == null) {
           unsetValues();
         } else {
-          setValues((List<byte[]>)value);
+          setValues((List<ByteBuffer>)value);
         }
         break;
 
       }
-    }
-
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
     }
 
     public Object getFieldValue(_Fields field) {
@@ -4004,12 +4251,12 @@ public class WxsGatewayService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case MAP_NAME:
         return isSetMapName();
@@ -4019,10 +4266,6 @@ public class WxsGatewayService {
         return isSetValues();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -4085,7 +4328,8 @@ public class WxsGatewayService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMapName()) {        lastComparison = TBaseHelper.compareTo(this.mapName, typedOther.mapName);
+      if (isSetMapName()) {
+        lastComparison = TBaseHelper.compareTo(this.mapName, typedOther.mapName);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -4094,7 +4338,8 @@ public class WxsGatewayService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetKeys()) {        lastComparison = TBaseHelper.compareTo(this.keys, typedOther.keys);
+      if (isSetKeys()) {
+        lastComparison = TBaseHelper.compareTo(this.keys, typedOther.keys);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -4103,12 +4348,17 @@ public class WxsGatewayService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetValues()) {        lastComparison = TBaseHelper.compareTo(this.values, typedOther.values);
+      if (isSetValues()) {
+        lastComparison = TBaseHelper.compareTo(this.values, typedOther.values);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -4132,10 +4382,10 @@ public class WxsGatewayService {
             if (field.type == TType.LIST) {
               {
                 TList _list12 = iprot.readListBegin();
-                this.keys = new ArrayList<byte[]>(_list12.size);
+                this.keys = new ArrayList<ByteBuffer>(_list12.size);
                 for (int _i13 = 0; _i13 < _list12.size; ++_i13)
                 {
-                  byte[] _elem14;
+                  ByteBuffer _elem14;
                   _elem14 = iprot.readBinary();
                   this.keys.add(_elem14);
                 }
@@ -4149,10 +4399,10 @@ public class WxsGatewayService {
             if (field.type == TType.LIST) {
               {
                 TList _list15 = iprot.readListBegin();
-                this.values = new ArrayList<byte[]>(_list15.size);
+                this.values = new ArrayList<ByteBuffer>(_list15.size);
                 for (int _i16 = 0; _i16 < _list15.size; ++_i16)
                 {
-                  byte[] _elem17;
+                  ByteBuffer _elem17;
                   _elem17 = iprot.readBinary();
                   this.values.add(_elem17);
                 }
@@ -4186,7 +4436,7 @@ public class WxsGatewayService {
         oprot.writeFieldBegin(KEYS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRING, this.keys.size()));
-          for (byte[] _iter18 : this.keys)
+          for (ByteBuffer _iter18 : this.keys)
           {
             oprot.writeBinary(_iter18);
           }
@@ -4198,7 +4448,7 @@ public class WxsGatewayService {
         oprot.writeFieldBegin(VALUES_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRING, this.values.size()));
-          for (byte[] _iter19 : this.values)
+          for (ByteBuffer _iter19 : this.values)
           {
             oprot.writeBinary(_iter19);
           }
@@ -4328,18 +4578,13 @@ public class WxsGatewayService {
       return new putAll_result(this);
     }
 
-    @Deprecated
-    public putAll_result clone() {
-      return new putAll_result(this);
+    @Override
+    public void clear() {
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       }
-    }
-
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
     }
 
     public Object getFieldValue(_Fields field) {
@@ -4348,19 +4593,15 @@ public class WxsGatewayService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -4393,6 +4634,10 @@ public class WxsGatewayService {
       putAll_result typedOther = (putAll_result)other;
 
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
