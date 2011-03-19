@@ -21,6 +21,8 @@ Licensed Materials - Property of IBM
             <map ref="FarMap3"/>
             <map ref="List"/>
             <map ref="Set"/>
+            
+            <map ref="RouterKeyI32"/>
         </mapSet>
     </objectgridDeployment>
 

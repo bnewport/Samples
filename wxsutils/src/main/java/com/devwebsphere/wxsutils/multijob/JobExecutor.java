@@ -13,6 +13,7 @@ package com.devwebsphere.wxsutils.multijob;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.ibm.websphere.objectgrid.BackingMap;
@@ -20,6 +21,7 @@ import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.Session;
+import com.ibm.websphere.objectgrid.UndefinedMapException;
 import com.ibm.websphere.objectgrid.datagrid.AgentManager;
 
 /**
@@ -99,8 +101,14 @@ public class JobExecutor <V,R>
 			else
 				return null;
 		}
+		catch(UndefinedMapException e)
+		{
+			logger.log(Level.SEVERE, "The map " + routingMapName + " MUST be defined in the grid");
+			throw new ObjectGridRuntimeException("The map " + routingMapName + " MUST be defined in the grid!");
+		}
 		catch(ObjectGridException e)
 		{
+			logger.log(Level.SEVERE, "Unexpected exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}

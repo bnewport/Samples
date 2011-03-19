@@ -20,6 +20,7 @@ import junit.framework.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.devwebsphere.wxsutils.multijob.pingall.PingAllPartitionsJob;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
@@ -267,6 +268,12 @@ public class TestClientAPIs
 		Assert.assertEquals(0, map.size(key));
 	}
 	
+	@Test
+	public void testPingAllPartitions()
+	{
+		int partitionCount = PingAllPartitionsJob.visitAllPartitions(ogclient);
+		Assert.assertEquals(ogclient.getMap("Set").getPartitionManager().getNumOfPartitions(), partitionCount);
+	}
 	/**
 	 * This does a simple stress test against the grid.
 	 */
