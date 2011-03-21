@@ -28,12 +28,10 @@ public class ListLenAgent<V extends Serializable> implements MapGridAgent
 	 * 
 	 */
 	private static final long serialVersionUID = -3736978703392897531L;
-	/**
-	 * 
-	 */
-	public Object process(Session sess, ObjectMap map, Object key) 
+	
+	static public <V> int size(Session sess, ObjectMap map, Object key)
 	{
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), ListLenAgent.class.getName());
 		long startNS = System.nanoTime();
 		Integer rc = new Integer(0);
 		try
@@ -54,6 +52,14 @@ public class ListLenAgent<V extends Serializable> implements MapGridAgent
 		}
 		return rc;
 	}
+	/**
+	 * 
+	 */
+	public Object process(Session sess, ObjectMap map, Object key) 
+	{
+		return new Integer(size(sess, map, key));
+	}
+	
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {
 		// TODO Auto-generated method stub
 		return null;

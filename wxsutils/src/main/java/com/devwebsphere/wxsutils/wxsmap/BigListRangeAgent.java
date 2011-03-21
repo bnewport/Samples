@@ -13,6 +13,8 @@ package com.devwebsphere.wxsutils.wxsmap;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
@@ -22,51 +24,44 @@ import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
-
-public class ListPushAgent<V extends Serializable> implements MapGridAgent 
+public class BigListRangeAgent<V extends Serializable> implements MapGridAgent 
 {
-	public boolean isLeft;
-	public V value;
+	static Logger logger = Logger.getLogger(BigListRangeAgent.class.getName());
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 8842082032401137638L;
+	private static final long serialVersionUID = -3820884829092397741L;
+	public int low;
+	public int high;
 	
-	static public <V> Boolean push(Session sess, ObjectMap map, Object key, boolean isLeft, V value)
+	static public <V extends Serializable> ArrayList<V> range(Session sess, ObjectMap map, Object key, int low, int high)
 	{
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), ListPushAgent.class.getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListRangeAgent.class.getName());
 		long startNS = System.nanoTime();
 		try
 		{
-			ArrayList<V> list = (ArrayList<V>)map.getForUpdate(key);
-			if(list != null)
-			{
-				if(isLeft)
-					list.add(0, value);
-				else
-					list.add(value);
-				map.update(key, list);
-			}
+			ArrayList<V> rc = null;
+			BigListHead<V> head = (BigListHead<V>)map.get(key);
+			if(head != null)
+				rc = head.range(sess, map, key, low, high);
 			else
-			{
-				list = new ArrayList<V>();
-				list.add(value);
-				map.insert(key, list);
-			}
+				rc = new ArrayList<V>();
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
+			return rc;
 		}
 		catch(ObjectGridException e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			mbean.getKeysMetric().logException(e);
-			e.printStackTrace();
 			throw new ObjectGridRuntimeException(e);
 		}
-		return Boolean.TRUE;
 	}
-
+	/**
+	 * 
+	 */
 	public Object process(Session sess, ObjectMap map, Object key) 
 	{
-		return push(sess, map, key, isLeft, value);
+		return range(sess, map, key, low, high);
 	}
 	
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {

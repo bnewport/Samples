@@ -54,6 +54,7 @@ import com.devwebsphere.wxsutils.wxsmap.RemoveAgent;
 import com.devwebsphere.wxsutils.wxsmap.ThreadLocalSession;
 import com.devwebsphere.wxsutils.wxsmap.WXSBaseMap;
 import com.devwebsphere.wxsutils.wxsmap.WXSMapImpl;
+import com.devwebsphere.wxsutils.wxsmap.WXSMapOfBigListsImpl;
 import com.devwebsphere.wxsutils.wxsmap.WXSMapOfListsImpl;
 import com.devwebsphere.wxsutils.wxsmap.WXSMapOfSetsImpl;
 import com.ibm.websphere.objectgrid.BackingMap;
@@ -171,18 +172,18 @@ public class WXSUtils
 	public <K,V extends Serializable> WXSMapOfLists<K,V> getMapOfLists(String mapName)
 	{
 		WXSBaseMap bmap = maps.get(mapName);
-		if(bmap != null && !(bmap instanceof WXSMapOfListsImpl))
+		if(bmap != null && !(bmap instanceof WXSMapOfBigListsImpl))
 		{
 			throw new ObjectGridRuntimeException(mapName + " is not a list");
 		}
-		WXSMapOfListsImpl<K,V> rc = (WXSMapOfListsImpl<K,V>)bmap;
+		WXSMapOfBigListsImpl<K,V> rc = (WXSMapOfBigListsImpl<K,V>)bmap;
 		if(rc == null)
 		{
 			try
 			{
 				if(grid.getSession().getMap(mapName) != null)
 				{
-					rc = new WXSMapOfListsImpl<K,V>(this, mapName);
+					rc = new WXSMapOfBigListsImpl<K,V>(this, mapName);
 					maps.put(mapName, rc);
 				}
 				else

@@ -36,13 +36,10 @@ public class ListPopAgent<V extends Serializable> implements MapGridAgent
 	};
 	
 	public boolean isLeft;
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 8842082032401137638L;
-	public Object process(Session sess, ObjectMap map, Object key) 
+	
+	static public <V> Object pop(Session sess, ObjectMap map, Object key, boolean isLeft)
 	{
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), ListPopAgent.class.getName());
 		long startNS = System.nanoTime();
 		Object rc = null;
 		try
@@ -75,6 +72,15 @@ public class ListPopAgent<V extends Serializable> implements MapGridAgent
 		}
 		return rc;
 	}
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8842082032401137638L;
+	public Object process(Session sess, ObjectMap map, Object key) 
+	{
+		return pop(sess, map, key, isLeft);
+	}
+	
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {
 		// TODO Auto-generated method stub
 		return null;

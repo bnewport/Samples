@@ -30,12 +30,10 @@ public class ListRangeAgent<V extends Serializable> implements MapGridAgent
 	private static final long serialVersionUID = -3820884829092397741L;
 	public int low;
 	public int high;
-	/**
-	 * 
-	 */
-	public Object process(Session sess, ObjectMap map, Object key) 
+	
+	static public <V> ArrayList<V> range(Session sess, ObjectMap map, Object key, int low, int high)
 	{
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), ListRangeAgent.class.getName());
 		long startNS = System.nanoTime();
 		try
 		{
@@ -56,6 +54,14 @@ public class ListRangeAgent<V extends Serializable> implements MapGridAgent
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
+	/**
+	 * 
+	 */
+	public Object process(Session sess, ObjectMap map, Object key) 
+	{
+		return range(sess, map, key, low, high);
+	}
+	
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {
 		// TODO Auto-generated method stub
 		return null;

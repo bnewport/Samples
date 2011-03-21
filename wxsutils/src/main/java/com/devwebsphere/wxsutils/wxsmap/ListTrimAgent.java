@@ -31,9 +31,10 @@ public class ListTrimAgent<V extends Serializable> implements MapGridAgent
 	 */
 	private static final long serialVersionUID = -984733774220708513L;
 	public int newSize;
-	public Object process(Session sess, ObjectMap map, Object key) 
+	
+	static public <V> Boolean trim(Session sess, ObjectMap map, Object key, int newSize)
 	{
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), ListTrimAgent.class.getName());
 		long startNS = System.nanoTime();
 		Boolean rc = Boolean.FALSE;
 		try
@@ -58,6 +59,11 @@ public class ListTrimAgent<V extends Serializable> implements MapGridAgent
 			throw new ObjectGridRuntimeException(e);
 		}
 		return rc;
+	}
+	
+	public Object process(Session sess, ObjectMap map, Object key) 
+	{
+		return trim(sess, map, key, newSize);
 	}
 	
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {

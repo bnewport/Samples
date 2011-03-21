@@ -11,7 +11,6 @@
 package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Map;
 
 import com.devwebsphere.wxsutils.WXSUtils;
@@ -22,36 +21,35 @@ import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
-
-public class ListPushAgent<V extends Serializable> implements MapGridAgent 
+public class BigListPopAgent<V extends Serializable> implements MapGridAgent 
 {
-	public boolean isLeft;
-	public V value;
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 8842082032401137638L;
-	
-	static public <V> Boolean push(Session sess, ObjectMap map, Object key, boolean isLeft, V value)
+
+	static public class EmptyMarker implements Serializable
 	{
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), ListPushAgent.class.getName());
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 5608399827890355903L;
+		
+	};
+	
+	public boolean isLeft;
+	
+	static public <V extends Serializable> Object pop(Session sess, ObjectMap map, Object key, boolean isLeft)
+	{
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListPopAgent.class.getName());
 		long startNS = System.nanoTime();
+		Object rc = null;
 		try
 		{
-			ArrayList<V> list = (ArrayList<V>)map.getForUpdate(key);
-			if(list != null)
-			{
-				if(isLeft)
-					list.add(0, value);
-				else
-					list.add(value);
-				map.update(key, list);
-			}
+			BigListHead<V> head = (BigListHead<V>)map.getForUpdate(key);
+			if(head == null)
+				rc = new ListPopAgent.EmptyMarker();
 			else
 			{
-				list = new ArrayList<V>();
-				list.add(value);
-				map.insert(key, list);
+				// this updates the map head also
+				rc = head.pop(sess, map, key, isLeft);
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
@@ -61,12 +59,15 @@ public class ListPushAgent<V extends Serializable> implements MapGridAgent
 			e.printStackTrace();
 			throw new ObjectGridRuntimeException(e);
 		}
-		return Boolean.TRUE;
+		return rc;
 	}
-
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8842082032401137638L;
 	public Object process(Session sess, ObjectMap map, Object key) 
 	{
-		return push(sess, map, key, isLeft, value);
+		return pop(sess, map, key, isLeft);
 	}
 	
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {

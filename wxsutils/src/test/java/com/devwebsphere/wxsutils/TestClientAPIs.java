@@ -21,6 +21,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.devwebsphere.wxsutils.multijob.pingall.PingAllPartitionsJob;
+import com.devwebsphere.wxsutils.wxsmap.BigListHead;
+import com.devwebsphere.wxsutils.wxsmap.BigListPushAgent;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
@@ -186,13 +188,105 @@ public class TestClientAPIs
 	}
 	
 	@Test
-	public void testListOperations()
+	public void testBigListOperations()
 	{
-		WXSMapOfLists<String, String> map = utils.getMapOfLists("List");
+		WXSMapOfLists<String, String> map = utils.getMapOfLists("BigList");
 		Assert.assertNotNull(map);
 		String key = "TEST";
-		ArrayList<String> list = map.remove(key);
-		Assert.assertNull(list);
+		int numItems = BigListPushAgent.BUCKET_SIZE * 5;
+		long startTime = System.nanoTime();
+		
+		for(int i = 0; i < numItems; ++i)
+		{
+			map.rpush(key, "" + i);
+			Assert.assertEquals(i + 1, map.llen(key));
+		}
+		
+		for(int i = numItems; i >= 0; --i)
+		{
+			map.rtrim(key, i);
+			Assert.assertEquals(i, map.llen(key));
+			if(i != 0)
+			{
+				ArrayList<String> list = map.lrange(key, i - 1, i - 1);
+				Assert.assertNotNull(list);
+				Assert.assertEquals(1, list.size());
+				list = map.lrange(key, 0, i - 1);
+				Assert.assertNotNull(list);
+				Assert.assertEquals(i, list.size());
+				for(int j = 0; j < i; ++j)
+					Assert.assertEquals("" + j, list.get(j));
+			}
+		}
+
+		for(int i = 0; i < numItems; ++i)
+		{
+			map.rpush(key, "" + i);
+			Assert.assertEquals(i + 1, map.llen(key));
+		}
+
+		for(int j = 0; j < numItems; ++j)
+		{
+			ArrayList<String> result = map.lrange(key, j, numItems - 1);
+			Assert.assertNotNull(result);
+			Assert.assertEquals(numItems - j, result.size());
+			for(int i = j; i < numItems; ++i)
+			{
+				Assert.assertEquals("" + i, result.get(i - j));
+			}
+		}
+		
+		for(int j = 0; j < numItems - 2; ++j)
+		{
+			ArrayList<String> result = map.lrange(key, j, j + 1);
+			Assert.assertNotNull(result);
+			Assert.assertEquals(2, result.size());
+			for(int i = 0; i < 2; ++i)
+			{
+				Assert.assertEquals("" + (j + i), result.get(i));
+			}
+		}
+		for(int i = 0; i < numItems; ++i)
+		{
+			String v = map.lpop(key);
+			Assert.assertEquals("" + i, v);
+			Assert.assertEquals(numItems - (i + 1), map.llen(key));
+		}
+		
+		for(int i = 0; i < numItems; ++i)
+		{
+			map.lpush(key, "" + i);
+			Assert.assertEquals(i + 1, map.llen(key));
+		}
+		
+		for(int i = 0; i < numItems; ++i)
+		{
+			String v = map.rpop(key);
+			Assert.assertEquals("" + i, v);
+			Assert.assertEquals(numItems - (i + 1), map.llen(key));
+		}
+		
+		for(int i = 0; i < numItems; ++i)
+		{
+			map.rpush(key, "" + i);
+			Assert.assertEquals(i + 1, map.llen(key));
+		}
+		
+		map.remove(key);
+		Assert.assertEquals(0, map.llen(key));
+		
+		long endTime = System.nanoTime();
+		double duration = (endTime - startTime) / 1000000.0;
+		System.out.println("Took " + duration);
+	}
+	
+	@Test
+	public void testListOperations()
+	{
+		WXSMapOfLists<String, String> map = utils.getMapOfLists("BigList");
+		Assert.assertNotNull(map);
+		String key = "TEST";
+		map.remove(key);
 		int numItems = 10;
 		for(int i = 0; i < numItems; ++i)
 		{

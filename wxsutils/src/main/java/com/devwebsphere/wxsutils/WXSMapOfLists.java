@@ -19,9 +19,8 @@ public interface WXSMapOfLists<K,V> {
 	 * are removed from the right to achieve this.
 	 * @param key The key for the list
 	 * @param size The maximum number of elements in the list
-	 * @return TRUE if the value exists otherwise FALSE
 	 */
-	public boolean rtrim(K key, int size);
+	public void rtrim(K key, int size);
 
 	/**
 	 * This pushes a value on the left side of the list
@@ -41,7 +40,7 @@ public interface WXSMapOfLists<K,V> {
 	 * Remove the list for this key if it exists
 	 * @param key
 	 */
-	public ArrayList<V> remove(K key);
+	public void remove(K key);
 	/**
 	 * This removes and returns the rightmost element in the list
 	 * @param key The key for the list

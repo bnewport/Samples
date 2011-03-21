@@ -24,12 +24,12 @@ import com.devwebsphere.wxsutils.jmx.listset.WXSMapOfListsMBeanManager;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 
-public class WXSMapOfListsImpl<K,V extends Serializable> extends WXSBaseMap implements WXSMapOfLists<K, V> 
+public class WXSMapOfBigListsImpl<K,V extends Serializable> extends WXSBaseMap implements WXSMapOfLists<K, V> 
 {
-	static Logger logger = Logger.getLogger(WXSMapOfListsImpl.class.getName());
+	static Logger logger = Logger.getLogger(WXSMapOfBigListsImpl.class.getName());
 	static LazyMBeanManagerAtomicReference<WXSMapOfListsMBeanManager> wxsMapOfListsMBeanManager = new LazyMBeanManagerAtomicReference<WXSMapOfListsMBeanManager>(WXSMapOfListsMBeanManager.class);
 	
-	public WXSMapOfListsImpl(WXSUtils utils, String mapName)
+	public WXSMapOfBigListsImpl(WXSUtils utils, String mapName)
 	{
 		super(utils, mapName);
 	}
@@ -40,12 +40,12 @@ public class WXSMapOfListsImpl<K,V extends Serializable> extends WXSBaseMap impl
 		long start = System.nanoTime();
 		try
 		{
-			ListLenAgent<V> a = new ListLenAgent<V>();
+			BigListLenAgent<V> a = new BigListLenAgent<V>();
 			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if(rcV != null && rcV instanceof EntryErrorValue)
 			{
-				logger.log(Level.SEVERE, "put(K,V) failed");
+				logger.log(Level.SEVERE, "llen failed");
 				throw new ObjectGridRuntimeException(rcV.toString());
 			}
 			Integer size = (Integer)rcV;
@@ -70,7 +70,7 @@ public class WXSMapOfListsImpl<K,V extends Serializable> extends WXSBaseMap impl
 		long start = System.nanoTime();
 		try
 		{
-			ListPopAgent<V> a = new ListPopAgent<V>();
+			BigListPopAgent<V> a = new BigListPopAgent<V>();
 			a.isLeft = isLeft;
 			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
@@ -100,7 +100,7 @@ public class WXSMapOfListsImpl<K,V extends Serializable> extends WXSBaseMap impl
 		long start = System.nanoTime();
 		try
 		{
-			ListPushAgent<V> pushAgent = new ListPushAgent<V>();
+			BigListPushAgent<V> pushAgent = new BigListPushAgent<V>();
 			pushAgent.isLeft = isLeft;
 			pushAgent.value = value;
 			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(pushAgent, Collections.singletonList(key));
@@ -125,19 +125,18 @@ public class WXSMapOfListsImpl<K,V extends Serializable> extends WXSBaseMap impl
 		long start = System.nanoTime();
 		try
 		{
-			ListRangeAgent<V> a = new ListRangeAgent<V>();
+			BigListRangeAgent<V> a = new BigListRangeAgent<V>();
 			a.low = low;
 			a.high = high;
 			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if(rcV != null && rcV instanceof EntryErrorValue)
 			{
-				logger.log(Level.SEVERE, "put(K,V) failed");
+				logger.log(Level.SEVERE, "range failed");
 				throw new ObjectGridRuntimeException(rcV.toString());
 			}
-			ArrayList<V> l = (ArrayList<V>)rcV;
 			mbean.getRangeMetrics().logTime(System.nanoTime() - start);
-			return l;
+			return (ArrayList<V>)rcV;
 		}
 		catch(Exception e)
 		{
@@ -152,16 +151,15 @@ public class WXSMapOfListsImpl<K,V extends Serializable> extends WXSBaseMap impl
 		long start = System.nanoTime();
 		try
 		{
-			ListTrimAgent<V> a = new ListTrimAgent<V>();
-			a.newSize = size;
+			BigListTrimAgent<V> a = new BigListTrimAgent<V>();
+			a.size = size;
 			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if(rcV != null && rcV instanceof EntryErrorValue)
 			{
-				logger.log(Level.SEVERE, "put(K,V) failed");
+				logger.log(Level.SEVERE, "remove(K) failed");
 				throw new ObjectGridRuntimeException(rcV.toString());
 			}
-			Boolean l = (Boolean)rcV;
 			mbean.getTrimMetrics().logTime(System.nanoTime() - start);
 		}
 		catch(Exception e)
@@ -187,7 +185,14 @@ public class WXSMapOfListsImpl<K,V extends Serializable> extends WXSBaseMap impl
 		long start = System.nanoTime();
 		try
 		{
-			ArrayList<V> rc = (ArrayList<V>)tls.getMap(mapName).remove(key);
+			BigListRemoveAgent<V> a = new BigListRemoveAgent<V>();
+			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
+			Object rcV = rc.get(key);
+			if(rcV != null && rcV instanceof EntryErrorValue)
+			{
+				logger.log(Level.SEVERE, "remove(K) failed");
+				throw new ObjectGridRuntimeException(rcV.toString());
+			}
 			mbean.getRemoveMetrics().logTime(System.nanoTime() - start);
 		}
 		catch(Exception e)

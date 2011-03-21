@@ -20,6 +20,8 @@ Licensed Materials - Property of IBM
             <map ref="Map2"/>
             <map ref="FarMap3"/>
             <map ref="List"/>
+            <map ref="BigList"/>
+            <map ref="BigList_b"/>
             <map ref="Set"/>
             
             <map ref="RouterKeyI32"/>

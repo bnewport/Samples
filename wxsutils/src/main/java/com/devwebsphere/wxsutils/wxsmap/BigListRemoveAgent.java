@@ -11,8 +11,9 @@
 package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
@@ -22,51 +23,41 @@ import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
-
-public class ListPushAgent<V extends Serializable> implements MapGridAgent 
+public class BigListRemoveAgent<V extends Serializable> implements MapGridAgent 
 {
-	public boolean isLeft;
-	public V value;
+	static Logger logger = Logger.getLogger(BigListRemoveAgent.class.getName());
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 8842082032401137638L;
+	private static final long serialVersionUID = -3736978703392897531L;
 	
-	static public <V> Boolean push(Session sess, ObjectMap map, Object key, boolean isLeft, V value)
+	static public <V extends Serializable> void remove(Session sess, ObjectMap map, Object key)
 	{
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), ListPushAgent.class.getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListRemoveAgent.class.getName());
 		long startNS = System.nanoTime();
 		try
 		{
-			ArrayList<V> list = (ArrayList<V>)map.getForUpdate(key);
-			if(list != null)
+			BigListHead<V> head = (BigListHead<V>)map.getForUpdate(key);
+			if(head != null)
 			{
-				if(isLeft)
-					list.add(0, value);
-				else
-					list.add(value);
-				map.update(key, list);
-			}
-			else
-			{
-				list = new ArrayList<V>();
-				list.add(value);
-				map.insert(key, list);
+				head.remove(sess, map, key);
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
 		catch(ObjectGridException e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			mbean.getKeysMetric().logException(e);
-			e.printStackTrace();
 			throw new ObjectGridRuntimeException(e);
 		}
-		return Boolean.TRUE;
 	}
-
+	/**
+	 * 
+	 */
 	public Object process(Session sess, ObjectMap map, Object key) 
 	{
-		return push(sess, map, key, isLeft, value);
+		remove(sess, map, key);
+		return Boolean.TRUE;
 	}
 	
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {
