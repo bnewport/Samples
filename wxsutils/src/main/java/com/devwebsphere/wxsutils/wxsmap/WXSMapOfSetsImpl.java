@@ -90,13 +90,13 @@ public class WXSMapOfSetsImpl<K,V extends Serializable> extends WXSBaseMap imple
 		}
 	}
 
-	public boolean contains(K key, boolean testAll, V... values) {
+	public boolean contains(K key, MemberOperation op, V... values) {
 		WXSMapOfSetsMBeanImpl mbean = wxsMapOfSetsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		try
 		{
 			SetIsMemberAgent<V> a = new SetIsMemberAgent<V>();
-			a.isAll = testAll;
+			a.isAll = op == MemberOperation.AND;
 			a.values = values;
 			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);

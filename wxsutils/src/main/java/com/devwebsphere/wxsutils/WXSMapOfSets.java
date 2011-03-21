@@ -12,16 +12,24 @@ package com.devwebsphere.wxsutils;
 
 import java.util.Set;
 
+import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent;
+
 /**
  * This allows a client to interact with a WXS Map that is treated
  * as a map of key/set pairs. Each entry consists of a key and the value
- * is a Set<V>
+ * is a Set<V>. This implementation is optimized to store the set
+ * as a distinct group of N Sets. This lowers the cost of adding
+ * or removing elements or checking for membership but
+ * the size of a set is still bounded within a single shard.
  * @author bnewport
+ * @see SetAddRemoveAgent#NUM_BUCKETS
  *
  * @param <K> The key for the set
  * @param <V> Each value set consists of this elements of this type only
  */
-public interface WXSMapOfSets<K,V> {
+public interface WXSMapOfSets<K,V> 
+{
+	public enum MemberOperation {OR, AND};
 
 	/**
 	 * This adds a value to the set named key.
@@ -67,7 +75,7 @@ public interface WXSMapOfSets<K,V> {
 	 * @param value The values to test for inclusion
 	 * @return true if the elements are present in the set
 	 */
-	public boolean contains(K key, boolean testAll, V... values);
+	public boolean contains(K key, MemberOperation op, V... values);
 
 	/**
 	 * This returns all the members of the set for the key.

@@ -26,7 +26,7 @@ import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
 public class SetAddRemoveAgent<V extends Serializable> implements MapGridAgent 
 {
-	static int NUM_BUCKETS = 211;
+	static public int NUM_BUCKETS = 211;
 	public boolean isAdd;
 	public V[] values;
 	/**

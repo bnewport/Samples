@@ -20,6 +20,7 @@ import junit.framework.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.devwebsphere.wxsutils.WXSMapOfSets.MemberOperation;
 import com.devwebsphere.wxsutils.multijob.pingall.PingAllPartitionsJob;
 import com.devwebsphere.wxsutils.wxsmap.BigListHead;
 import com.devwebsphere.wxsutils.wxsmap.BigListPushAgent;
@@ -344,12 +345,12 @@ public class TestClientAPIs
 		{
 			map.add(key, "" + i);
 			Assert.assertEquals(i + 1, map.size(key));
-			Assert.assertTrue(map.contains(key, true, "" + i));
+			Assert.assertTrue(map.contains(key, MemberOperation.AND, "" + i));
 		}
 		map.add(key, "" + 0);
 		Assert.assertEquals(numKeys, map.size(key));
 		map.remove(key, "" + 0);
-		Assert.assertFalse(map.contains(key, true, "" + 0));
+		Assert.assertFalse(map.contains(key, MemberOperation.AND, "" + 0));
 		Assert.assertEquals(numKeys - 1, map.size(key));
 		Set<String> values = map.get(key);
 		Assert.assertNotNull(values);
