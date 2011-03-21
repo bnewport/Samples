@@ -12,6 +12,32 @@ package com.devwebsphere.wxsutils;
 
 import java.util.ArrayList;
 
+import com.devwebsphere.wxsutils.wxsmap.BigListHead;
+import com.devwebsphere.wxsutils.wxsmap.BigListPushAgent;
+
+/**
+ * This allows entries in a Map to be lists. The implementation actually uses
+ * two Maps for every List Map. One is named with the application name
+ * but only holds meta data for the actual list. The value used for this
+ * is BigListHead. The actual data for the list is stored in another map
+ * in the same partition as the real map. This map is called "mapName_b". The lists is split in to blocks
+ * and these blocks are stored in the second map using a key like "name#NNN"
+ * where name is the key as a string and NNN is the block number. The blocks
+ * are up to a certain size. This implementation means that as the list
+ * gets bigger the impact of the change is limited to BUCKET_SIZE entries
+ * at a time. So, even a list with 10000 elements in it would only see
+ * replication of at most BUCKET_SIZE entries when an item is pushed or popped.
+ * All element buckets are kept in the same partition as the list meta data for
+ * performance. It's assumed that lists with large sizes are evenly distributed
+ * throughout all partitions. If one partition has an unusually large list then this
+ * may cause memory problems.
+ * @author bnewport
+ * @see BigListPushAgent#BUCKET_SIZE
+ * @see BigListHead
+ *
+ * @param <K>
+ * @param <V>
+ */
 public interface WXSMapOfLists<K,V> {
 
 	/**
