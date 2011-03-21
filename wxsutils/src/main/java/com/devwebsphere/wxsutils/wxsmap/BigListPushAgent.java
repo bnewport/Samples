@@ -23,7 +23,7 @@ import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.UndefinedMapException;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
-public class BigListPushAgent <V extends Serializable> implements MapGridAgent 
+public class BigListPushAgent <K extends Serializable, V extends Serializable> implements MapGridAgent 
 {
 	static Logger logger = Logger.getLogger(BigListPushAgent.class.getName());
 
@@ -31,13 +31,14 @@ public class BigListPushAgent <V extends Serializable> implements MapGridAgent
 	
 	public boolean isLeft;
 	public V value;
+	public K dirtyKey;
 	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -5627208135087330201L;
-
-	public Object process(Session sess, ObjectMap map, Object key) 
+	
+	static <K extends Serializable, V extends Serializable> void push(Session sess, ObjectMap map, Object key, boolean isLeft, V value, K dirtyKey)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListPushAgent.class.getName());
 		long startNS = System.nanoTime();
@@ -54,6 +55,12 @@ public class BigListPushAgent <V extends Serializable> implements MapGridAgent
 				// this updates the head in the map also
 				head.push(sess, map, key, isLeft, value);
 			}
+			if(dirtyKey != null)
+			{
+				ObjectMap dirtyMap = sess.getMap(map.getName() + "_dirty");
+				// needs to be a set
+//				BigListPushAgent.push(sess, dirtyMap, dirtyKey, true, (Serializable)key, null);
+			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
 		catch(UndefinedMapException e)
@@ -66,6 +73,11 @@ public class BigListPushAgent <V extends Serializable> implements MapGridAgent
 			e.printStackTrace();
 			throw new ObjectGridRuntimeException(e);
 		}
+	}
+
+	public Object process(Session sess, ObjectMap map, Object key) 
+	{
+		push(sess, map, key, isLeft, value, dirtyKey);
 		return Boolean.TRUE;
 	}
 

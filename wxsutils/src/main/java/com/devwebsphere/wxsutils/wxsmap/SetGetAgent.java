@@ -11,6 +11,7 @@
 package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,7 +23,7 @@ import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
-public class SetSizeAgent<V extends Serializable> implements MapGridAgent 
+public class SetGetAgent<V extends Serializable> implements MapGridAgent 
 {
 	/**
 	 * 
@@ -35,7 +36,7 @@ public class SetSizeAgent<V extends Serializable> implements MapGridAgent
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
 		long startNS = System.nanoTime();
-		int rc = 0;
+		Set<V> rc = new HashSet<V>();
 		try
 		{
 			map.get(key);
@@ -43,9 +44,7 @@ public class SetSizeAgent<V extends Serializable> implements MapGridAgent
 			{
 				Set<V> d = (Set<V>)map.get(SetAddRemoveAgent.getBucketKeyForBucket(key, b));
 				if(d != null)
-				{
-					rc += d.size();
-				}
+					rc.addAll(d);
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}

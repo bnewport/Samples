@@ -122,14 +122,22 @@ public class WXSMapOfSetsImpl<K,V extends Serializable> extends WXSBaseMap imple
 		long start = System.nanoTime();
 		try
 		{
-			Set<V> rc = (Set<V>)tls.getMap(mapName).remove(key);
-//			mbean.getRemoveMetrics().logTime(System.nanoTime() - start);
-			return rc;
+			SetGetAgent<V> a = new SetGetAgent<V>();
+			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
+			Object rcV = rc.get(key);
+			if(rcV != null && rcV instanceof EntryErrorValue)
+			{
+				logger.log(Level.SEVERE, "put(K,V) failed");
+				throw new ObjectGridRuntimeException(rcV.toString());
+			}
+//			mbean.getSizeMetrics().logTime(System.nanoTime() - start);
+			Set<V> set = (Set<V>)rcV;
+			return set.size() > 0 ? set : null;
 		}
 		catch(Exception e)
 		{
 			logger.log(Level.SEVERE, "Exception", e);
-//			mbean.getRemoveMetrics().logException(e);
+//			mbean.getSizeMetrics().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
@@ -139,20 +147,26 @@ public class WXSMapOfSetsImpl<K,V extends Serializable> extends WXSBaseMap imple
 		addRemove(key, false, values);
 	}
 
-	public Set<V> remove(K key) 
+	public void remove(K key) 
 	{
 		WXSMapOfSetsMBeanImpl mbean = wxsMapOfSetsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		try
 		{
-			Set<V> rc = (Set<V>)tls.getMap(mapName).remove(key);
-//			mbean.getRemoveMetrics().logTime(System.nanoTime() - start);
-			return rc;
+			SetRemoveAgent<V> a = new SetRemoveAgent<V>();
+			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
+			Object rcV = rc.get(key);
+			if(rcV != null && rcV instanceof EntryErrorValue)
+			{
+				logger.log(Level.SEVERE, "put(K,V) failed");
+				throw new ObjectGridRuntimeException(rcV.toString());
+			}
+			mbean.getSizeMetrics().logTime(System.nanoTime() - start);
 		}
 		catch(Exception e)
 		{
 			logger.log(Level.SEVERE, "Exception", e);
-//			mbean.getRemoveMetrics().logException(e);
+			mbean.getSizeMetrics().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}

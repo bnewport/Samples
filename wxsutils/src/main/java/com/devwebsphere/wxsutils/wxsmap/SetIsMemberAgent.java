@@ -35,16 +35,17 @@ public class SetIsMemberAgent<V extends Serializable> implements MapGridAgent
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
 		long startNS = System.nanoTime();
-		boolean rc = false;
+		boolean rc = isAll ? true : false;
 		try
 		{
-			Set<V> s = (Set<V>)map.get(key);
-			if(s != null)
+			map.get(key); // token lock to prevent deadlocks
+			for(V v : values)
 			{
-				if(isAll)
+				String bucketKey = SetAddRemoveAgent.getBucketKeyForValue(key, v);
+				Set<V> s = (Set<V>)map.get(bucketKey);
+				if(s != null)
 				{
-					rc = true;
-					for(V v : values)
+					if(isAll)
 					{
 						if(!s.contains(v))
 						{
@@ -52,11 +53,7 @@ public class SetIsMemberAgent<V extends Serializable> implements MapGridAgent
 							break;
 						}
 					}
-				}
-				else
-				{
-					rc = false;
-					for(V v : values)
+					else
 					{
 						if(s.contains(v))
 						{

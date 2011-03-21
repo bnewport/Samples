@@ -22,7 +22,7 @@ import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
-public class SetSizeAgent<V extends Serializable> implements MapGridAgent 
+public class SetRemoveAgent<V extends Serializable> implements MapGridAgent 
 {
 	/**
 	 * 
@@ -35,17 +35,12 @@ public class SetSizeAgent<V extends Serializable> implements MapGridAgent
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
 		long startNS = System.nanoTime();
-		int rc = 0;
 		try
 		{
-			map.get(key);
+			map.getForUpdate(key);
 			for(int  b = 0; b < SetAddRemoveAgent.NUM_BUCKETS; ++b)
 			{
-				Set<V> d = (Set<V>)map.get(SetAddRemoveAgent.getBucketKeyForBucket(key, b));
-				if(d != null)
-				{
-					rc += d.size();
-				}
+				Set<V> d = (Set<V>)map.remove(SetAddRemoveAgent.getBucketKeyForBucket(key, b));
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
@@ -55,7 +50,7 @@ public class SetSizeAgent<V extends Serializable> implements MapGridAgent
 			e.printStackTrace();
 			throw new ObjectGridRuntimeException(e);
 		}
-		return rc;
+		return Boolean.TRUE;
 	}
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {
 		// TODO Auto-generated method stub

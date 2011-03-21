@@ -24,7 +24,7 @@ import com.devwebsphere.wxsutils.jmx.listset.WXSMapOfListsMBeanManager;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 
-public class WXSMapOfBigListsImpl<K,V extends Serializable> extends WXSBaseMap implements WXSMapOfLists<K, V> 
+public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable> extends WXSBaseMap implements WXSMapOfLists<K, V> 
 {
 	static Logger logger = Logger.getLogger(WXSMapOfBigListsImpl.class.getName());
 	static LazyMBeanManagerAtomicReference<WXSMapOfListsMBeanManager> wxsMapOfListsMBeanManager = new LazyMBeanManagerAtomicReference<WXSMapOfListsMBeanManager>(WXSMapOfListsMBeanManager.class);
@@ -100,7 +100,7 @@ public class WXSMapOfBigListsImpl<K,V extends Serializable> extends WXSBaseMap i
 		long start = System.nanoTime();
 		try
 		{
-			BigListPushAgent<V> pushAgent = new BigListPushAgent<V>();
+			BigListPushAgent<K, V> pushAgent = new BigListPushAgent<K, V>();
 			pushAgent.isLeft = isLeft;
 			pushAgent.value = value;
 			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(pushAgent, Collections.singletonList(key));

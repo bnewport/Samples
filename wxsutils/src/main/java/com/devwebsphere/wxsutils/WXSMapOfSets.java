@@ -80,5 +80,5 @@ public interface WXSMapOfSets<K,V> {
 	 * This removes the set with the specified key if it exists
 	 * @param key
 	 */
-	public Set<V> remove(K key);
+	public void remove(K key);
 }

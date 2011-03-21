@@ -169,7 +169,7 @@ public class WXSUtils
 		tls = new ThreadLocalSession(this);
 	}
 
-	public <K,V extends Serializable> WXSMapOfLists<K,V> getMapOfLists(String mapName)
+	public <K extends Serializable,V extends Serializable> WXSMapOfLists<K,V> getMapOfLists(String mapName)
 	{
 		WXSBaseMap bmap = maps.get(mapName);
 		if(bmap != null && !(bmap instanceof WXSMapOfBigListsImpl))
