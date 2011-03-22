@@ -217,7 +217,7 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	public static <K extends Serializable, V extends Serializable> Set<V> getAllDirtyKeysInGrid(ObjectGrid ogClient, String listMapName, K dirtyKey)
 	{
 		WXSUtils utils = new WXSUtils(ogClient);
-		WXSMapOfLists<V, String> listMap = utils.getMapOfLists("BigList");
+//		WXSMapOfLists<V, String> listMap = utils.getMapOfLists("BigList");
 		
 		// You need a new one of these for each whole grid iteration. Once it getNextResult returns
 		// null then make a new one
@@ -234,7 +234,7 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 			{
 				for(V listKey : r)
 				{
-					String theJob = listMap.rpop(listKey);
+//					String theJob = listMap.rpop(listKey);
 					// do something with theJob
 				}
 				// add to set
