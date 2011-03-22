@@ -38,6 +38,8 @@ public class BigListPopAgent<K extends Serializable, V extends Serializable> imp
 	public LR isLeft;
 	public K dirtyKey;
 	
+	static EmptyMarker emptyMarker = new EmptyMarker();
+	
 	static public <K extends Serializable, V extends Serializable> Object pop(Session sess, ObjectMap map, Object key, LR isLeft, K dirtyKey)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListPopAgent.class.getName());
@@ -55,7 +57,7 @@ public class BigListPopAgent<K extends Serializable, V extends Serializable> imp
 			
 			BigListHead<V> head = (BigListHead<V>)map.getForUpdate(key);
 			if(head == null)
-				rc = new ListPopAgent.EmptyMarker();
+				rc = emptyMarker;
 			else
 			{
 				// this updates the map head also

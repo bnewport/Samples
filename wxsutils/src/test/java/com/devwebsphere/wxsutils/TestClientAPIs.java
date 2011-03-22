@@ -197,6 +197,12 @@ public class TestClientAPIs
 		String key = "TEST";
 		int numItems = BigListPushAgent.BUCKET_SIZE * 5;
 		long startTime = System.nanoTime();
+
+		// check popping an empty list returns the right value
+		String rc = map.lpop(key);
+		Assert.assertNull(rc);
+		rc = map.rpop(key);
+		Assert.assertNull(rc);
 		
 		for(int i = 0; i < numItems; ++i)
 		{

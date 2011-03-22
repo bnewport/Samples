@@ -88,6 +88,10 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 				throw new ObjectGridRuntimeException(rcV.toString());
 			}
 			mbean.getPopMetrics().logTime(System.nanoTime() - start);
+			if(rcV instanceof BigListPopAgent.EmptyMarker)
+			{
+				rcV = null;
+			}
 			return (V)rcV;
 		}
 		catch(Exception e)
