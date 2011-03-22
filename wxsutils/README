@@ -9,3 +9,8 @@ mvn test -PstartSingleCatalog -e
 
 Note in application server environments
 You should configure wxsutils.jar to be a shared jar referenced by the WAR or EAR modules.
+
+To build without running test cases use:
+
+mvn install -DskipTests=true
+
