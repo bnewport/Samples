@@ -66,6 +66,7 @@ public class BigListHead <V extends Serializable> implements Serializable
 		}
 		catch(UndefinedMapException e)
 		{
+			logger.log(Level.SEVERE, "Unknown map " + bucketMapName, e);
 			throw new ObjectGridRuntimeException("Bucket map doesn't exist " + bucketMapName, e);
 		}
 	}

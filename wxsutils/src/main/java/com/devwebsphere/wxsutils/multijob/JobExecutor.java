@@ -1,4 +1,3 @@
-package com.devwebsphere.wxsutils.multijob;
 //
 //This sample program is provided AS IS and may be used, executed, copied and
 //modified without royalty payment by customer (a) for its own instruction and
@@ -9,7 +8,7 @@ package com.devwebsphere.wxsutils.multijob;
 //5724-J34 (C) COPYRIGHT International Business Machines Corp. 2009
 //All Rights Reserved * Licensed Materials - Property of IBM
 //
-
+package com.devwebsphere.wxsutils.multijob;
 
 import java.util.Collections;
 import java.util.Map;
@@ -37,6 +36,7 @@ public class JobExecutor <V,R>
 	static Logger logger = Logger.getLogger(JobExecutor.class.getName());
 	MultipartTask<V, R> mtask;
 	ObjectGrid ogclient;
+	BackingMap bmap;
 	int currentPartitionID;
 	SinglePartTask<V, R> currTask;
 	String routingMapName = "RouterKeyI32";
@@ -52,7 +52,7 @@ public class JobExecutor <V,R>
 		this.mtask = m;
 		this.ogclient = ogclient;
 		String aMapName = (String)ogclient.getListOfMapNames().get(0);
-		BackingMap bmap = ogclient.getMap(aMapName);
+		bmap = ogclient.getMap(aMapName);
 		currentPartitionID = bmap.getPartitionManager().getNumOfPartitions() - 1;
 		currTask = null;
 	}
@@ -85,7 +85,12 @@ public class JobExecutor <V,R>
 						currTask = mtask.createTaskForPartition(null);
 					}
 					else
+					{
+						// reset executor
+						currentPartitionID = bmap.getPartitionManager().getNumOfPartitions() - 1;
+						currTask = null;
 						return null;
+					}
 				}
 				// currTask needs to be sent to current partition
 				Object key = new Integer(currentPartitionID);

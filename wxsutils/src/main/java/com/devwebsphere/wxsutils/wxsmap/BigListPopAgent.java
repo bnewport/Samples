@@ -12,6 +12,8 @@ package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
@@ -24,7 +26,8 @@ import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
 public class BigListPopAgent<K extends Serializable, V extends Serializable> implements MapGridAgent 
 {
-
+	static Logger logger = Logger.getLogger(BigListPopAgent.class.getName());
+	
 	static public class EmptyMarker implements Serializable
 	{
 
@@ -67,8 +70,8 @@ public class BigListPopAgent<K extends Serializable, V extends Serializable> imp
 		}
 		catch(ObjectGridException e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			mbean.getKeysMetric().logException(e);
-			e.printStackTrace();
 			throw new ObjectGridRuntimeException(e);
 		}
 		return rc;

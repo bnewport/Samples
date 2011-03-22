@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxsutils.WXSMapOfLists;
+import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.multijob.JobExecutor;
 import com.devwebsphere.wxsutils.multijob.MultipartTask;
 import com.devwebsphere.wxsutils.multijob.SinglePartTask;
@@ -31,6 +33,7 @@ import com.ibm.websphere.objectgrid.Session;
  * This will pull dirty lists from a specific dirty set. It returns the keys
  * for the lists which are dirty.
  * @author bnewport
+ * @see FetchJobsFromAllDirtyListsJob#getAllDirtyKeysInGrid(ObjectGrid, String, Serializable)
  *
  * @param <K>
  * @param <V>
@@ -136,7 +139,8 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	}
 	
 	public SinglePartTask<PartitionResult<V>, ArrayList<V>> createTaskForPartition(
-			SinglePartTask<PartitionResult<V>, ArrayList<V>> previousTask) {
+			SinglePartTask<PartitionResult<V>, ArrayList<V>> previousTask) 
+	{
 		// prevtask is null when called for first time for a partition
 		if(previousTask == null)
 		{
@@ -151,6 +155,7 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 		{
 			if(lastVisitedBucket < SetAddRemoveAgent.NUM_BUCKETS)
 			{
+				// keep going on this partition at the next set bucket
 				FetchDirtyJobsInPartitionTask<K,V> t = new FetchDirtyJobsInPartitionTask<K,V>();
 				t.dirtyKey = dirtyKey;
 				t.listMapName = listMapName;
@@ -159,6 +164,7 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 			}
 			else
 			{
+				// time to move to the next partition
 				return null;
 			}
 		}
@@ -166,7 +172,7 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	
 	
 	/**
-	 * This is just a delegate to the JobExecutor. This can return Maps of zero size. Only
+	 * This is just a delegate to the JobExecutor. This can return Lists of zero size. Only
 	 * a null return indicates the end of the operation.
 	 * @return
 	 */
@@ -175,11 +181,6 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 		return je.getNextResult();
 	}
 	
-	public JobExecutor<PartitionResult<V>, ArrayList<V>> getJE()
-	{
-		return je;
-	}
-
 	/**
 	 * This will visit all partitions for the specified client
 	 * grid connections
@@ -192,7 +193,7 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 		int count = 0;
 		while(true)
 		{
-			ArrayList<V> list = job.getJE().getNextResult();
+			ArrayList<V> list = job.getNextResult();
 			if(list == null)
 				break;
 			++count;
@@ -215,19 +216,34 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	 */
 	public static <K extends Serializable, V extends Serializable> Set<V> getAllDirtyKeysInGrid(ObjectGrid ogClient, String listMapName, K dirtyKey)
 	{
-		FetchJobsFromAllDirtyListsJob<K, V> job = new FetchJobsFromAllDirtyListsJob<K, V>(ogClient, listMapName, dirtyKey);
+		WXSUtils utils = new WXSUtils(ogClient);
+		WXSMapOfLists<V, String> listMap = utils.getMapOfLists("BigList");
 		
+		// You need a new one of these for each whole grid iteration. Once it getNextResult returns
+		// null then make a new one
+		FetchJobsFromAllDirtyListsJob<K, V> job = new FetchJobsFromAllDirtyListsJob<K, V>(ogClient, listMapName, dirtyKey);
+
+		// we'll add all the dirty list keys to this set
 		Set<V> result = new HashSet<V>();
 		while(true)
 		{
+			// get the next block of dirty list keys
 			ArrayList<V> r = job.getNextResult();
+			// when r is null then the whole grid has been checked
 			if(r != null)
 			{
+				for(V listKey : r)
+				{
+					String theJob = listMap.rpop(listKey);
+					// do something with theJob
+				}
+				// add to set
 				result.addAll(r);
 			}
 			else
 				break;
 		}
+		// job is now of no use, do not reuse it, create a new one
 		return result;
 	}
 }
