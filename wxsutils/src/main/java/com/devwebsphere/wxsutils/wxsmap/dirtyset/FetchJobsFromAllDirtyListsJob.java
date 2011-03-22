@@ -28,19 +28,21 @@ import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 
 /**
- * This simply invokes some code on every partition. This can be useful
- * if firewalls will close inactive sockets after some time period. Executing
- * this task will touch every container and so long as this is done within
- * the firewall timeout period then sockets to the grid containers can
- * be kept alive.
+ * This will pull dirty lists from a specific dirty set. It returns the keys
+ * for the lists which are dirty.
  * @author bnewport
- * @see FetchJobsFromAllDirtyListsJob#visitAllPartitions(ObjectGrid)
  *
+ * @param <K>
+ * @param <V>
  */
 public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Serializable> implements MultipartTask<PartitionResult<V>, ArrayList<V>>
 {
 	static Logger logger = Logger.getLogger(FetchJobsFromAllDirtyListsJob.class.getName());
-	
+
+	/**
+	 * extractResult will set this to the last bucket visited on the grid side during
+	 * the last call. The next iteration starts at this plus one.
+	 */
 	int lastVisitedBucket;
 
 	/**
@@ -53,6 +55,15 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 		return rawRC.result;
 	}
 
+	/**
+	 * This will check a single partition for all keys for the single set called
+	 * dirtyKey within this partition. It iterates over every bucket for
+	 * that set and skips empty buckets
+	 * @author bnewport
+	 *
+	 * @param <K>
+	 * @param <V>
+	 */
 	static public class FetchDirtyJobsInPartitionTask <K extends Serializable, V extends Serializable> implements SinglePartTask<PartitionResult<V>, ArrayList<V>>
 	{
 		K dirtyKey;
@@ -76,6 +87,11 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 			return result.isEmpty();
 		}
 
+		/**
+		 * This will start at nextBucket and scan it and subsequent buckets for non empty set.
+		 * The result is a PartitionResult that indicates the last bucket checked
+		 * and the keys found if any.
+		 */
 		public PartitionResult<V> process(Session sess) 
 		{
 			try
@@ -185,6 +201,18 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 		return count;
 	}
 	
+	/**
+	 * This code illustrates how to get a ALL of the dirty keys from the grid. It just
+	 * repeatedly calls getNextResult until it returns null. Then it has visited every
+	 * partition. This will return all the keys in a bucket until every bucket in the
+	 * grid has been examined. Empty buckets are skipped
+	 * @param <K>
+	 * @param <V>
+	 * @param ogClient
+	 * @param listMapName
+	 * @param dirtyKey
+	 * @return
+	 */
 	public static <K extends Serializable, V extends Serializable> Set<V> getAllDirtyKeysInGrid(ObjectGrid ogClient, String listMapName, K dirtyKey)
 	{
 		FetchJobsFromAllDirtyListsJob<K, V> job = new FetchJobsFromAllDirtyListsJob<K, V>(ogClient, listMapName, dirtyKey);
