@@ -63,6 +63,16 @@ public interface WXSMapOfLists<K,V> {
 	 * @return NULL if the list is empty or the leftmost element
 	 */
 	public V lpop(K key);
+	
+	/**
+	 * This is the same as lpop but if the list is empty
+	 * afterwards then its key is removed from the set named
+	 * dirtySet in the Map mapName_dirty
+	 * @param key
+	 * @param dirtyKey
+	 * @return
+	 */
+	public V lpop(K key, K dirtyKey);
 
 	/**
 	 * Remove the list for this key if it exists
@@ -75,6 +85,16 @@ public interface WXSMapOfLists<K,V> {
 	 * @return NULL if the list is empty or the rightmost element
 	 */
 	public V rpop(K key);
+	
+	/**
+	 * This is the same as rpop but if the list is empty
+	 * afterwards then its key is removed from the set named
+	 * dirtySet in the Map mapName_dirty
+	 * @param key
+	 * @param dirtyKey
+	 * @return
+	 */
+	public V rpop(K key, K dirtyKey);
 
 	/**
 	 * This pushes the value on the righthand side of the list

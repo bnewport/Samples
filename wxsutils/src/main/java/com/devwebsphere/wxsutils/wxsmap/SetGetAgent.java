@@ -34,9 +34,10 @@ public class SetGetAgent<V extends Serializable> implements MapGridAgent
 	/**
 	 * 
 	 */
-	public Object process(Session sess, ObjectMap map, Object key) 
+	
+	static public <V extends Serializable> Set<V> get(Session sess, ObjectMap map, Object key, Filter filter)
 	{
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), SetGetAgent.class.getName());
 		long startNS = System.nanoTime();
 		Set<V> rc = new HashSet<V>();
 		try
@@ -69,6 +70,12 @@ public class SetGetAgent<V extends Serializable> implements MapGridAgent
 		}
 		return rc;
 	}
+	
+	public Object process(Session sess, ObjectMap map, Object key) 
+	{
+		return get(sess, map, key, filter);
+	}
+	
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {
 		// TODO Auto-generated method stub
 		return null;

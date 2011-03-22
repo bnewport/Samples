@@ -1,4 +1,3 @@
-package com.devwebsphere.wxsutils.multijob;
 //
 //This sample program is provided AS IS and may be used, executed, copied and
 //modified without royalty payment by customer (a) for its own instruction and
@@ -9,24 +8,30 @@ package com.devwebsphere.wxsutils.multijob;
 //5724-J34 (C) COPYRIGHT International Business Machines Corp. 2009
 //All Rights Reserved * Licensed Materials - Property of IBM
 //
-
+package com.devwebsphere.wxsutils.wxsmap.dirtyset;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
-import com.ibm.websphere.objectgrid.Session;
-
-public interface SinglePartTask<V,R> extends Serializable
+public class PartitionResult<V extends Serializable> implements Serializable
 {
 	/**
-	 * This is called on the grid side to process the next block within this partition
-	 * @param sess The session to the local partition primary
-	 * @return the next block of processing information for the user
+	 * 
 	 */
-	V process(Session sess);
+	private static final long serialVersionUID = -3257173697785502710L;
+	ArrayList<V> result;
+	int nextBucket;
 	
-	/**
-	 * This tests of the result has any data
-	 * @return
-	 */
-	boolean isResultEmpty(R result);
+	public String toString()
+	{
+		StringBuilder sb = new StringBuilder("PartitionResult<[");
+		for(V v : result)
+		{
+			sb.append(v.toString());
+			sb.append(",");
+		}
+		sb.append("], next=");
+		sb.append(Integer.toString(nextBucket));
+		return sb.toString();
+	}
 }

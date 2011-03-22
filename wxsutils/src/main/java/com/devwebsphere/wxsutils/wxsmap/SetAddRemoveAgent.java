@@ -26,8 +26,9 @@ import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
 public class SetAddRemoveAgent<V extends Serializable> implements MapGridAgent 
 {
+	static enum Operation { ADD, REMOVE};
 	static public int NUM_BUCKETS = 211;
-	public boolean isAdd;
+	public Operation op;
 	public V[] values;
 	/**
 	 * 
@@ -58,7 +59,7 @@ public class SetAddRemoveAgent<V extends Serializable> implements MapGridAgent
 	 * @param isAdd
 	 * @param values
 	 */
-	static public <V> void add(Session sess, ObjectMap map, Object key, boolean isAdd, V... values)
+	static public <V> void doOperation(Session sess, ObjectMap map, Object key, Operation op, V... values)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), SetAddRemoveAgent.class.getName());
 		long startNS = System.nanoTime();
@@ -71,7 +72,7 @@ public class SetAddRemoveAgent<V extends Serializable> implements MapGridAgent
 				Set<V> s = (Set<V>)map.getForUpdate(bucketKey);
 				if(s != null)
 				{
-					if(isAdd)
+					if(op == Operation.ADD)
 						for(V v : values)
 							s.add(v);
 					else
@@ -82,7 +83,7 @@ public class SetAddRemoveAgent<V extends Serializable> implements MapGridAgent
 				else
 				{
 					s = new HashSet<V>();
-					if(isAdd)
+					if(op == Operation.ADD)
 						for(V v : values)
 							s.add(v);
 					map.insert(bucketKey, s);
@@ -100,7 +101,7 @@ public class SetAddRemoveAgent<V extends Serializable> implements MapGridAgent
 
 	public Object process(Session sess, ObjectMap map, Object key) 
 	{
-		SetAddRemoveAgent.add(sess, map, key, isAdd, values);
+		SetAddRemoveAgent.doOperation(sess, map, key, op, values);
 		return Boolean.TRUE;
 	}
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {

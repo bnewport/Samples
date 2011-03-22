@@ -95,7 +95,7 @@ public class JobExecutor <V,R>
 				// invoke the SingleTaskPart on this specified partition
 				Map<Integer, V> agent_result = amgr.callMapAgent(agent, Collections.singleton(key));
 				// extract the user exposed object from the return value
-				R r = currTask.extractResult(agent_result.get(key));
+				R r = mtask.extractResult(agent_result.get(key));
 				return r;
 			}
 			else

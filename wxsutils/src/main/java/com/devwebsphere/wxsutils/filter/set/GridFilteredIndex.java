@@ -44,6 +44,15 @@ public class GridFilteredIndex<K,V> implements MultipartTask<Map<K,V>, Map<K,V>>
 	public enum Operation {eq, lt, lte, gt, gte, btwn};
 
 	/**
+	 * This is called to convert from the network form to the
+	 * client form. Its the same in this case.
+	 */
+	public Map<K, V> extractResult(Map<K, V> rawRC) 
+	{
+		return rawRC;
+	}
+
+	/**
 	 * This is called grid size, once per partition to use the index to
 	 * generate a subset and then filter the result. Finally, any filtered
 	 * K,V pairs are returned.
@@ -84,15 +93,6 @@ public class GridFilteredIndex<K,V> implements MultipartTask<Map<K,V>, Map<K,V>>
 			this.opCode = op;
 			this.value1 = v1;
 			this.value2 = v2;
-		}
-
-		/**
-		 * This is called to convert from the network form to the
-		 * client form. Its the same in this case.
-		 */
-		public Map<K, V> extractResult(Map<K, V> rawRC) 
-		{
-			return rawRC;
 		}
 
 		/**

@@ -33,6 +33,15 @@ public class PingAllPartitionsJob implements MultipartTask<Boolean, Boolean>
 {
 	static Logger logger = Logger.getLogger(PingAllPartitionsJob.class.getName());
 
+	/**
+	 * This is called to convert from the network form to the
+	 * client form. Its the same in this case.
+	 */
+	public Boolean extractResult(Boolean rawRC) 
+	{
+		return rawRC;
+	}
+
 	static public class PingSinglePartitionTask implements SinglePartTask<Boolean, Boolean>
 	{
 		static Logger logger = Logger.getLogger(PingSinglePartitionTask.class.getName());
@@ -42,15 +51,6 @@ public class PingAllPartitionsJob implements MultipartTask<Boolean, Boolean>
 		private static final long serialVersionUID = 1722977140374061823L;
 		
 		public PingSinglePartitionTask() {}
-
-		/**
-		 * This is called to convert from the network form to the
-		 * client form. Its the same in this case.
-		 */
-		public Boolean extractResult(Boolean rawRC) 
-		{
-			return rawRC;
-		}
 
 		/**
 		 * This can be called to check if a partition result is

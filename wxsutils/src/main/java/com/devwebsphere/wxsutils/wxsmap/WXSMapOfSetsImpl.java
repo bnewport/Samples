@@ -22,6 +22,7 @@ import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.jmx.listset.WXSMapOfSetsMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.listset.WXSMapOfSetsMBeanManager;
+import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent.Operation;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 
@@ -38,16 +39,16 @@ public class WXSMapOfSetsImpl<K,V extends Serializable> extends WXSBaseMap imple
 
 	public void add(K key, V... values) 
 	{
-		addRemove(key, true, values);
+		addRemove(key, Operation.ADD, values);
 	}
 
-	void addRemove(K key, boolean isAdd, V... values) {
+	void addRemove(K key, Operation op, V... values) {
 		WXSMapOfSetsMBeanImpl mbean = wxsMapOfSetsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		try
 		{
 			SetAddRemoveAgent<V> a = new SetAddRemoveAgent<V>();
-			a.isAdd = isAdd;
+			a.op = op;
 			a.values = values;
 			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
@@ -91,13 +92,13 @@ public class WXSMapOfSetsImpl<K,V extends Serializable> extends WXSBaseMap imple
 		}
 	}
 
-	public boolean contains(K key, MemberOperation op, V... values) {
+	public boolean contains(K key, Contains op, V... values) {
 		WXSMapOfSetsMBeanImpl mbean = wxsMapOfSetsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		try
 		{
 			SetIsMemberAgent<V> a = new SetIsMemberAgent<V>();
-			a.isAll = op == MemberOperation.AND;
+			a.op = op;
 			a.values = values;
 			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
@@ -151,7 +152,7 @@ public class WXSMapOfSetsImpl<K,V extends Serializable> extends WXSBaseMap imple
 
 	public void remove(K key, V... values) 
 	{
-		addRemove(key, false, values);
+		addRemove(key, Operation.REMOVE, values);
 	}
 
 	public void remove(K key) 

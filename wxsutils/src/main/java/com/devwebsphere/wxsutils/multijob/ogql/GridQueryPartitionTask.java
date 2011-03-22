@@ -68,17 +68,6 @@ public class GridQueryPartitionTask implements SinglePartTask<ArrayList<Object>,
 		return list;
 	}
 
-	boolean lastExtractWasFull = false;
-	
-	public ArrayList<Object> extractResult(ArrayList<Object> rawRC)
-	{
-		ArrayList<Object> rc = rawRC;
-		// check if last block was < limit records and if it was then
-		// assume there is no more data in this partition
-		lastExtractWasFull = (rc.size() == limit);
-		return rc;
-	}
-
 	public boolean isResultEmpty(ArrayList<Object> result) {
 		return result.isEmpty();
 	}

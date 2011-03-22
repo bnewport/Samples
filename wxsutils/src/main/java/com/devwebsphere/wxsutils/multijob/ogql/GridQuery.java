@@ -33,6 +33,17 @@ public class GridQuery implements MultipartTask<ArrayList<Object>, ArrayList<Obj
 	String queryString;
 	JobExecutor<ArrayList<Object>, ArrayList<Object>> je;
 
+	boolean lastExtractWasFull = false;
+	
+	public ArrayList<Object> extractResult(ArrayList<Object> rawRC)
+	{
+		ArrayList<Object> rc = rawRC;
+		// check if last block was < limit records and if it was then
+		// assume there is no more data in this partition
+		lastExtractWasFull = (rc.size() == limit);
+		return rc;
+	}
+
 	/**
 	 * Construct an instance. It's important that any query parameters or hints
 	 * be specified using {@link #setQueryHints(Map)} and {@link #setQueryParameters(Map)}
@@ -70,7 +81,7 @@ public class GridQuery implements MultipartTask<ArrayList<Object>, ArrayList<Obj
 			// if last SinglePartTask wasn't the last one then just get the next
 			// block of limit records
 			GridQueryPartitionTask qpa = (GridQueryPartitionTask)previousTask;
-			if(qpa.lastExtractWasFull)
+			if(lastExtractWasFull)
 			{
 				qpa.offset += qpa.limit;
 				return qpa;

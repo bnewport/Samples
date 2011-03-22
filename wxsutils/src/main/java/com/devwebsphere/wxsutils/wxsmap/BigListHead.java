@@ -16,6 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.filter.Filter;
+import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent.Operation;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
@@ -35,6 +36,8 @@ import com.ibm.websphere.objectgrid.UndefinedMapException;
 public class BigListHead <V extends Serializable> implements Serializable 
 {
 	static Logger logger = Logger.getLogger(BigListHead.class.getName());
+	
+	static public enum LR { LEFT, RIGHT };
 	
 	/**
 	 * 
@@ -98,14 +101,14 @@ public class BigListHead <V extends Serializable> implements Serializable
 	 * @param value
 	 * @throws ObjectGridException
 	 */
-	public void push(Session sess, ObjectMap map, Object key, boolean isLeft, V value)
+	public void push(Session sess, ObjectMap map, Object key, LR isLeft, V value)
 		throws ObjectGridException
 	{
 		ObjectMap bmap = getBucketMap(sess, map);
 		while(true)
 		{
 			// get current bucket
-			String bkey = getBucketKey(key, isLeft ? leftBucket : rightBucket);
+			String bkey = getBucketKey(key, isLeft == LR.LEFT ? leftBucket : rightBucket);
 			ArrayList<V> list = (ArrayList<V>)bmap.get(bkey);
 			// if empty then insert empty list
 			if(list == null)
@@ -116,7 +119,7 @@ public class BigListHead <V extends Serializable> implements Serializable
 			// if current bucket has room then push value
 			if(list.size() < bucketSize)
 			{
-				if(isLeft)
+				if(isLeft == LR.LEFT)
 					list.add(0, value);
 				else
 					list.add(value);
@@ -125,7 +128,7 @@ public class BigListHead <V extends Serializable> implements Serializable
 			}
 			else
 				// otherwise move over and try next bucket
-				if(isLeft)
+				if(isLeft == LR.LEFT)
 					leftBucket--;
 				else
 					rightBucket++;
@@ -134,27 +137,34 @@ public class BigListHead <V extends Serializable> implements Serializable
 		map.update(key, this);
 	}
 	
-	public V pop(Session sess, ObjectMap map, Object key, boolean isLeft)
+	public <K extends Serializable> V pop(Session sess, ObjectMap map, Object key, LR isLeft, K dirtyKey)
 		throws ObjectGridException
 	{
 		ObjectMap bmap = getBucketMap(sess, map);
-		String bkey = getBucketKey(key, isLeft ? leftBucket : rightBucket);
+		String bkey = getBucketKey(key, isLeft == LR.LEFT ? leftBucket : rightBucket);
 		ArrayList<V> list = (ArrayList<V>)bmap.get(bkey);
 		V rc = null;
 		if(list != null)
 		{
-			if(isLeft)
+			if(isLeft == LR.LEFT)
 				rc = list.remove(0);
 			else
 				rc = list.remove(list.size() - 1);
-			if(list.isEmpty())
+			if(list.isEmpty()) // a bucket is now empty
 			{
 				bmap.remove(bkey);
-				if(leftBucket == rightBucket)
+				if(leftBucket == rightBucket) // the list is now empty
+				{
 					map.remove(key);
+					if(dirtyKey != null)
+					{
+						ObjectMap dirtyMap = sess.getMap(BigListPushAgent.getDirtySetMapNameForListMap(map.getName()));
+						SetAddRemoveAgent.doOperation(sess, dirtyMap, dirtyKey, Operation.REMOVE, (Serializable)key);
+					}
+				}
 				else
 				{
-					if(isLeft)
+					if(isLeft == LR.LEFT)
 						leftBucket++;
 					else
 						rightBucket--;

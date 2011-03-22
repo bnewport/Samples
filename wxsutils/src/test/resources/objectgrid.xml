@@ -20,8 +20,12 @@ Licensed Materials - Property of IBM
             <backingMap name="Map2"  copyMode="COPY_TO_BYTES"/>
             <backingMap name="FarMap3" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES"/>
             <backingMap name="List" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES"/>
+            
+            <!-- You need 3 maps for a list. A main one, an XX_b and an XX_dirty if using dirty sets -->
             <backingMap name="BigList" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES"/>
             <backingMap name="BigList_b" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES"/>
+            <backingMap name="BigList_dirty" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES"/>
+            
             <backingMap name="Set" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES"/>
             
             <backingMap name="RouterKeyI32" lockStrategy="PESSIMISTIC"/>

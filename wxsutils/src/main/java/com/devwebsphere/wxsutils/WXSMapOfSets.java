@@ -30,7 +30,13 @@ import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent;
  */
 public interface WXSMapOfSets<K,V> 
 {
-	public enum MemberOperation {OR, AND};
+	/**
+	 * This is to indicate for a contains operation whether
+	 * ALL or ANY of the values is being tested for.
+	 * @author bnewport
+	 *
+	 */
+	public enum Contains {ANY, ALL};
 
 	/**
 	 * This adds a value to the set named key.
@@ -76,7 +82,7 @@ public interface WXSMapOfSets<K,V>
 	 * @param value The values to test for inclusion
 	 * @return true if the elements are present in the set
 	 */
-	public boolean contains(K key, MemberOperation op, V... values);
+	public boolean contains(K key, Contains op, V... values);
 
 	/**
 	 * This returns all the members of the set for the key. It can also

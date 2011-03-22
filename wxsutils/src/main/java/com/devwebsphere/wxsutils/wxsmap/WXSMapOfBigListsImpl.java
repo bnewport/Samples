@@ -22,6 +22,7 @@ import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.jmx.listset.WXSMapOfListsMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.listset.WXSMapOfListsMBeanManager;
+import com.devwebsphere.wxsutils.wxsmap.BigListHead.LR;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 
@@ -63,21 +64,27 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 
 	public V lpop(K key)
 	{
-		return pop(key, true);
+		return pop(key, LR.LEFT, null);
+	}
+
+	public V lpop(K key, K dirtyKey)
+	{
+		return pop(key, LR.LEFT, dirtyKey);
 	}
 	
-	V pop(K key, boolean isLeft) {
+	V pop(K key, LR isLeft, K dirtyKey) {
 		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		try
 		{
-			BigListPopAgent<V> a = new BigListPopAgent<V>();
+			BigListPopAgent<K, V> a = new BigListPopAgent<K, V>();
 			a.isLeft = isLeft;
+			a.dirtyKey = dirtyKey;
 			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if(rcV != null && rcV instanceof EntryErrorValue)
 			{
-				logger.log(Level.SEVERE, "put(K,V) failed");
+				logger.log(Level.SEVERE, "pop failed");
 				throw new ObjectGridRuntimeException(rcV.toString());
 			}
 			mbean.getPopMetrics().logTime(System.nanoTime() - start);
@@ -93,10 +100,10 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 
 	public void lpush(K key, V value, K... dirtySet)
 	{
-		push(key, value, true, dirtySet);
+		push(key, value, LR.LEFT, dirtySet);
 	}
 	
-	void push(K key, V value, boolean isLeft, K[] dirtySet) {
+	void push(K key, V value, LR isLeft, K[] dirtySet) {
 		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		if(dirtySet != null && dirtySet.length > 1)
@@ -112,7 +119,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 			Object rcV = rc.get(key);
 			if(rcV != null && rcV instanceof EntryErrorValue)
 			{
-				logger.log(Level.SEVERE, "put(K,V) failed");
+				logger.log(Level.SEVERE, "push failed: " + rcV.toString());
 				throw new ObjectGridRuntimeException(rcV.toString());
 			}
 			mbean.getPushMetrics().logTime(System.nanoTime() - start);
@@ -166,7 +173,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 			Object rcV = rc.get(key);
 			if(rcV != null && rcV instanceof EntryErrorValue)
 			{
-				logger.log(Level.SEVERE, "remove(K) failed");
+				logger.log(Level.SEVERE, "rtrim failed");
 				throw new ObjectGridRuntimeException(rcV.toString());
 			}
 			mbean.getTrimMetrics().logTime(System.nanoTime() - start);
@@ -180,12 +187,17 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 	}
 
 	public V rpop(K key) {
-		return pop(key, false);
+		return pop(key, LR.RIGHT, null);
+	}
+	
+	public V rpop(K key, K dirtyKey)
+	{
+		return pop(key, LR.RIGHT, dirtyKey);
 	}
 
-	public void rpush(K key, V value, K[] dirtySet) 
+	public void rpush(K key, V value, K... dirtySet) 
 	{
-		push(key, value, false, dirtySet);
+		push(key, value, LR.RIGHT, dirtySet);
 	}
 
 	public void remove(K key)

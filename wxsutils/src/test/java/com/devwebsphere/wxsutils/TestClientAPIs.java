@@ -20,10 +20,11 @@ import junit.framework.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.devwebsphere.wxsutils.WXSMapOfSets.MemberOperation;
+import com.devwebsphere.wxsutils.WXSMapOfSets.Contains;
 import com.devwebsphere.wxsutils.multijob.pingall.PingAllPartitionsJob;
 import com.devwebsphere.wxsutils.wxsmap.BigListHead;
 import com.devwebsphere.wxsutils.wxsmap.BigListPushAgent;
+import com.devwebsphere.wxsutils.wxsmap.dirtyset.FetchJobsFromAllDirtyListsJob;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
@@ -345,12 +346,12 @@ public class TestClientAPIs
 		{
 			map.add(key, "" + i);
 			Assert.assertEquals(i + 1, map.size(key));
-			Assert.assertTrue(map.contains(key, MemberOperation.AND, "" + i));
+			Assert.assertTrue(map.contains(key, Contains.ALL, "" + i));
 		}
 		map.add(key, "" + 0);
 		Assert.assertEquals(numKeys, map.size(key));
 		map.remove(key, "" + 0);
-		Assert.assertFalse(map.contains(key, MemberOperation.AND, "" + 0));
+		Assert.assertFalse(map.contains(key, Contains.ALL, "" + 0));
 		Assert.assertEquals(numKeys - 1, map.size(key));
 		Set<String> values = map.get(key);
 		Assert.assertNotNull(values);
@@ -361,6 +362,50 @@ public class TestClientAPIs
 		map.remove(key);
 		Assert.assertNull(map.get(key));
 		Assert.assertEquals(0, map.size(key));
+	}
+	
+	@Test
+	public void testDirtySet()
+	{
+		String dirtyKey = "DIRTY";
+		WXSMapOfSets<String, String> dirtySetMap = utils.getMapOfSets("BigList_dirty");
+		WXSMapOfLists<String, String> listMap = utils.getMapOfLists("BigList");
+		
+		// check set is empty
+		Assert.assertEquals(0, dirtySetMap.size(dirtyKey));
+
+		// check key L isn't in dirtySet
+		Set<String> set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
+		Assert.assertFalse(set.contains("L"));
+
+		// check with no dirty set key specified, the dirtySet doesn't change
+		listMap.lpush("L", "HELLO");
+		set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
+		Assert.assertFalse(set.contains("L"));
+		String rc = listMap.lpop("L");
+		Assert.assertEquals("HELLO", rc);
+
+		// now check it changes
+		listMap.lpush("L", "HELLO", dirtyKey);
+		
+		// is L in the dirtySet?
+		set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
+		Assert.assertTrue(set.contains("L"));
+		listMap.lpush("L", "BYE", dirtyKey);
+		
+		// check it's still there
+		set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
+		Assert.assertTrue(set.contains("L"));
+
+		// one pop should leave it in there
+		Assert.assertEquals("BYE", listMap.lpop("L", dirtyKey));
+		set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
+		Assert.assertTrue(set.contains("L"));
+
+		// another pop should empty the list and remove it
+		Assert.assertEquals("HELLO", listMap.lpop("L", dirtyKey));
+		set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
+		Assert.assertFalse(set.contains("L"));
 	}
 	
 	@Test

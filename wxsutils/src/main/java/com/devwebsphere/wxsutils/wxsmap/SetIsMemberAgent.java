@@ -13,8 +13,11 @@ package com.devwebsphere.wxsutils.wxsmap;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
+import com.devwebsphere.wxsutils.WXSMapOfSets.Contains;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
@@ -25,7 +28,9 @@ import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
 public class SetIsMemberAgent<V extends Serializable> implements MapGridAgent 
 {
-	public boolean isAll;
+	static Logger logger = Logger.getLogger(SetIsMemberAgent.class.getName());
+	
+	public Contains op;
 	public V[] values;
 	/**
 	 * 
@@ -35,7 +40,8 @@ public class SetIsMemberAgent<V extends Serializable> implements MapGridAgent
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
 		long startNS = System.nanoTime();
-		boolean rc = isAll ? true : false;
+		boolean rc = false;
+		boolean allFirst = true;
 		try
 		{
 			map.get(key); // token lock to prevent deadlocks
@@ -45,12 +51,17 @@ public class SetIsMemberAgent<V extends Serializable> implements MapGridAgent
 				Set<V> s = (Set<V>)map.get(bucketKey);
 				if(s != null)
 				{
-					if(isAll)
+					if(op == Contains.ALL)
 					{
 						if(!s.contains(v))
 						{
 							rc = false;
 							break;
+						}
+						else if(allFirst)
+						{
+							rc = true;
+							allFirst = false;
 						}
 					}
 					else
@@ -68,7 +79,7 @@ public class SetIsMemberAgent<V extends Serializable> implements MapGridAgent
 		catch(ObjectGridException e)
 		{
 			mbean.getKeysMetric().logException(e);
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 		return rc;

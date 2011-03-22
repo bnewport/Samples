@@ -22,6 +22,7 @@ Licensed Materials - Property of IBM
             <map ref="List"/>
             <map ref="BigList"/>
             <map ref="BigList_b"/>
+            <map ref="BigList_dirty"/>
             <map ref="Set"/>
             
             <map ref="RouterKeyI32"/>

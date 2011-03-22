@@ -17,6 +17,8 @@ import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
+import com.devwebsphere.wxsutils.wxsmap.BigListHead.LR;
+import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent.Operation;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
@@ -30,7 +32,7 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 
 	public static int BUCKET_SIZE = 20;
 	
-	public boolean isLeft;
+	public LR isLeft;
 	public V value;
 	public K dirtyKey;
 	
@@ -46,12 +48,20 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 		return sb.toString();
 	}
 	
-	static <K extends Serializable, V extends Serializable> void push(Session sess, ObjectMap map, Object key, boolean isLeft, V value, K dirtyKey)
+	static <K extends Serializable, V extends Serializable> void push(Session sess, ObjectMap map, Object key, LR isLeft, V value, K dirtyKey)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListPushAgent.class.getName());
 		long startNS = System.nanoTime();
 		try
 		{
+			ObjectMap dirtyMap = null;
+			// lock dirtymap first to avoid dead locks
+			if(dirtyKey != null)
+			{
+				dirtyMap = sess.getMap(getDirtySetMapNameForListMap(map.getName()));
+				dirtyMap.getForUpdate(dirtyKey);
+			}
+			
 			BigListHead<V> head = (BigListHead<V>)map.getForUpdate(key);
 			if(head == null)
 			{
@@ -67,8 +77,7 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 			// a push
 			if(dirtyKey != null)
 			{
-				ObjectMap dirtyMap = sess.getMap(getDirtySetMapNameForListMap(map.getName()));
-				SetAddRemoveAgent.add(sess, dirtyMap, dirtyKey, true, (Serializable)key);
+				SetAddRemoveAgent.doOperation(sess, dirtyMap, dirtyKey, Operation.ADD, (Serializable)key);
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
