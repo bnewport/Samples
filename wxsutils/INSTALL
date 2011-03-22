@@ -11,7 +11,7 @@ mvn install:install-file
   -Dfile=XXX/lib/objectgrid.jar
   -DgroupId=com.ibm.websphere.objectgrid
   -DartifactId=objectgrid-server
-  -Dversion=7.0.0.1
+  -Dversion=7.1
   -Dpackaging=jar
   
 Add this to your .profile or start up script file
