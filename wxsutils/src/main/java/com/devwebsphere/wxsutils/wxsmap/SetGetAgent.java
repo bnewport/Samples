@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.devwebsphere.wxsutils.WXSUtils;
+import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
@@ -25,6 +26,7 @@ import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
 public class SetGetAgent<V extends Serializable> implements MapGridAgent 
 {
+	Filter filter;
 	/**
 	 * 
 	 */
@@ -44,7 +46,18 @@ public class SetGetAgent<V extends Serializable> implements MapGridAgent
 			{
 				Set<V> d = (Set<V>)map.get(SetAddRemoveAgent.getBucketKeyForBucket(key, b));
 				if(d != null)
-					rc.addAll(d);
+				{
+					if(filter == null)
+						rc.addAll(d);
+					else
+					{
+						for(V v : d)
+						{
+							if(filter.filter(v))
+								rc.add(v);
+						}
+					}
+				}
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}

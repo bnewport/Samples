@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSMapOfLists;
 import com.devwebsphere.wxsutils.WXSUtils;
+import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.jmx.listset.WXSMapOfListsMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.listset.WXSMapOfListsMBeanManager;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
@@ -90,19 +91,23 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		}
 	}
 
-	public void lpush(K key, V value)
+	public void lpush(K key, V value, K... dirtySet)
 	{
-		push(key, value, true);
+		push(key, value, true, dirtySet);
 	}
 	
-	void push(K key, V value, boolean isLeft) {
+	void push(K key, V value, boolean isLeft, K[] dirtySet) {
 		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
+		if(dirtySet != null && dirtySet.length > 1)
+			throw new ObjectGridRuntimeException("push does not allow multiple dirtySet key");
 		try
 		{
 			BigListPushAgent<K, V> pushAgent = new BigListPushAgent<K, V>();
 			pushAgent.isLeft = isLeft;
 			pushAgent.value = value;
+			if(dirtySet != null && dirtySet.length == 1)
+				pushAgent.dirtyKey = dirtySet[0];
 			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(pushAgent, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if(rcV != null && rcV instanceof EntryErrorValue)
@@ -120,9 +125,13 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		}
 	}
 
-	public ArrayList<V> lrange(K key, int low, int high) {
+	public ArrayList<V> lrange(K key, int low, int high, Filter... filters) {
 		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
+		if(filters.length > 1)
+		{
+			throw new ObjectGridRuntimeException("Only one filter can be specified");
+		}
 		try
 		{
 			BigListRangeAgent<V> a = new BigListRangeAgent<V>();
@@ -174,9 +183,9 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		return pop(key, false);
 	}
 
-	public void rpush(K key, V value) 
+	public void rpush(K key, V value, K[] dirtySet) 
 	{
-		push(key, value, false);
+		push(key, value, false, dirtySet);
 	}
 
 	public void remove(K key)

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxsutils.filter.Filter;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
@@ -197,7 +198,7 @@ public class BigListHead <V extends Serializable> implements Serializable
 		map.remove(key);
 	}
 	
-	public ArrayList<V> range(Session sess, ObjectMap map, Object key, int low, int high)
+	public ArrayList<V> range(Session sess, ObjectMap map, Object key, int low, int high, Filter filter)
 		throws ObjectGridException
 	{
 		int size = size(sess, map, key);
@@ -230,7 +231,14 @@ public class BigListHead <V extends Serializable> implements Serializable
 				ArrayList<V> current = (ArrayList<V>)bmap.get(getBucketKey(key, bucket));
 				for(int i = low; i <= high; i++)
 				{
-					rc.add(current.get(offset++));
+					V elem = current.get(offset++);
+					if(filter != null)
+					{
+						if(filter.filter(elem))
+							rc.add(elem);
+					}
+					else
+						rc.add(elem);
 					if(offset >= current.size() && i != high)
 					{
 						bucket++;

@@ -17,6 +17,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
+import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
@@ -33,8 +34,9 @@ public class BigListRangeAgent<V extends Serializable> implements MapGridAgent
 	private static final long serialVersionUID = -3820884829092397741L;
 	public int low;
 	public int high;
+	public Filter filter;
 	
-	static public <V extends Serializable> ArrayList<V> range(Session sess, ObjectMap map, Object key, int low, int high)
+	static public <V extends Serializable> ArrayList<V> range(Session sess, ObjectMap map, Object key, int low, int high, Filter filter)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListRangeAgent.class.getName());
 		long startNS = System.nanoTime();
@@ -43,7 +45,7 @@ public class BigListRangeAgent<V extends Serializable> implements MapGridAgent
 			ArrayList<V> rc = null;
 			BigListHead<V> head = (BigListHead<V>)map.get(key);
 			if(head != null)
-				rc = head.range(sess, map, key, low, high);
+				rc = head.range(sess, map, key, low, high, filter);
 			else
 				rc = new ArrayList<V>();
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
@@ -61,7 +63,7 @@ public class BigListRangeAgent<V extends Serializable> implements MapGridAgent
 	 */
 	public Object process(Session sess, ObjectMap map, Object key) 
 	{
-		return range(sess, map, key, low, high);
+		return range(sess, map, key, low, high, filter);
 	}
 	
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {

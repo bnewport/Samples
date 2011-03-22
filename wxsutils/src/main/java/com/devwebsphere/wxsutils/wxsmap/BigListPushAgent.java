@@ -12,6 +12,7 @@ package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
@@ -38,6 +39,13 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 	 */
 	private static final long serialVersionUID = -5627208135087330201L;
 	
+	static public String getDirtySetMapNameForListMap(String mapName)
+	{
+		StringBuilder sb = new StringBuilder(mapName);
+		sb.append("_dirty");
+		return sb.toString();
+	}
+	
 	static <K extends Serializable, V extends Serializable> void push(Session sess, ObjectMap map, Object key, boolean isLeft, V value, K dirtyKey)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListPushAgent.class.getName());
@@ -55,20 +63,23 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 				// this updates the head in the map also
 				head.push(sess, map, key, isLeft, value);
 			}
+			// maintain a set of list keys in this partition when they have
+			// a push
 			if(dirtyKey != null)
 			{
-				ObjectMap dirtyMap = sess.getMap(map.getName() + "_dirty");
-				// needs to be a set
-//				BigListPushAgent.push(sess, dirtyMap, dirtyKey, true, (Serializable)key, null);
+				ObjectMap dirtyMap = sess.getMap(getDirtySetMapNameForListMap(map.getName()));
+				SetAddRemoveAgent.add(sess, dirtyMap, dirtyKey, true, (Serializable)key);
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
 		catch(UndefinedMapException e)
 		{
+			logger.log(Level.SEVERE, "Undefined map", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 		catch(ObjectGridException e)
 		{
+			logger.log(Level.SEVERE, "Unexpected exception", e);
 			mbean.getKeysMetric().logException(e);
 			e.printStackTrace();
 			throw new ObjectGridRuntimeException(e);

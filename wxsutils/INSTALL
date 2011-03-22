@@ -17,3 +17,7 @@ mvn install:install-file
 Add this to your .profile or start up script file
 
 MAVEN_OPT="-Xmx512M -Djava.endorsed.dirs=..../og7001/lib/endorsed -Dcom.sun.management.jmxremote"
+
+# This builds the project from scratch without running junit tests
+mvn clean
+mvn install -DskipTests=true

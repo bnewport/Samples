@@ -19,12 +19,20 @@ import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSMapOfLists;
 import com.devwebsphere.wxsutils.WXSUtils;
+import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.jmx.listset.WXSMapOfListsMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.listset.WXSMapOfListsMBeanManager;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 
-public class WXSMapOfListsImpl<K,V extends Serializable> extends WXSBaseMap implements WXSMapOfLists<K, V> 
+/**
+ * Not used any more, provided as a simpler sample
+ * @author bnewport
+ *
+ * @param <K>
+ * @param <V>
+ */
+public class WXSMapOfListsImpl<K,V extends Serializable> extends WXSBaseMap // implements WXSMapOfLists<K, V> 
 {
 	static Logger logger = Logger.getLogger(WXSMapOfListsImpl.class.getName());
 	static LazyMBeanManagerAtomicReference<WXSMapOfListsMBeanManager> wxsMapOfListsMBeanManager = new LazyMBeanManagerAtomicReference<WXSMapOfListsMBeanManager>(WXSMapOfListsMBeanManager.class);
@@ -120,8 +128,13 @@ public class WXSMapOfListsImpl<K,V extends Serializable> extends WXSBaseMap impl
 		}
 	}
 
-	public ArrayList<V> lrange(K key, int low, int high) {
+	public ArrayList<V> lrange(K key, int low, int high, Filter... filters) {
 		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
+		Filter filter = null;
+		if(filters != null && filters.length > 1)
+			throw new ObjectGridRuntimeException("Only one filter is allowed");
+		if(filters != null && filters.length == 1)
+			filter = filters[0];
 		long start = System.nanoTime();
 		try
 		{

@@ -12,6 +12,7 @@ package com.devwebsphere.wxsutils;
 
 import java.util.ArrayList;
 
+import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.wxsmap.BigListHead;
 import com.devwebsphere.wxsutils.wxsmap.BigListPushAgent;
 
@@ -52,8 +53,9 @@ public interface WXSMapOfLists<K,V> {
 	 * This pushes a value on the left side of the list
 	 * @param key The key for the list
 	 * @param value The value to push
+	 * @param dirtySet The key for the per shard dirty set to add this key to. Optional
 	 */
-	public void lpush(K key, V value);
+	public void lpush(K key, V value, K... dirtySet);
 
 	/**
 	 * This removes and returns the left most element in the list
@@ -78,19 +80,22 @@ public interface WXSMapOfLists<K,V> {
 	 * This pushes the value on the righthand side of the list
 	 * @param key The key for the list
 	 * @param value The value to add on the right side of the list
+	 * @param dirtySet The key for the per shard dirty set to add this key to. Optional
 	 */
-	public void rpush(K key, V value);
+	public void rpush(K key, V value, K... dirtySet);
 
 	/**
 	 * This returns the elements in the list from index low to index high
 	 * inclusive. This list may be shorter than usual if the
-	 * list is size is less than low or high.
+	 * list is size is less than low or high. The returned elements can be filtered
+	 * also using the optional filter parameter, note: only one filter can be specified
 	 * @param key The key for the list
 	 * @param low The 0-index for the left most element to return
 	 * @param high The 0-index for the right most element to return
+	 * @param filter If specified then elements are only returned if they match the Filter
 	 * @return An array with the list elements. It may be shorter than expected
 	 */
-	public ArrayList<V> lrange(K key, int low, int high);
+	public ArrayList<V> lrange(K key, int low, int high, Filter... filter);
 
 	/**
 	 * The length of the list for the key. 0 if the list doesn't

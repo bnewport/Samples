@@ -12,6 +12,7 @@ package com.devwebsphere.wxsutils;
 
 import java.util.Set;
 
+import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent;
 
 /**
@@ -78,11 +79,13 @@ public interface WXSMapOfSets<K,V>
 	public boolean contains(K key, MemberOperation op, V... values);
 
 	/**
-	 * This returns all the members of the set for the key.
+	 * This returns all the members of the set for the key. It can also
+	 * only return elements matching an optional filter.
 	 * @param key The key for the set
+	 * @param filter The optional filter to use. Only one should be specified
 	 * @return The list of entries. It's empty if the set doesn't exist
 	 */
-	public Set<V> get(K key);
+	public Set<V> get(K key, Filter... filter);
 
 	/**
 	 * This removes the set with the specified key if it exists

@@ -58,7 +58,7 @@ public class SetAddRemoveAgent<V extends Serializable> implements MapGridAgent
 	 * @param isAdd
 	 * @param values
 	 */
-	static public <V> void add(Session sess, ObjectMap map, Object key, boolean isAdd, V[] values)
+	static public <V> void add(Session sess, ObjectMap map, Object key, boolean isAdd, V... values)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), SetAddRemoveAgent.class.getName());
 		long startNS = System.nanoTime();

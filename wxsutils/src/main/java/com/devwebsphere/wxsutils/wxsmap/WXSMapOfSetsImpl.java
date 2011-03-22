@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSMapOfSets;
 import com.devwebsphere.wxsutils.WXSUtils;
+import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.jmx.listset.WXSMapOfSetsMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.listset.WXSMapOfSetsMBeanManager;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
@@ -117,12 +118,18 @@ public class WXSMapOfSetsImpl<K,V extends Serializable> extends WXSBaseMap imple
 		}
 	}
 
-	public Set<V> get(K key) {
+	public Set<V> get(K key, Filter... filters) {
 		WXSMapOfSetsMBeanImpl mbean = wxsMapOfSetsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
+		if(filters != null && filters.length > 1)
+			throw new ObjectGridRuntimeException("Only one filter can be specified");
+		Filter filter = null;
+		if(filters != null && filters.length == 1)
+			filter = filters[0];
 		try
 		{
 			SetGetAgent<V> a = new SetGetAgent<V>();
+			a.filter = filter;
 			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if(rcV != null && rcV instanceof EntryErrorValue)
