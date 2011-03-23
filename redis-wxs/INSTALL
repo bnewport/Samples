@@ -13,16 +13,16 @@ mvn install:install-file
   -Dfile=XXX/lib/objectgrid.jar
   -DgroupId=com.ibm.websphere.objectgrid
   -DartifactId=objectgrid-server
-  -Dversion=7.0.0.1
+  -Dversion=7.1
   -Dpackaging=jar
 
 mvn install:install-file
   -Dfile=XXX/lib/ogspring.jar
   -DgroupId=com.ibm
-  -DartifactId=ibm-objectgrid-spring
-  -Dversion=7.0.0.1
+  -DartifactId=objectgrid-spring
+  -Dversion=7.1
   -Dpackaging=jar
-  
+   
 Add this to your .profile or start up script file
 
 MAVEN_OPT="-Xmx512M -Djava.endorsed.dirs=/Users/ibm/Documents/Development/og7001/lib/endorsed -Dcom.sun.management.jmxremote"
@@ -36,7 +36,7 @@ http://www-01.ibm.com/software/data/optim/purequery-runtime/
 Install it and find the pdq.jar file. Add this to the maven repository:
 
 mvn install:install-file
-  -Dfile=XXX/lib/ogspring.jar
+  -Dfile=XXX/pdq.jar
   -DgroupId=com.ibm
   -DartifactId=ibm-purequery-runtime
   -Dversion=2.6
