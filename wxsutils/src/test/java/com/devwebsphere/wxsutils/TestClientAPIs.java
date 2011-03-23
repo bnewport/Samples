@@ -546,7 +546,7 @@ public class TestClientAPIs
 		final String dirtyKey = "DIRTY3";
 		final String key = "M";
         final WXSMapOfLists<String, String> listMap = utils.getMapOfLists("BigList");
-        final int runTimeSeconds = 45;
+        final int runTimeSeconds = 6 * 60;
        
 		Runnable pusher = new Runnable() {
 			
@@ -556,6 +556,12 @@ public class TestClientAPIs
 				while(System.currentTimeMillis() < start + runTime)
 				{
 					listMap.lpush(key, UUID.randomUUID().toString(), dirtyKey);
+					try
+					{
+//						Thread.currentThread().wait(10);
+					}
+					catch(Exception e) 
+					{}
 				}
 			}
 		};
@@ -567,18 +573,37 @@ public class TestClientAPIs
 				long runTime = runTimeSeconds * 1000L;
 				while(System.currentTimeMillis() < start + runTime)
 				{
-					ArrayList<String> pList = listMap.popAll(key, dirtyKey);
-					if(pList != null)
-						System.out.println("Pulled " + pList.size());
+					Set<String> allKeys = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey) ;
+					for(String aKey : allKeys)
+					{
+						ArrayList<String> pList = listMap.popAll(aKey, dirtyKey);
+						if(pList != null && pList.size() > 0)
+							System.out.println("Pulled " + pList.size());
+					}
+					try
+					{
+						Thread.currentThread().wait(100);
+					}
+					catch(Exception e) 
+					{}
+					
 				}
 			}
 		};
-		
-		Thread pusherThread = new Thread(pusher);
+
+		ArrayList<Thread> allPushers = new ArrayList<Thread>();
+		for(int i = 0; i < 100; ++i)
+		{
+			Thread pusherThread = new Thread(pusher);
+			allPushers.add(pusherThread);
+			pusherThread.start();
+		}
 		Thread pullerThread = new Thread(puller);
-		pusherThread.start();
 		pullerThread.start();
-		pusherThread.join();
+		
+		for(Thread t : allPushers)
+			t.join();
+		
 		pullerThread.join();
 	}
 }
