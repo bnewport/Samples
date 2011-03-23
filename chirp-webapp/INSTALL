@@ -7,6 +7,9 @@ Start a test redis server using this script in the chirp-webapp folder:
 
 ./runtestserver.sh
 
+You only need a test server if the wxsutils.properties in the chirp-war specifies a cep property, the catalog endpoint
+for the test server. Otherwise, the default actually, is to start such a test server within the servlet engine itself.
+
 Make sure your mysql database is running and that you have created the chirp database (see instructions in redis-wxs).
 
 The objectgrid-server and og-spring jars are marked in the pom.xml as PROVIDED. This means they are not included in the
