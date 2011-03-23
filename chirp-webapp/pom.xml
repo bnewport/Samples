@@ -23,7 +23,7 @@
     <dependency>
     	<groupId>com.billynewport.wxsutils</groupId>
     	<artifactId>wxsutils</artifactId>
-    	<version>1.4-SNAPSHOT</version>
+    	<version>1.12-SNAPSHOT</version>
     </dependency>
     <dependency>
     	<groupId>com.devwebsphere</groupId>

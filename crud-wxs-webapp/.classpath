@@ -4,6 +4,6 @@
   <classpathentry kind="output" path="target/classes"/>
   <classpathentry kind="var" path="M2_REPO/junit/junit/3.8.1/junit-3.8.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/com/ibm/websphere/objectgrid/objectgrid-server/7.1/objectgrid-server-7.1.jar"/>
-  <classpathentry kind="var" path="M2_REPO/com/billynewport/wxsutils/wxsutils/1.4-SNAPSHOT/wxsutils-1.4-SNAPSHOT.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/billynewport/wxsutils/wxsutils/1.12-SNAPSHOT/wxsutils-1.12-SNAPSHOT.jar"/>
   <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 </classpath>

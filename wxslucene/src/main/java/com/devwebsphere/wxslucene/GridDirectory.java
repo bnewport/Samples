@@ -13,7 +13,6 @@ package com.devwebsphere.wxslucene;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,9 +31,9 @@ import com.devwebsphere.wxslucene.jmx.LuceneDirectoryMBeanImpl;
 import com.devwebsphere.wxslucene.jmx.LuceneDirectoryMBeanManager;
 import com.devwebsphere.wxslucene.jmx.LuceneFileMBeanManager;
 import com.devwebsphere.wxssearch.ByteArrayKey;
-import com.devwebsphere.wxsutils.LazyMBeanManagerAtomicReference;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
+import com.devwebsphere.wxsutils.wxsmap.LazyMBeanManagerAtomicReference;
 
 /**
  * This is a Lucene Directory implementation to store the directory and its files in an IBM WebSphere

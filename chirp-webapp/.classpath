@@ -3,7 +3,7 @@
   <classpathentry kind="src" path="src/main/resources" excluding="**/*.java"/>
   <classpathentry kind="output" path="target/classes"/>
   <classpathentry kind="var" path="M2_REPO/commons-dbcp/commons-dbcp/1.2.2/commons-dbcp-1.2.2.jar"/>
-  <classpathentry kind="var" path="M2_REPO/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar" sourcepath="M2_REPO/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1-sources.jar"/>
   <classpathentry kind="var" path="M2_REPO/commons-pool/commons-pool/1.3/commons-pool-1.3.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/apache/geronimo/specs/geronimo-jsp_2.0_spec/1.1/geronimo-jsp_2.0_spec-1.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/apache/geronimo/specs/geronimo-servlet_2.4_spec/1.1.1/geronimo-servlet_2.4_spec-1.1.1.jar"/>
@@ -11,10 +11,9 @@
   <classpathentry kind="var" path="M2_REPO/com/ibm/ibm-purequery-runtime/2.6/ibm-purequery-runtime-2.6.jar"/>
   <classpathentry kind="var" path="M2_REPO/junit/junit/3.8.1/junit-3.8.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/mysql/mysql-connector-java/5.1.10/mysql-connector-java-5.1.10.jar"/>
-  <classpathentry kind="var" path="M2_REPO/com/ibm/websphere/objectgrid/objectgrid-server/7.0.0.1/objectgrid-server-7.0.0.1.jar"/>
-  <classpathentry kind="var" path="M2_REPO/com/ibm/objectgrid-spring/7.1/objectgrid-spring-7.1.jar"/>
-  <classpathentry kind="var" path="M2_REPO/com/devwebsphere/redis-wxs/1.2-SNAPSHOT/redis-wxs-1.2-SNAPSHOT.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/ibm/websphere/objectgrid/objectgrid-server/7.1/objectgrid-server-7.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/devwebsphere/redis-wxs/1.3-SNAPSHOT/redis-wxs-1.3-SNAPSHOT.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/springframework/spring/2.5.6/spring-2.5.6.jar"/>
-  <classpathentry kind="var" path="M2_REPO/com/billynewport/wxsutils/wxsutils/1.3-SNAPSHOT/wxsutils-1.3-SNAPSHOT.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/billynewport/wxsutils/wxsutils/1.12-SNAPSHOT/wxsutils-1.12-SNAPSHOT.jar"/>
   <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 </classpath>
