@@ -110,7 +110,7 @@ public class BigListHead <V extends Serializable> implements Serializable
 		{
 			// get current bucket
 			String bkey = getBucketKey(key, isLeft == LR.LEFT ? leftBucket : rightBucket);
-			ArrayList<V> list = (ArrayList<V>)bmap.get(bkey);
+			ArrayList<V> list = (ArrayList<V>)bmap.getForUpdate(bkey);
 			// if empty then insert empty list
 			if(list == null)
 			{

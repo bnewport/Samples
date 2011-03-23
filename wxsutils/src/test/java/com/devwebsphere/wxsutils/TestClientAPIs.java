@@ -445,31 +445,26 @@ public class TestClientAPIs
             {
                     String key = UUID.randomUUID().toString();
                     keys.add(key);
-                    System.out.println("Adding Key:"+key);
                     listMap.lpush(key, "HELLO"+i,dirtyKey);
-                    System.out.println("Added Key"+key);
                    
             }
 
             set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
             Assert.assertEquals(keys.size(), set.size());
 
+            int jobCounter = numKeys;
             while(true){
                     set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
                    
                     if(set != null){
-                            if(set.size() == 0){
-                                    System.out.println("No Keys Found in Grid:");
+                            if(set.size() == 0)
                                     break;
-                            }else{
-                                    System.out.println("DirtyKey Size:"+set.size());
-                            }
                     }
                    
                     for(String key : set){
                             String value = listMap.lpop(key,dirtyKey);
                             if(value != null)
-                            	System.out.println("Got Value:"+value+" for Key: "+key);
+                            	--jobCounter;
                     }
                    
                     try {
@@ -478,6 +473,7 @@ public class TestClientAPIs
                             e.printStackTrace();
                     }
             }
+            Assert.assertEquals(0, jobCounter);
     }
 	
 	@Test

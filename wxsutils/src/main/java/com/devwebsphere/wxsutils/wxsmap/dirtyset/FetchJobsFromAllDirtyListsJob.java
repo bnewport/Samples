@@ -102,6 +102,8 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 			try
 			{
 				ObjectMap setMap = sess.getMap(BigListPushAgent.getDirtySetMapNameForListMap(listMapName));
+				// serialize access to set
+				setMap.getForUpdate(dirtyKey);
 				Set<V> set = null;
 				int i = nextBucket;
 				for(i = nextBucket; i < SetAddRemoveAgent.NUM_BUCKETS; ++i)

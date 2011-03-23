@@ -38,7 +38,7 @@ public class SetSizeAgent<V extends Serializable> implements MapGridAgent
 		int rc = 0;
 		try
 		{
-			map.get(key);
+ 			map.get(key);
 			for(int  b = 0; b < SetAddRemoveAgent.NUM_BUCKETS; ++b)
 			{
 				Set<V> d = (Set<V>)map.get(SetAddRemoveAgent.getBucketKeyForBucket(key, b));

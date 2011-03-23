@@ -13,6 +13,8 @@ package com.devwebsphere.wxsutils.wxsmap;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
@@ -24,6 +26,7 @@ import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
 public class SetRemoveAgent<V extends Serializable> implements MapGridAgent 
 {
+	static Logger logger = Logger.getLogger(SetRemoveAgent.class.getName());
 	/**
 	 * 
 	 */
@@ -47,7 +50,7 @@ public class SetRemoveAgent<V extends Serializable> implements MapGridAgent
 		catch(ObjectGridException e)
 		{
 			mbean.getKeysMetric().logException(e);
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 		return Boolean.TRUE;
