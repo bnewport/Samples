@@ -14,9 +14,12 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
+import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent.Operation;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
@@ -26,6 +29,7 @@ import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
 public class SetAddFlushAgent<V extends Serializable> implements MapGridAgent 
 {
+	static Logger logger = Logger.getLogger(SetAddFlushAgent.class.getName());
 	public int maxSize;
 	public V[] values;
 	/**
@@ -36,41 +40,30 @@ public class SetAddFlushAgent<V extends Serializable> implements MapGridAgent
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
 		long startNS = System.nanoTime();
-		Set<V> rc = null;
+		Set<V> rc = new HashSet<V>();
 		try
 		{
-			Set<V> s = (Set<V>)map.getForUpdate(key);
-			if(s != null)
+			map.getForUpdate(key);
+			int currentSize = SetSizeAgent.size(sess, map, key);
+			if(currentSize <= maxSize)
 			{
-				if(s.size() <= maxSize)
-				{
-					for(V v : values)
-						s.add(v);
-					rc = new HashSet<V>();
-				}
-				else
-				{
-					rc = s;
-					s = new HashSet<V>();
-					for(V v : values)
-						s.add(v);
-				}
-				map.update(key, s);
+				SetAddRemoveAgent.doOperation(sess, map, key, Operation.ADD, values);
 			}
 			else
 			{
-				s = new HashSet<V>();
-				for(V v : values)
-					s.add(v);
-				map.insert(key, s);
-				rc = new HashSet<V>();
+				// return existing values
+				rc = SetGetAgent.get(sess, map, key, null);
+				// remove existing values from set
+				SetRemoveAgent.remove(sess, map, key);
+				// add new values to set
+				SetAddRemoveAgent.doOperation(sess, map, key, Operation.ADD, values);
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
 		catch(ObjectGridException e)
 		{
 			mbean.getKeysMetric().logException(e);
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 		return rc;

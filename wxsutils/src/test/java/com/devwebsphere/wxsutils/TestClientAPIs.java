@@ -371,6 +371,19 @@ public class TestClientAPIs
 		map.remove(key);
 		Assert.assertNull(map.get(key));
 		Assert.assertEquals(0, map.size(key));
+		
+		
+		int maxSize = 3;
+		for(int i = 0; i <= maxSize; ++i)
+		{
+			Set<String> ss = map.addAndFlush(key, maxSize, Integer.toString(i));
+			Assert.assertNotNull(ss);
+			Assert.assertEquals(0, ss.size());
+		}
+		Set<String> ss = map.addAndFlush(key, maxSize, "4");
+		Assert.assertNotNull(ss);
+		Assert.assertEquals(maxSize + 1, ss.size());
+		Assert.assertEquals(1, map.size(key));
 	}
 	
 	public boolean isDirty(String mapName, String dirtyKey, String listKey)

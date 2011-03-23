@@ -12,7 +12,6 @@ package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,19 +30,19 @@ public class SetRemoveAgent<V extends Serializable> implements MapGridAgent
 	 * 
 	 */
 	private static final long serialVersionUID = -3736978703392897531L;
-	/**
-	 * 
-	 */
-	public Object process(Session sess, ObjectMap map, Object key) 
+	
+	static public <V extends Serializable> void remove(Session sess, ObjectMap map, Object key)
 	{
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), SetRemoveAgent.class.getName());
 		long startNS = System.nanoTime();
 		try
 		{
 			map.getForUpdate(key);
 			for(int  b = 0; b < SetAddRemoveAgent.NUM_BUCKETS; ++b)
 			{
-				Set<V> d = (Set<V>)map.remove(SetAddRemoveAgent.getBucketKeyForBucket(key, b));
+				Object bkey = SetAddRemoveAgent.getBucketKeyForBucket(key, b);
+				if(map.containsKey(bkey))
+					map.remove(bkey);
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
@@ -53,6 +52,14 @@ public class SetRemoveAgent<V extends Serializable> implements MapGridAgent
 			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
+	}
+	
+	/**
+	 * 
+	 */
+	public Object process(Session sess, ObjectMap map, Object key) 
+	{
+		remove(sess, map, key);
 		return Boolean.TRUE;
 	}
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {

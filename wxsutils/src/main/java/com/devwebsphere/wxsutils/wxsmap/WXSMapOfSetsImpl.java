@@ -191,7 +191,7 @@ public class WXSMapOfSetsImpl<K,V extends Serializable> extends WXSBaseMap imple
 			Object rcV = rc.get(key);
 			if(rcV != null && rcV instanceof EntryErrorValue)
 			{
-				logger.log(Level.SEVERE, "set addAndFlush failed");
+				logger.log(Level.SEVERE, "set addAndFlush failed: " + rcV.toString());
 				throw new ObjectGridRuntimeException(rcV.toString());
 			}
 			mbean.getAddRemoveMetrics().logTime(System.nanoTime() - start);

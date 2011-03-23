@@ -13,6 +13,8 @@ package com.devwebsphere.wxsutils.wxsmap;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
@@ -24,6 +26,8 @@ import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
 public class SetSizeAgent<V extends Serializable> implements MapGridAgent 
 {
+	static Logger logger = Logger.getLogger(SetSizeAgent.class.getName());
+	
 	/**
 	 * 
 	 */
@@ -31,9 +35,10 @@ public class SetSizeAgent<V extends Serializable> implements MapGridAgent
 	/**
 	 * 
 	 */
-	public Object process(Session sess, ObjectMap map, Object key) 
+	
+	static public <V extends Serializable> int size(Session sess, ObjectMap map, Object key)
 	{
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), SetSizeAgent.class.getName());
 		long startNS = System.nanoTime();
 		int rc = 0;
 		try
@@ -52,11 +57,17 @@ public class SetSizeAgent<V extends Serializable> implements MapGridAgent
 		catch(ObjectGridException e)
 		{
 			mbean.getKeysMetric().logException(e);
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 		return rc;
 	}
+	
+	public Object process(Session sess, ObjectMap map, Object key) 
+	{
+		return new Integer(size(sess, map, key));
+	}
+	
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {
 		// TODO Auto-generated method stub
 		return null;
