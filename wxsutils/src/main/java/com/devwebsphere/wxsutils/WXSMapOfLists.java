@@ -11,6 +11,7 @@
 package com.devwebsphere.wxsutils;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.wxsmap.BigListHead;
@@ -73,6 +74,21 @@ public interface WXSMapOfLists<K,V> {
 	 * @return
 	 */
 	public V lpop(K key, K dirtyKey);
+
+	/**
+	 * This removes all items from the list and returns them.
+	 * @param key
+	 * @return All items
+	 */
+	public ArrayList<V> popAll(K key);
+	
+	/**
+	 * This removes all items from the list, returns them and removes the list key from the dirtySet
+	 * @param key
+	 * @param dirtyKey
+	 * @return
+	 */
+	public ArrayList<V> popAll(K key, K dirtyKey);
 
 	/**
 	 * Remove the list for this key if it exists

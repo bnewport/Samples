@@ -22,6 +22,7 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.UndefinedMapException;
 import com.ibm.websphere.objectgrid.datagrid.AgentManager;
+import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 
 /**
  * This takes a MultiPartTask and works with it to execute
@@ -98,9 +99,15 @@ public class JobExecutor <V,R>
 				AgentManager amgr = sess.getMap(routingMapName).getAgentManager();
 				JobAgent<V,R> agent = new JobAgent<V,R>(currTask);
 				// invoke the SingleTaskPart on this specified partition
-				Map<Integer, V> agent_result = amgr.callMapAgent(agent, Collections.singleton(key));
+				Map<Integer, Object> agent_result = amgr.callMapAgent(agent, Collections.singleton(key));
+				Object value = agent_result.get(key);
+				if(value != null && value instanceof EntryErrorValue)
+				{
+					logger.log(Level.SEVERE, "Grid side exception occurred: " + value.toString());
+					throw new ObjectGridRuntimeException("Grid side exception occurred for key: " + key +": " + value.toString());
+				}
 				// extract the user exposed object from the return value
-				R r = mtask.extractResult(agent_result.get(key));
+				R r = mtask.extractResult((V)value);
 				return r;
 			}
 			else

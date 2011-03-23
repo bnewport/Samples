@@ -166,6 +166,36 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		}
 	}
 
+	public ArrayList<V> popAll(K key)
+	{
+		return popAll(key, null);
+	}
+	
+	public ArrayList<V> popAll(K key, K dirtyKey) {
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
+		long start = System.nanoTime();
+		try
+		{
+			BigListPopAllAgent<K, V> a = new BigListPopAllAgent<K, V>();
+			a.dirtyKey = dirtyKey;
+			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
+			Object rcV = rc.get(key);
+			if(rcV != null && rcV instanceof EntryErrorValue)
+			{
+				logger.log(Level.SEVERE, "popAll failed");
+				throw new ObjectGridRuntimeException(rcV.toString());
+			}
+			mbean.getRangeMetrics().logTime(System.nanoTime() - start);
+			return (ArrayList<V>)rcV;
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.SEVERE, "Exception", e);
+			mbean.getRangeMetrics().logException(e);
+			throw new ObjectGridRuntimeException(e);
+		}
+	}
+
 	public void rtrim(K key, int size) {
 		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();

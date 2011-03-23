@@ -17,7 +17,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
-import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
@@ -25,27 +24,26 @@ import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
-public class BigListRangeAgent<V extends Serializable> implements MapGridAgent 
+public class BigListPopAllAgent<K extends Serializable, V extends Serializable> implements MapGridAgent 
 {
-	static Logger logger = Logger.getLogger(BigListRangeAgent.class.getName());
+	static Logger logger = Logger.getLogger(BigListPopAllAgent.class.getName());
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -3820884829092397741L;
-	public int low;
-	public int high;
-	public Filter filter;
+
+	public K dirtyKey;
 	
-	static public <V extends Serializable> ArrayList<V> range(Session sess, ObjectMap map, Object key, int low, int high, Filter filter)
+	static public <K extends Serializable, V extends Serializable> ArrayList<V> popAll(Session sess, ObjectMap map, Object key, K dirtyKey)
 	{
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListRangeAgent.class.getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListPopAllAgent.class.getName());
 		long startNS = System.nanoTime();
 		try
 		{
 			ArrayList<V> rc = null;
-			BigListHead<V> head = (BigListHead<V>)map.get(key);
+			BigListHead<V> head = (BigListHead<V>)map.getForUpdate(key);
 			if(head != null)
-				rc = head.range(sess, map, key, low, high, filter);
+				rc = head.popAll(sess, map, key, dirtyKey);
 			else
 				rc = new ArrayList<V>();
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
@@ -63,7 +61,7 @@ public class BigListRangeAgent<V extends Serializable> implements MapGridAgent
 	 */
 	public Object process(Session sess, ObjectMap map, Object key) 
 	{
-		return range(sess, map, key, low, high, filter);
+		return popAll(sess, map, key, dirtyKey);
 	}
 
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {

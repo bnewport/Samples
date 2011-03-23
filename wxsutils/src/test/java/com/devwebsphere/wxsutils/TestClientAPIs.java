@@ -282,6 +282,8 @@ public class TestClientAPIs
 		map.remove(key);
 		Assert.assertEquals(0, map.llen(key));
 		
+		Assert.assertTrue(map.popAll(key).isEmpty());
+		
 		long endTime = System.nanoTime();
 		double duration = (endTime - startTime) / 1000000.0;
 		System.out.println("Took " + duration);
@@ -369,6 +371,12 @@ public class TestClientAPIs
 		Assert.assertEquals(0, map.size(key));
 	}
 	
+	public boolean isDirty(String mapName, String dirtyKey, String listKey)
+	{
+		Set<String> set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, mapName, dirtyKey);
+		return(set.contains(listKey));
+	}
+	
 	@Test
 	public void testDirtySet()
 	{
@@ -380,13 +388,11 @@ public class TestClientAPIs
 		Assert.assertEquals(0, dirtySetMap.size(dirtyKey));
 
 		// check key L isn't in dirtySet
-		Set<String> set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
-		Assert.assertFalse(set.contains("L"));
+		Assert.assertFalse(isDirty("BigList", dirtyKey, "L"));
 
 		// check with no dirty set key specified, the dirtySet doesn't change
 		listMap.lpush("L", "HELLO");
-		set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
-		Assert.assertFalse(set.contains("L"));
+		Assert.assertFalse(isDirty("BigList", dirtyKey, "L"));
 		String rc = listMap.lpop("L");
 		Assert.assertEquals("HELLO", rc);
 
@@ -394,23 +400,30 @@ public class TestClientAPIs
 		listMap.lpush("L", "HELLO", dirtyKey);
 		
 		// is L in the dirtySet?
-		set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
-		Assert.assertTrue(set.contains("L"));
+		Assert.assertTrue(isDirty("BigList", dirtyKey, "L"));
 		listMap.lpush("L", "BYE", dirtyKey);
 		
 		// check it's still there
-		set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
-		Assert.assertTrue(set.contains("L"));
+		Assert.assertTrue(isDirty("BigList", dirtyKey, "L"));
 
 		// one pop should leave it in there
 		Assert.assertEquals("BYE", listMap.lpop("L", dirtyKey));
-		set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
-		Assert.assertTrue(set.contains("L"));
+		Assert.assertTrue(isDirty("BigList", dirtyKey, "L"));
 
 		// another pop should empty the list and remove it
 		Assert.assertEquals("HELLO", listMap.lpop("L", dirtyKey));
-		set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
-		Assert.assertFalse(set.contains("L"));
+		Assert.assertFalse(isDirty("BigList", dirtyKey, "L"));
+		
+		listMap.lpush("L", "0", dirtyKey);
+		Assert.assertTrue(isDirty("BigList", dirtyKey, "L"));
+		listMap.lpush("L", "1", dirtyKey);
+		Assert.assertTrue(isDirty("BigList", dirtyKey, "L"));
+		
+		Assert.assertEquals(2, listMap.llen("L"));
+		
+		ArrayList<String> allValues = listMap.popAll("L", dirtyKey);
+		Assert.assertFalse(isDirty("BigList", dirtyKey, "L")); // not dirty any more
+		Assert.assertEquals(2, allValues.size());
 	}
 	
 	@Test

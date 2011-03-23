@@ -159,8 +159,7 @@ public class BigListHead <V extends Serializable> implements Serializable
 					map.remove(key);
 					if(dirtyKey != null)
 					{
-						ObjectMap dirtyMap = sess.getMap(BigListPushAgent.getDirtySetMapNameForListMap(map.getName()));
-						SetAddRemoveAgent.doOperation(sess, dirtyMap, dirtyKey, Operation.REMOVE, (Serializable)key);
+						removeFromDirtySet(sess, map, key, dirtyKey);
 					}
 				}
 				else
@@ -178,6 +177,25 @@ public class BigListHead <V extends Serializable> implements Serializable
 			}
 		}
 		return rc;
+	}
+	
+	/**
+	 * This removes the list key from the specified dirty set.
+	 * @param <K>
+	 * @param sess
+	 * @param map
+	 * @param key
+	 * @param dirtyKey
+	 * @throws ObjectGridException
+	 */
+	<K extends Serializable> void removeFromDirtySet(Session sess, ObjectMap map, Object key, K dirtyKey)
+		throws ObjectGridException
+	{
+		if(dirtyKey != null)
+		{
+			ObjectMap dirtyMap = sess.getMap(BigListPushAgent.getDirtySetMapNameForListMap(map.getName()));
+			SetAddRemoveAgent.doOperation(sess, dirtyMap, dirtyKey, Operation.REMOVE, (Serializable)key);
+		}
 	}
 	
 	public int size(Session sess, ObjectMap map, Object key)
@@ -209,6 +227,22 @@ public class BigListHead <V extends Serializable> implements Serializable
 		map.remove(key);
 	}
 	
+	public <K extends Serializable> ArrayList<V> popAll(Session sess, ObjectMap map, Object key, K dirtyKey)
+	throws ObjectGridException
+	{
+		ArrayList<V> list = new ArrayList<V>();
+		ObjectMap bmap = getBucketMap(sess, map);
+		for(int i = leftBucket; i <= rightBucket; ++i)
+		{
+			ArrayList<V> blist = (ArrayList<V>)bmap.remove(getBucketKey(key, i));
+			list.addAll(blist);
+		}
+		map.remove(key);
+		if(dirtyKey != null)
+			removeFromDirtySet(sess, map, key, dirtyKey);
+		return list;
+	}
+
 	public ArrayList<V> range(Session sess, ObjectMap map, Object key, int low, int high, Filter filter)
 		throws ObjectGridException
 	{
