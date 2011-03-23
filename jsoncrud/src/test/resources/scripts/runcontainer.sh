@@ -28,7 +28,7 @@ fi
 
 CONTAINER_NAME="$1"
 
-APPCP="$M2REPO/args4j/args4j/2.0.12/args4j-2.0.12.jar:$M2REPO/com/google/code/gson/gson/1.4/gson-1.4.jar:$M2REPO/rhino/js/1.7R2/js-1.7R2.jar:$M2REPO/com/billynewport/wxsutils/wxsutils/1.10-SNAPSHOT/wxsutils-1.10-SNAPSHOT.jar:$M2REPO/com/devwebsphere/jsoncrud/1.0-SNAPSHOT/jsoncrud-1.0-SNAPSHOT.jar:../../../../target/test-classes"
+APPCP="$M2REPO/args4j/args4j/2.0.12/args4j-2.0.12.jar:$M2REPO/com/google/code/gson/gson/1.4/gson-1.4.jar:$M2REPO/rhino/js/1.7R2/js-1.7R2.jar:$M2REPO/com/billynewport/wxsutils/wxsutils/1.12-SNAPSHOT/wxsutils-1.12-SNAPSHOT.jar:$M2REPO/com/devwebsphere/jsoncrud/1.0-SNAPSHOT/jsoncrud-1.0-SNAPSHOT.jar:../../../../target/test-classes"
 
 # Start the container server process
 $JAVA_EXE -classpath "$OG_CLASSPATH:$APPCP" "$OBJECTGRID_ENDORSED_DIRS" com.ibm.ws.objectgrid.InitializationService "$CONTAINER_NAME" -catalogServiceEndPoints $CATALOGSERVER_HOST:$CATALOGSERVER_PORT -objectgridFile ../objectgrid.xml -deploymentPolicyFile ../deployment.xml
