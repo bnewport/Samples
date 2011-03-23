@@ -22,7 +22,6 @@ import org.junit.Test;
 
 import com.devwebsphere.wxsutils.WXSMapOfSets.Contains;
 import com.devwebsphere.wxsutils.multijob.pingall.PingAllPartitionsJob;
-import com.devwebsphere.wxsutils.wxsmap.BigListHead;
 import com.devwebsphere.wxsutils.wxsmap.BigListPushAgent;
 import com.devwebsphere.wxsutils.wxsmap.dirtyset.FetchJobsFromAllDirtyListsJob;
 import com.ibm.websphere.objectgrid.BackingMap;

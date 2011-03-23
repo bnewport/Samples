@@ -70,7 +70,7 @@ public class QueryAllPartitionsJSON implements MultipartTask<ArrayList<String>, 
 			// if last SinglePartTask wasn't the last one then just get the next
 			// block of limit records
 			QueryPartitionAgentJSON qpa = (QueryPartitionAgentJSON)previousTask;
-			if(qpa.lastExtractWasFull)
+			if(lastExtractWasFull)
 			{
 				qpa.offset += qpa.limit;
 				return qpa;
@@ -79,6 +79,17 @@ public class QueryAllPartitionsJSON implements MultipartTask<ArrayList<String>, 
 				// otherwise we got all the records in this partition
 				return null;
 		}
+	}
+
+	boolean lastExtractWasFull = false;
+	
+	public ArrayList<String> extractResult(ArrayList<String> rawRC)
+	{
+		ArrayList<String> rc = rawRC;
+		// check if last block was < limit records and if it was then
+		// assume there is no more data in this partition
+		lastExtractWasFull = (rc.size() == limit);
+		return rc;
 	}
 
 	/**

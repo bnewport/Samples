@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.devwebsphere.wxsutils.WXSMapOfLists;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.multijob.JobExecutor;
 import com.devwebsphere.wxsutils.multijob.MultipartTask;
@@ -49,11 +48,14 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	int lastVisitedBucket;
 
 	/**
-	 * This is called to convert from the network form to the
-	 * client form. Its the same in this case.
+	 * The is called to extract the current partition result from the
+	 * returned PartitionResult. It also pulls out the current bucket in
+	 * use in this call also. This is called once per SingleTask call
+	 * by the loops.
 	 */
 	public ArrayList<V> extractResult(PartitionResult<V> rawRC) 
 	{
+		// The next bucket visited is this plus one
 		lastVisitedBucket = rawRC.nextBucket;
 		return rawRC.result;
 	}

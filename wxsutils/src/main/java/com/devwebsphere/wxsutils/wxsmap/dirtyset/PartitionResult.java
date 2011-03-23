@@ -13,13 +13,27 @@ package com.devwebsphere.wxsutils.wxsmap.dirtyset;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+/**
+ * This is returned from the SingleTask to the MultiTask. The intent is for
+ * the current singletask to return the bucket in use to the multitask.
+ * @author bnewport
+ *
+ * @param <V>
+ */
 public class PartitionResult<V extends Serializable> implements Serializable
 {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -3257173697785502710L;
+	
+	/**
+	 * The set of keys from the current bucket
+	 */
 	ArrayList<V> result;
+	/**
+	 * The current bucket. The next bucket to visit is this plus one.
+	 */
 	int nextBucket;
 	
 	public String toString()
