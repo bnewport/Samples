@@ -9,6 +9,10 @@ Start a test redis server using this script in the chirp-webapp folder:
 
 Make sure your mysql database is running and that you have created the chirp database (see instructions in redis-wxs).
 
+The objectgrid-server and og-spring jars are marked in the pom.xml as PROVIDED. This means they are not included in the
+WAR as is. The classpath for jetty or your application server should have them already on the class path. If you are
+using WebSphere ND then install WXS on top to achieve this. Otherwise, remove the scope from those jars in the pom.xml
+
 mvn jetty:run
 
 Now, open a browser and goto http://localhost:8080/chirp-webapp
