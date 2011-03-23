@@ -77,6 +77,10 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 			// a push
 			if(dirtyKey != null)
 			{
+				if(logger.isLoggable(Level.FINE))
+				{
+					logger.log(Level.FINE, "Adding key [" + key + "] to dirtySet [" + dirtyKey +"]");
+				}
 				SetAddRemoveAgent.doOperation(sess, dirtyMap, dirtyKey, Operation.ADD, (Serializable)key);
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);

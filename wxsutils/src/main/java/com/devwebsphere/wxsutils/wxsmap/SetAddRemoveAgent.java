@@ -38,7 +38,7 @@ public class SetAddRemoveAgent<V extends Serializable> implements MapGridAgent
 	static public <K, V> String getBucketKeyForValue(K key, V value)
 		throws ObjectGridException
 	{
-		int vhash = value.hashCode() % NUM_BUCKETS;
+		int vhash = Math.abs(value.hashCode()) % NUM_BUCKETS;
 		return getBucketKeyForBucket(key, vhash);
 	}
 

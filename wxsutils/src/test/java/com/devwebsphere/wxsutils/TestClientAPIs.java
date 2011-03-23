@@ -12,8 +12,10 @@ package com.devwebsphere.wxsutils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import junit.framework.Assert;
 
@@ -424,7 +426,59 @@ public class TestClientAPIs
 		ArrayList<String> allValues = listMap.popAll("L", dirtyKey);
 		Assert.assertFalse(isDirty("BigList", dirtyKey, "L")); // not dirty any more
 		Assert.assertEquals(2, allValues.size());
+		Assert.assertTrue(allValues.contains("0"));
+		Assert.assertTrue(allValues.contains("1"));
 	}
+	
+	@Test
+    public void testDirtySetSize()
+    {
+            String dirtyKey = "DIRTY2";
+            WXSMapOfLists<String, String> listMap = utils.getMapOfLists("BigList");
+           
+            Set<String> set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
+            Assert.assertEquals(0, set.size());
+            
+            int numKeys = 10;
+            Set<String> keys = new HashSet<String>();
+            for(int i = 0; i < numKeys; i++)
+            {
+                    String key = UUID.randomUUID().toString();
+                    keys.add(key);
+                    System.out.println("Adding Key:"+key);
+                    listMap.lpush(key, "HELLO"+i,dirtyKey);
+                    System.out.println("Added Key"+key);
+                   
+            }
+
+            set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
+            Assert.assertEquals(keys.size(), set.size());
+
+            while(true){
+                    set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
+                   
+                    if(set != null){
+                            if(set.size() == 0){
+                                    System.out.println("No Keys Found in Grid:");
+                                    break;
+                            }else{
+                                    System.out.println("DirtyKey Size:"+set.size());
+                            }
+                    }
+                   
+                    for(String key : set){
+                            String value = listMap.lpop(key,dirtyKey);
+                            if(value != null)
+                            	System.out.println("Got Value:"+value+" for Key: "+key);
+                    }
+                   
+                    try {
+                            Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                            e.printStackTrace();
+                    }
+            }
+    }
 	
 	@Test
 	public void testPingAllPartitions()
@@ -435,7 +489,7 @@ public class TestClientAPIs
 	/**
 	 * This does a simple stress test against the grid.
 	 */
-	@Test 
+//	@Test 
 	public void testPutRate()
 	{
 		clearMap();

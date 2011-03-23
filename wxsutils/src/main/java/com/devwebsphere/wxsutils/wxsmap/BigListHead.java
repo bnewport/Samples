@@ -193,6 +193,10 @@ public class BigListHead <V extends Serializable> implements Serializable
 	{
 		if(dirtyKey != null)
 		{
+			if(logger.isLoggable(Level.FINE))
+			{
+				logger.log(Level.FINE, "Removing key [" + key + "] from dirtySet [" + dirtyKey + "]");
+			}
 			ObjectMap dirtyMap = sess.getMap(BigListPushAgent.getDirtySetMapNameForListMap(map.getName()));
 			SetAddRemoveAgent.doOperation(sess, dirtyMap, dirtyKey, Operation.REMOVE, (Serializable)key);
 		}
