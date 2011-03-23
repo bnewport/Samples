@@ -234,6 +234,13 @@ public class BigListHead <V extends Serializable> implements Serializable
 	public <K extends Serializable> ArrayList<V> popAll(Session sess, ObjectMap map, Object key, K dirtyKey)
 	throws ObjectGridException
 	{
+		ObjectMap dirtyMap = null;
+		// lock dirtymap first to avoid dead locks
+		if(dirtyKey != null)
+		{
+			dirtyMap = sess.getMap(BigListPushAgent.getDirtySetMapNameForListMap(map.getName()));
+			dirtyMap.getForUpdate(dirtyKey);
+		}
 		ArrayList<V> list = new ArrayList<V>();
 		ObjectMap bmap = getBucketMap(sess, map);
 		for(int i = leftBucket; i <= rightBucket; ++i)
