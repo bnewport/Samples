@@ -40,6 +40,13 @@ public class BigListPopAllAgent<K extends Serializable, V extends Serializable> 
 		long startNS = System.nanoTime();
 		try
 		{
+			ObjectMap dirtyMap = null;
+			// lock dirtymap first to avoid dead locks
+			if(dirtyKey != null)
+			{
+				dirtyMap = sess.getMap(BigListPushAgent.getDirtySetMapNameForListMap(map.getName()));
+				dirtyMap.getForUpdate(dirtyKey);
+			}
 			ArrayList<V> rc = null;
 			BigListHead<V> head = (BigListHead<V>)map.getForUpdate(key);
 			if(head != null)

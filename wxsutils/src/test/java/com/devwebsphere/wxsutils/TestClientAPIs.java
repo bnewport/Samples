@@ -538,4 +538,47 @@ public class TestClientAPIs
 			}
 		}
 	}
+	
+	@Test
+	public void testMultiThread()
+		throws InterruptedException
+	{
+		final String dirtyKey = "DIRTY3";
+		final String key = "M";
+        final WXSMapOfLists<String, String> listMap = utils.getMapOfLists("BigList");
+        final int runTimeSeconds = 45;
+       
+		Runnable pusher = new Runnable() {
+			
+			public void run() {
+				long start = System.currentTimeMillis();
+				long runTime = runTimeSeconds * 1000L;
+				while(System.currentTimeMillis() < start + runTime)
+				{
+					listMap.lpush(key, UUID.randomUUID().toString(), dirtyKey);
+				}
+			}
+		};
+		
+		Runnable puller = new Runnable() {
+			public void run()
+			{
+				long start = System.currentTimeMillis();
+				long runTime = runTimeSeconds * 1000L;
+				while(System.currentTimeMillis() < start + runTime)
+				{
+					ArrayList<String> pList = listMap.popAll(key, dirtyKey);
+					if(pList != null)
+						System.out.println("Pulled " + pList.size());
+				}
+			}
+		};
+		
+		Thread pusherThread = new Thread(pusher);
+		Thread pullerThread = new Thread(puller);
+		pusherThread.start();
+		pullerThread.start();
+		pusherThread.join();
+		pullerThread.join();
+	}
 }
