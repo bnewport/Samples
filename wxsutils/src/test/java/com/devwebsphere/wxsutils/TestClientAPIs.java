@@ -546,7 +546,7 @@ public class TestClientAPIs
 		final String dirtyKey = "DIRTY3";
 		final String key = "M";
         final WXSMapOfLists<String, String> listMap = utils.getMapOfLists("BigList");
-        final int runTimeSeconds = 6 * 60;
+        final int runTimeSeconds = 60 * 60; // 60 minutes
        
 		Runnable pusher = new Runnable() {
 			
@@ -558,7 +558,7 @@ public class TestClientAPIs
 					listMap.lpush(key, UUID.randomUUID().toString(), dirtyKey);
 					try
 					{
-//						Thread.currentThread().wait(10);
+						Thread.currentThread().wait(10);
 					}
 					catch(Exception e) 
 					{}
@@ -582,7 +582,7 @@ public class TestClientAPIs
 					}
 					try
 					{
-						Thread.currentThread().wait(100);
+						Thread.currentThread().wait(50);
 					}
 					catch(Exception e) 
 					{}
@@ -592,14 +592,19 @@ public class TestClientAPIs
 		};
 
 		ArrayList<Thread> allPushers = new ArrayList<Thread>();
-		for(int i = 0; i < 100; ++i)
+		Thread pullerThread = new Thread(puller);
+		pullerThread.start();
+		for(int i = 0; i < 1000; ++i)
 		{
 			Thread pusherThread = new Thread(pusher);
 			allPushers.add(pusherThread);
 			pusherThread.start();
+			try
+			{
+				Thread.currentThread().sleep(10);
+			}
+			catch(InterruptedException e) {}
 		}
-		Thread pullerThread = new Thread(puller);
-		pullerThread.start();
 		
 		for(Thread t : allPushers)
 			t.join();
