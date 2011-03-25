@@ -103,14 +103,14 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 				ObjectMap setMap = sess.getMap(BigListPushAgent.getDirtySetMapNameForListMap(listMapName));
 				// serialize access to set
 				setMap.getForUpdate(dirtyKey);
-				Set<V> set = null;
+				Set<V> set = new HashSet<V>();
 				int i = nextBucket;
 				for(i = nextBucket; i < SetAddRemoveAgent.NUM_BUCKETS; ++i)
 				{
-					set = (Set<V>)setMap.get(SetAddRemoveAgent.getBucketKeyForBucket(dirtyKey, i));
-					if(set != null)
+					Set<V> bucketSet = (Set<V>)setMap.get(SetAddRemoveAgent.getBucketKeyForBucket(dirtyKey, i));
+					if(bucketSet != null)
 					{
-						break;
+						set.addAll(bucketSet);
 					}
 				}
 				PartitionResult<V> rc = new PartitionResult<V>();
