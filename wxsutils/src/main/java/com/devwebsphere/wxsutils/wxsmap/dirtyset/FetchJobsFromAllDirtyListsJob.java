@@ -70,9 +70,10 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	 */
 	static public class FetchDirtyJobsInPartitionTask <K extends Serializable, V extends Serializable> implements SinglePartTask<PartitionResult<V>, ArrayList<V>>
 	{
-		K dirtyKey;
-		String listMapName;
+		K setKey;
+		String setMapName;
 		int nextBucket;
+		int desiredMaxKeys = Integer.MAX_VALUE;
 		
 		static Logger logger = Logger.getLogger(FetchDirtyJobsInPartitionTask.class.getName());
 		/**
@@ -100,17 +101,20 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 		{
 			try
 			{
-				ObjectMap setMap = sess.getMap(BigListPushAgent.getDirtySetMapNameForListMap(listMapName));
+				ObjectMap setMap = sess.getMap(setMapName);
 				// serialize access to set
-				setMap.getForUpdate(dirtyKey);
+				setMap.getForUpdate(setKey);
 				Set<V> set = new HashSet<V>();
 				int i = nextBucket;
 				for(i = nextBucket; i < SetAddRemoveAgent.NUM_BUCKETS; ++i)
 				{
-					Set<V> bucketSet = (Set<V>)setMap.get(SetAddRemoveAgent.getBucketKeyForBucket(dirtyKey, i));
+					Set<V> bucketSet = (Set<V>)setMap.get(SetAddRemoveAgent.getBucketKeyForBucket(setKey, i));
 					if(bucketSet != null)
 					{
 						set.addAll(bucketSet);
+						// keep adding buckets until max size exceeded
+						if(set.size() >= desiredMaxKeys)
+							break;
 					}
 				}
 				PartitionResult<V> rc = new PartitionResult<V>();
@@ -118,6 +122,8 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 					rc.result = new ArrayList<V>(set);
 				else
 					rc.result = new ArrayList<V>();
+				// remember the current bucket so we start at the next one
+				// during the next call to this method
 				rc.nextBucket = i;
 				return rc;
 			}
@@ -131,12 +137,13 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	}
 	
 	JobExecutor<PartitionResult<V>, ArrayList<V>> je;
-	K dirtyKey;
+	K setKey;
 	String listMapName;
+	int desiredMaxKeysPerTrip = Integer.MAX_VALUE;
 	
-	public FetchJobsFromAllDirtyListsJob(ObjectGrid ogclient, String listMapName, K dirtyKey)
+	public FetchJobsFromAllDirtyListsJob(ObjectGrid ogclient, String listMapName, K setKey)
 	{
-		this.dirtyKey = dirtyKey;
+		this.setKey = setKey;
 		this.listMapName = listMapName;
 		je = new JobExecutor<PartitionResult<V>, ArrayList<V>>(ogclient, this);
 	}
@@ -149,9 +156,10 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 		{
 			// start fetching buckets at bucket 0
 			FetchDirtyJobsInPartitionTask<K,V> t = new FetchDirtyJobsInPartitionTask<K,V>();
-			t.dirtyKey = dirtyKey;
-			t.listMapName = listMapName;
+			t.setKey = setKey;
+			t.setMapName = BigListPushAgent.getDirtySetMapNameForListMap(listMapName);
 			t.nextBucket = 0;
+			t.desiredMaxKeys = desiredMaxKeysPerTrip;
 			return t;
 		}
 		else
@@ -160,9 +168,10 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 			{
 				// keep going on this partition at the next set bucket
 				FetchDirtyJobsInPartitionTask<K,V> t = new FetchDirtyJobsInPartitionTask<K,V>();
-				t.dirtyKey = dirtyKey;
-				t.listMapName = listMapName;
+				t.setKey = setKey;
+				t.setMapName = BigListPushAgent.getDirtySetMapNameForListMap(listMapName);
 				t.nextBucket = lastVisitedBucket + 1;
+				t.desiredMaxKeys = desiredMaxKeysPerTrip;
 				return t;
 			}
 			else

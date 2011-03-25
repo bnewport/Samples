@@ -120,12 +120,12 @@ public abstract class MBeanGroupManager <M>
 		ArrayList<MBeanServer> mBeanServers = MBeanServerFactory.findMBeanServer(null);
 		if(mBeanServers.size() == 0)
 		{
-			logger.log(Level.INFO, "No MBeanServer found, creating a new one");
+			logger.log(Level.FINE, "No MBeanServer found, creating a new one");
 			mbeanServer = MBeanServerFactory.createMBeanServer(domainName);
 		}
 		else
 		{
-			logger.log(Level.INFO, "Reusing existing MBeanServer");
+			logger.log(Level.FINE, "Reusing existing MBeanServer");
 			mbeanServer = (MBeanServer)mBeanServers.get(0);
 		}
 		

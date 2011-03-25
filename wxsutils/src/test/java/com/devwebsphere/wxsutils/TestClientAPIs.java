@@ -13,9 +13,12 @@ package com.devwebsphere.wxsutils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import junit.framework.Assert;
 
@@ -39,6 +42,8 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
  */
 public class TestClientAPIs 
 {
+	static Logger logger = Logger.getLogger(TestClientAPIs.class.getName());
+	
 	static ObjectGrid ogclient;
 	static WXSUtils utils;
 	static BackingMap bmFarMap3;
@@ -289,7 +294,7 @@ public class TestClientAPIs
 		
 		long endTime = System.nanoTime();
 		double duration = (endTime - startTime) / 1000000.0;
-		System.out.println("Took " + duration);
+		logger.log(Level.INFO, "Took " + duration);
 	}
 	
 	@Test
@@ -340,6 +345,52 @@ public class TestClientAPIs
 			Assert.assertEquals("" + i, v);
 			Assert.assertEquals(numItems - (i + 1), map.llen(key));
 		}
+	}
+	
+	@Test 
+	public void testBulkPushOperations()
+	{
+		WXSMapOfLists<String, String> map = utils.getMapOfLists("BigList");
+		String key = "BULK_LIST";
+		
+		Assert.assertEquals(0, map.llen(key));
+		List<String> items = new ArrayList<String>();
+		items.add("0"); items.add("1"); items.add("2");
+		
+		map.lpush(key, items); // list is now 2, 1, 0
+		
+		Assert.assertEquals(3, map.llen(key));
+		items = map.lrange(key, 0, 2);
+		Assert.assertEquals(3, items.size());
+		Assert.assertEquals("2", items.get(0));
+		Assert.assertEquals("1", items.get(1));
+		Assert.assertEquals("0", items.get(2));
+		
+		map.lpush(key, "4");
+		items = map.lrange(key, 0, 0);
+		Assert.assertEquals(1, items.size());
+		Assert.assertEquals("4", items.get(0));
+		
+		map.remove(key);
+		
+		// now do right push
+		Assert.assertEquals(0, map.llen(key));
+		items = new ArrayList<String>();
+		items.add("0"); items.add("1"); items.add("2");
+		
+		map.rpush(key, items); // list is now 0, 1, 2
+		
+		Assert.assertEquals(3, map.llen(key));
+		items = map.lrange(key, 0, 2);
+		Assert.assertEquals(3, items.size());
+		Assert.assertEquals("0", items.get(0));
+		Assert.assertEquals("1", items.get(1));
+		Assert.assertEquals("2", items.get(2));
+		
+		map.rpush(key, "4");
+		items = map.lrange(key, 3, 3);
+		Assert.assertEquals(1, items.size());
+		Assert.assertEquals("4", items.get(0));
 	}
 	
 	@Test
@@ -484,7 +535,8 @@ public class TestClientAPIs
                     try {
                             Thread.sleep(5000);
                     } catch (InterruptedException e) {
-                            e.printStackTrace();
+                    	logger.log(Level.SEVERE, "Exception", e);
+                    	Assert.fail();
                     }
             }
             Assert.assertEquals(0, jobCounter);
@@ -565,14 +617,15 @@ public class TestClientAPIs
 						}
 						catch(Exception e) 
 						{
-							
+							logger.log(Level.SEVERE, "Exception", e);
+							Assert.fail();
 						}
 					}
 				}
 				catch(Exception e)
 				{
-					System.out.println("Pusher thread exception");
-					e.printStackTrace(System.out);
+					logger.log(Level.SEVERE, "Exception", e);
+					Assert.fail();
 				}
 			}
 		};
@@ -595,17 +648,20 @@ public class TestClientAPIs
 						}
 						try
 						{
-							Thread.currentThread().wait(50);
+							Thread.currentThread().sleep(50);
 						}
 						catch(Exception e) 
-						{}
+						{
+							logger.log(Level.SEVERE, "Exception",e);
+							Assert.fail();
+						}
 						
 					}
 				}
 				catch(Exception e)
 				{
-					System.out.println("Puller thread exception");
-					e.printStackTrace(System.out);
+					logger.log(Level.SEVERE, "Exception", e);
+					Assert.fail();
 				}
 			}
 		};
@@ -622,7 +678,11 @@ public class TestClientAPIs
 			{
 				Thread.currentThread().sleep(10);
 			}
-			catch(InterruptedException e) {}
+			catch(InterruptedException e) 
+			{
+				logger.log(Level.SEVERE, "Exception", e);
+				Assert.fail();
+			}
 		}
 		
 		for(Thread t : allPushers)
