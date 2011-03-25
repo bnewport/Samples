@@ -45,12 +45,13 @@ public class TestClientAPIs
 	
 	@BeforeClass
 	public static void setupTest()
+		throws Exception
 	{
 		// do everything in one JVM for test
-		ogclient = WXSUtils.startTestServer("Grid", "/objectgrid.xml", "/deployment.xml");
+//		ogclient = WXSUtils.startTestServer("Grid", "/objectgrid.xml", "/deployment.xml");
 		// switch to this to connect to remote grid instead.
-//		ogclient = WXSUtils.connectClient("localhost:2809", "Grid", "/objectgrid.xml");
-		utils = new WXSUtils(ogclient);
+		utils = WXSUtils.getDefaultUtils();
+		ogclient = utils.getObjectGrid();
 		bmFarMap3 = ogclient.getMap("FarMap3");
 	}
 
@@ -551,17 +552,27 @@ public class TestClientAPIs
 		Runnable pusher = new Runnable() {
 			
 			public void run() {
-				long start = System.currentTimeMillis();
-				long runTime = runTimeSeconds * 1000L;
-				while(System.currentTimeMillis() < start + runTime)
+				try
 				{
-					listMap.lpush(key, UUID.randomUUID().toString(), dirtyKey);
-					try
+					long start = System.currentTimeMillis();
+					long runTime = runTimeSeconds * 1000L;
+					while(System.currentTimeMillis() < start + runTime)
 					{
-						Thread.currentThread().wait(10);
+						listMap.lpush(key, UUID.randomUUID().toString(), dirtyKey);
+						try
+						{
+//							Thread.currentThread().wait(10);
+						}
+						catch(Exception e) 
+						{
+							
+						}
 					}
-					catch(Exception e) 
-					{}
+				}
+				catch(Exception e)
+				{
+					System.out.println("Pusher thread exception");
+					e.printStackTrace(System.out);
 				}
 			}
 		};
@@ -569,24 +580,32 @@ public class TestClientAPIs
 		Runnable puller = new Runnable() {
 			public void run()
 			{
-				long start = System.currentTimeMillis();
-				long runTime = runTimeSeconds * 1000L;
-				while(System.currentTimeMillis() < start + runTime)
+				try
 				{
-					Set<String> allKeys = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey) ;
-					for(String aKey : allKeys)
+					long start = System.currentTimeMillis();
+					long runTime = runTimeSeconds * 1000L;
+					while(System.currentTimeMillis() < start + runTime)
 					{
-						ArrayList<String> pList = listMap.popAll(aKey, dirtyKey);
-						if(pList != null && pList.size() > 0)
-							System.out.println("Pulled " + pList.size());
+						Set<String> allKeys = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey) ;
+						for(String aKey : allKeys)
+						{
+							ArrayList<String> pList = listMap.popAll(aKey, dirtyKey);
+							if(pList != null && pList.size() > 0)
+								System.out.println("Pulled " + pList.size());
+						}
+						try
+						{
+							Thread.currentThread().wait(50);
+						}
+						catch(Exception e) 
+						{}
+						
 					}
-					try
-					{
-						Thread.currentThread().wait(50);
-					}
-					catch(Exception e) 
-					{}
-					
+				}
+				catch(Exception e)
+				{
+					System.out.println("Puller thread exception");
+					e.printStackTrace(System.out);
 				}
 			}
 		};
@@ -594,7 +613,7 @@ public class TestClientAPIs
 		ArrayList<Thread> allPushers = new ArrayList<Thread>();
 		Thread pullerThread = new Thread(puller);
 		pullerThread.start();
-		for(int i = 0; i < 1000; ++i)
+		for(int i = 0; i < 200; ++i)
 		{
 			Thread pusherThread = new Thread(pusher);
 			allPushers.add(pusherThread);

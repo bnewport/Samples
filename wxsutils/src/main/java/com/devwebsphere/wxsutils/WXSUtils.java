@@ -1131,4 +1131,15 @@ public class WXSUtils
 		}
 		return globalDefaultUtils;
 	}
+
+	/**
+	 * This returns the WXS Session being used by this WXSUtils instance for
+	 * this thread. If you create multiple WXSUtils instances, each one has a different
+	 * ThreadLocal
+	 * @return The WXS Session in use for this thread with this WXSUtil instance
+	 */
+	public Session getSessionForThread()
+	{
+		return tls.getSession();
+	}
 }
