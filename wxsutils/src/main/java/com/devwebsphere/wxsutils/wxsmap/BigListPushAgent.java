@@ -11,6 +11,8 @@
 package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,7 +35,7 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 	public static int BUCKET_SIZE = 20;
 	
 	public LR isLeft;
-	public V value;
+	public List<V> values;
 	public K dirtyKey;
 	
 	/**
@@ -48,7 +50,7 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 		return sb.toString();
 	}
 	
-	static <K extends Serializable, V extends Serializable> void push(Session sess, ObjectMap map, Object key, LR isLeft, V value, K dirtyKey)
+	static <K extends Serializable, V extends Serializable> void push(Session sess, ObjectMap map, Object key, LR isLeft, List<V> values, K dirtyKey)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListPushAgent.class.getName());
 		long startNS = System.nanoTime();
@@ -63,15 +65,18 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 			}
 			
 			BigListHead<V> head = (BigListHead<V>)map.getForUpdate(key);
-			if(head == null)
+			for(V v : values)
 			{
-				// this inserts the head in the map also.
-				head = new BigListHead<V>(sess, map, key, value, BUCKET_SIZE);
-			}
-			else
-			{
-				// this updates the head in the map also
-				head.push(sess, map, key, isLeft, value);
+				if(head == null)
+				{
+					// this inserts the head in the map also.
+					head = new BigListHead<V>(sess, map, key, v, BUCKET_SIZE);
+				}
+				else
+				{
+					// this updates the head in the map also
+					head.push(sess, map, key, isLeft, v);
+				}
 			}
 			// maintain a set of list keys in this partition when they have
 			// a push
@@ -101,7 +106,7 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 
 	public Object process(Session sess, ObjectMap map, Object key) 
 	{
-		push(sess, map, key, isLeft, value, dirtyKey);
+		push(sess, map, key, isLeft, values, dirtyKey);
 		return Boolean.TRUE;
 	}
 

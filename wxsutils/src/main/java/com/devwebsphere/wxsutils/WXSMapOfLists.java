@@ -59,6 +59,14 @@ public interface WXSMapOfLists<K,V> {
 	public void lpush(K key, V value, K... dirtySet);
 
 	/**
+	 * This pushes the value on the left of the list moving over the list from 0 to its size
+	 * @param key
+	 * @param values
+	 * @param dirtySet
+	 */
+	public void lpush(K key, List<V> values, K... dirtySet);
+
+	/**
 	 * This removes and returns the left most element in the list
 	 * @param key The key for the list
 	 * @return NULL if the list is empty or the leftmost element
@@ -119,6 +127,8 @@ public interface WXSMapOfLists<K,V> {
 	 * @param dirtySet The key for the per shard dirty set to add this key to. Optional
 	 */
 	public void rpush(K key, V value, K... dirtySet);
+	
+	public void rpush(K key, List<V> values, K... dirtySet);
 
 	/**
 	 * This returns the elements in the list from index low to index high

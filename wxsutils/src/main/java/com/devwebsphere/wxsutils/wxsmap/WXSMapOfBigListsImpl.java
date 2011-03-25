@@ -13,6 +13,7 @@ package com.devwebsphere.wxsutils.wxsmap;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -104,10 +105,17 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 
 	public void lpush(K key, V value, K... dirtySet)
 	{
-		push(key, value, LR.LEFT, dirtySet);
+		List<V> list = new ArrayList<V>(1);
+		list.add(value);
+		push(key, list, LR.LEFT, dirtySet);
 	}
 	
-	void push(K key, V value, LR isLeft, K[] dirtySet) {
+	public void lpush(K key, List<V> values, K... dirtySet)
+	{
+		push(key, values, LR.LEFT, dirtySet);
+	}
+	
+	void push(K key, List<V> values, LR isLeft, K[] dirtySet) {
 		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		if(dirtySet != null && dirtySet.length > 1)
@@ -116,7 +124,8 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		{
 			BigListPushAgent<K, V> pushAgent = new BigListPushAgent<K, V>();
 			pushAgent.isLeft = isLeft;
-			pushAgent.value = value;
+			pushAgent.values = new ArrayList<V>();
+			pushAgent.values.addAll(values);
 			if(dirtySet != null && dirtySet.length == 1)
 				pushAgent.dirtyKey = dirtySet[0];
 			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(pushAgent, Collections.singletonList(key));
@@ -135,7 +144,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
-
+	
 	public ArrayList<V> lrange(K key, int low, int high, Filter... filters) {
 		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
@@ -231,9 +240,16 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 
 	public void rpush(K key, V value, K... dirtySet) 
 	{
-		push(key, value, LR.RIGHT, dirtySet);
+		List<V> list = new ArrayList<V>(1);
+		list.add(value);
+		push(key, list, LR.RIGHT, dirtySet);
 	}
 
+	public void rpush(K key, List<V> values, K... dirtySet) 
+	{
+		push(key, values, LR.RIGHT, dirtySet);
+	}
+	
 	public void remove(K key)
 	{
 		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
