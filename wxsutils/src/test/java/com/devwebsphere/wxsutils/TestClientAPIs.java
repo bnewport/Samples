@@ -391,29 +391,35 @@ public class TestClientAPIs
 		items = map.lrange(key, 3, 3);
 		Assert.assertEquals(1, items.size());
 		Assert.assertEquals("4", items.get(0));
-		
-		Map<String, List<String>> bulkItems = new HashMap<String, List<String>>();
-		
-		int numItemsToPush = 3;
-		for(int i = 0; i < 10; ++i)
+
 		{
-			ArrayList<String> itemsToPush = new ArrayList<String>();
-			for(int j = 0; j < numItemsToPush; ++j)
-				itemsToPush.add("ITEM #" + j + " for " + i);
-			bulkItems.put(Integer.toString(i), itemsToPush);
-		}
-		map.rpush(bulkItems);
-		
-		for(int i = 0; i < 10; ++i)
-		{
-			Assert.assertEquals(numItemsToPush, map.llen(Integer.toString(i)));
-			List<String> v = map.popAll(Integer.toString(i));
-			Assert.assertEquals(numItemsToPush, v.size());
-			Set<String> vset = new HashSet<String>();
-			vset.addAll(v);
-			for(int j = 0; j < numItemsToPush; ++j)
+			Map<String, List<String>> bulkItems = new HashMap<String, List<String>>();
+			
+			int numItemsToPush = 3;
+			int numListsToTest = 10;
+			for(int i = 0; i < numListsToTest; ++i)
 			{
-				Assert.assertTrue(vset.contains("ITEM #" + j + " for " + i));
+				ArrayList<String> itemsToPush = new ArrayList<String>();
+				for(int j = 0; j < numItemsToPush; ++j)
+					itemsToPush.add("ITEM #" + j + " for " + i);
+				bulkItems.put(Integer.toString(i), itemsToPush);
+			}
+			map.rpush(bulkItems, "BULK_DIRTY");
+
+			Set<String> dirtySet = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", "BULK_DIRTY");
+			Assert.assertEquals(numListsToTest, dirtySet.size());
+
+			for(String dirtyKey : dirtySet)
+			{
+				Assert.assertEquals(numItemsToPush, map.llen(dirtyKey));
+				List<String> v = map.popAll(dirtyKey);
+				Assert.assertEquals(numItemsToPush, v.size());
+				Set<String> vset = new HashSet<String>();
+				vset.addAll(v);
+				for(int j = 0; j < numItemsToPush; ++j)
+				{
+					Assert.assertTrue(vset.contains("ITEM #" + j + " for " + dirtyKey));
+				}
 			}
 		}
 	}
