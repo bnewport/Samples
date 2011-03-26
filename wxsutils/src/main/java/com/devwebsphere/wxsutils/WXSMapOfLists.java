@@ -12,6 +12,7 @@ package com.devwebsphere.wxsutils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.wxsmap.BigListHead;
@@ -65,6 +66,28 @@ public interface WXSMapOfLists<K,V> {
 	 * @param dirtySet
 	 */
 	public void lpush(K key, List<V> values, K... dirtySet);
+
+	/**
+	 * This takes a Map of list keys and the entries to push and does a push
+	 * of all those key and lists in bulk. Each Map Entry is like a normal
+	 * call to lpush(K, List<V>). It tries to do at most one RPC
+	 * per partition and does those RPCs in parallel using
+	 * the WXSUtils thread pool.
+	 * @param items
+	 * @param dirtySet
+	 */
+	public void lpush(Map<K, List<V>> items, K... dirtySet);
+	
+	/**
+	 * This takes a Map of list keys and the entries to push and does a push
+	 * of all those key and lists in bulk. Each Map Entry is like a normal
+	 * call to rpush(K, List<V>). It tries to do at most one RPC
+	 * per partition and does those RPCs in parallel using
+	 * the WXSUtils thread pool.
+	 * @param items
+	 * @param dirtySet
+	 */
+	public void rpush(Map<K, List<V>> items, K... dirtySet);
 
 	/**
 	 * This removes and returns the left most element in the list

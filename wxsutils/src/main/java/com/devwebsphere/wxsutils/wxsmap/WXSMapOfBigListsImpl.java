@@ -13,8 +13,12 @@ package com.devwebsphere.wxsutils.wxsmap;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,6 +28,7 @@ import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.jmx.listset.WXSMapOfListsMBeanImpl;
 import com.devwebsphere.wxsutils.jmx.listset.WXSMapOfListsMBeanManager;
 import com.devwebsphere.wxsutils.wxsmap.BigListHead.LR;
+import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 
@@ -124,16 +129,20 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		{
 			BigListPushAgent<K, V> pushAgent = new BigListPushAgent<K, V>();
 			pushAgent.isLeft = isLeft;
-			pushAgent.values = new ArrayList<V>();
-			pushAgent.values.addAll(values);
+			pushAgent.values = new HashMap<K, List<V>>();
+			pushAgent.values.put(key, values);
 			if(dirtySet != null && dirtySet.length == 1)
 				pushAgent.dirtyKey = dirtySet[0];
-			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(pushAgent, Collections.singletonList(key));
-			Object rcV = rc.get(key);
-			if(rcV != null && rcV instanceof EntryErrorValue)
+			Object rc = tls.getMap(mapName).getAgentManager().callReduceAgent(pushAgent, Collections.singletonList(key));
+			if(rc != null && !(rc instanceof Boolean))
 			{
-				logger.log(Level.SEVERE, "push failed: " + rcV.toString());
-				throw new ObjectGridRuntimeException(rcV.toString());
+				logger.log(Level.SEVERE, "push failed: " + rc.toString());
+				throw new ObjectGridRuntimeException(rc.toString());
+			}
+			Boolean rcB = (Boolean)rc;
+			if(!rcB)
+			{
+				throw new ObjectGridRuntimeException("Push failed");
 			}
 			mbean.getPushMetrics().logTime(System.nanoTime() - start);
 		}
@@ -245,6 +254,16 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		push(key, list, LR.RIGHT, dirtySet);
 	}
 
+	public void rpush(Map<K, List<V>> items, K... dirtySet)
+	{
+		bulkPushAll(bmap, items, LR.RIGHT, dirtySet);
+	}
+	
+	public void lpush(Map<K, List<V>> items, K... dirtySet)
+	{
+		bulkPushAll(bmap, items, LR.LEFT, dirtySet);
+	}
+	
 	public void rpush(K key, List<V> values, K... dirtySet) 
 	{
 		push(key, values, LR.RIGHT, dirtySet);
@@ -271,6 +290,45 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 			logger.log(Level.SEVERE, "Exception", e);
 			mbean.getRemoveMetrics().logException(e);
 			throw new ObjectGridRuntimeException(e);
+		}
+	}
+
+	void bulkPushAll(BackingMap bmap, Map<K,List<V>> batch, LR side, K[] dirtySet)
+	{
+		if(dirtySet != null && dirtySet.length > 1)
+			throw new ObjectGridRuntimeException("push does not allow multiple dirtySet key");
+		K dirtyKey = null;
+		if(dirtySet != null && dirtySet.length == 1)
+			dirtyKey = dirtySet[0];
+		if(batch.size() > 0)
+		{
+			Map<Integer, Map<K,List<V>>> pmap = WXSUtils.convertToPartitionEntryMap(bmap, batch);
+			Iterator<Map<K,List<V>>> items = pmap.values().iterator();
+			ArrayList<Future<?>> results = new ArrayList<Future<?>>();
+			CountDownLatch doneSignal = new CountDownLatch(pmap.size());
+			while(items.hasNext())
+			{
+				Map<K,List<V>> perPartitionEntries = items.next();
+				// we need one key for partition routing
+				// so get the first one
+				K key = perPartitionEntries.keySet().iterator().next();
+				
+				// invoke the agent to add the batch of records to the grid
+				BigListPushAgent<K, V> agent = new BigListPushAgent<K, V>();
+				agent.dirtyKey = dirtyKey;
+				agent.isLeft = side;
+				agent.values = perPartitionEntries;
+				// Push all keys/lists for one partition using the first key as a routing key
+				Future<?> fv = utils.getExecutorService().submit(new WXSUtils.CallReduceAgentThread(utils.getObjectGrid(), bmap.getName(), key, agent, doneSignal));
+				results.add(fv);
+			}
+	
+			WXSUtils.blockForAllFuturesToFinish(doneSignal);
+			if(!WXSUtils.areAllFuturesTRUE(results))
+			{
+				logger.log(Level.SEVERE, "pushAll failed because of a server side exception");
+				throw new ObjectGridRuntimeException("pushAll failed");
+			}
 		}
 	}
 }

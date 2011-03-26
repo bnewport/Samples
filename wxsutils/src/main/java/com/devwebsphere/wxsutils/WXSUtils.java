@@ -396,7 +396,7 @@ public class WXSUtils
 				ia.batchBefore = origPerPartitionEntries.getValue();
 				ia.newValues = updPerPartitionEntries;
 				// Insert all keys for one partition using the first key as a routing key
-				Future<Map<K, Boolean>> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ia, doneSignal));
+				Future<Map<K, Boolean>> fv = threadPool.submit(new CallReduceAgentThread(grid, bmap.getName(), key, ia, doneSignal));
 				results.add(fv);
 			}
 	
@@ -459,7 +459,7 @@ public class WXSUtils
 				ia.doGet = doGet;
 				ia.batch = perPartitionEntries;
 				// Insert all keys for one partition using the first key as a routing key
-				Future<?> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ia, doneSignal));
+				Future<?> fv = threadPool.submit(new CallReduceAgentThread(grid, bmap.getName(), key, ia, doneSignal));
 				results.add(fv);
 			}
 	
@@ -478,7 +478,7 @@ public class WXSUtils
 	 * @param results
 	 * @return true if all Agents returned true
 	 */
-	boolean areAllFuturesTRUE(List<Future<?>> results)
+	static public boolean areAllFuturesTRUE(List<Future<?>> results)
 	{
 		try
 		{
@@ -527,7 +527,7 @@ public class WXSUtils
 				// invoke the agent to add the batch of records to the grid
 				RemoveAgent<K> ra = new RemoveAgent<K>();
 				ra.batch = perPartitionEntries;
-				Future<?> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ra, doneSignal));
+				Future<?> fv = threadPool.submit(new CallReduceAgentThread(grid, bmap.getName(), key, ra, doneSignal));
 				results.add(fv);
 			}
 	
@@ -564,7 +564,7 @@ public class WXSUtils
 				// invoke the agent to add the batch of records to the grid
 				InvalidateAgent<K> ra = new InvalidateAgent<K>();
 				ra.batch = perPartitionEntries;
-				Future<?> fv = threadPool.submit(new CallReduceAgentThread(bmap.getName(), key, ra, doneSignal));
+				Future<?> fv = threadPool.submit(new CallReduceAgentThread(grid, bmap.getName(), key, ra, doneSignal));
 				results.add(fv);
 			}
 	
@@ -606,7 +606,7 @@ public class WXSUtils
 					// invoke the agent to add the batch of records to the grid
 					MapAgentExecutor<K,A,X> ia = new MapAgentExecutor<K,A,X>();
 					ia.batch = perPartitionEntries;
-					Future<Map<K,X>> fv = threadPool.submit(new CallReduceAgentThread<K,Map<K,X>>(bmap.getName(), key, ia, doneSignal));
+					Future<Map<K,X>> fv = threadPool.submit(new CallReduceAgentThread<K,Map<K,X>>(grid, bmap.getName(), key, ia, doneSignal));
 					results.add(fv);
 				}
 				Map<K,X> result = new HashMap<K, X>();
@@ -659,7 +659,7 @@ public class WXSUtils
 						// invoke the agent to add the batch of records to the grid
 						ReduceAgentExecutor<K,A> ia = new ReduceAgentExecutor<K,A>();
 						ia.batch = perPartitionEntries;
-						Future<X> fv = threadPool.submit(new CallReduceAgentThread<K,X>(bmap.getName(), key, ia, doneSignal));
+						Future<X> fv = threadPool.submit(new CallReduceAgentThread<K,X>(grid, bmap.getName(), key, ia, doneSignal));
 						results.add(fv);
 					}
 					Iterator<Future<X>> iter = results.iterator();
@@ -691,7 +691,7 @@ public class WXSUtils
 	 * @param items
 	 * @return
 	 */
-	protected <K1, V1> Map<Integer, Map<K1,V1>> convertToPartitionEntryMap(BackingMap baseMap, Map<K1,V1> items)
+	static public <K1, V1> Map<Integer, Map<K1,V1>> convertToPartitionEntryMap(BackingMap baseMap, Map<K1,V1> items)
 	{
 		Iterator<Map.Entry<K1, V1>> iter = items.entrySet().iterator();
 		Map<Integer,Map<K1,V1>> entriesForPartition = new HashMap<Integer, Map<K1,V1>>();
@@ -717,7 +717,7 @@ public class WXSUtils
 	 * @param keys
 	 * @return
 	 */
-	protected <K> Map<Integer, List<K>> convertToPartitionEntryMap(BackingMap baseMap, Collection<K> keys)
+	static public <K> Map<Integer, List<K>> convertToPartitionEntryMap(BackingMap baseMap, Collection<K> keys)
 	{
 		Map<Integer,List<K>> entriesForPartition = new HashMap<Integer, List<K>>();
 		for(K k : keys)
@@ -828,15 +828,17 @@ public class WXSUtils
 			container.teardown();
 	}
 
-	class CallReduceAgentThread<K,X> implements Callable<X>
+	static public class CallReduceAgentThread<K,X> implements Callable<X>
 	{
 		K key;
 		String mapName;
 		ReduceGridAgent agent;
 		CountDownLatch doneSignal;
+		ObjectGrid grid;
 		
-		public CallReduceAgentThread(String mapName, K key, ReduceGridAgent agent, CountDownLatch ds)
+		public CallReduceAgentThread(ObjectGrid grid, String mapName, K key, ReduceGridAgent agent, CountDownLatch ds)
 		{
+			this.grid = grid;
 			this.doneSignal = ds;
 			this.key = key;
 			this.mapName = mapName;
@@ -868,7 +870,7 @@ public class WXSUtils
 	 * This waits for all the Futures to be complete
 	 * @param results The list of Futures to wait on.
 	 */
-	void blockForAllFuturesToFinish(CountDownLatch doneSignal)
+	static public void blockForAllFuturesToFinish(CountDownLatch doneSignal)
 	{
 		try 
 		{

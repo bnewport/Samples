@@ -11,7 +11,7 @@
 package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -26,16 +26,16 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.UndefinedMapException;
-import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
+import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 
-public class BigListPushAgent <K extends Serializable, V extends Serializable> implements MapGridAgent 
+public class BigListPushAgent <K extends Serializable, V extends Serializable> implements ReduceGridAgent 
 {
 	static Logger logger = Logger.getLogger(BigListPushAgent.class.getName());
 
 	public static int BUCKET_SIZE = 20;
 	
 	public LR isLeft;
-	public List<V> values;
+	public Map<K,List<V>> values;
 	public K dirtyKey;
 	
 	/**
@@ -50,7 +50,7 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 		return sb.toString();
 	}
 	
-	static <K extends Serializable, V extends Serializable> void push(Session sess, ObjectMap map, Object key, LR isLeft, List<V> values, K dirtyKey)
+	static <K extends Serializable, V extends Serializable> void push(Session sess, ObjectMap map, LR isLeft, Map<K, List<V>> values, K dirtyKey)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListPushAgent.class.getName());
 		long startNS = System.nanoTime();
@@ -64,30 +64,34 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 				dirtyMap.getForUpdate(dirtyKey);
 			}
 			
-			BigListHead<V> head = (BigListHead<V>)map.getForUpdate(key);
-			for(V v : values)
+			for(Map.Entry<K, List<V>> e : values.entrySet())
 			{
-				if(head == null)
+				K key = e.getKey();
+				BigListHead<V> head = (BigListHead<V>)map.getForUpdate(key);
+				for(V v : e.getValue())
 				{
-					// this inserts the head in the map also.
-					head = new BigListHead<V>(sess, map, key, v, BUCKET_SIZE);
+					if(head == null)
+					{
+						// this inserts the head in the map also.
+						head = new BigListHead<V>(sess, map, key, v, BUCKET_SIZE);
+					}
+					else
+					{
+						// this updates the head in the map also
+						head.push(sess, map, key, isLeft, v);
+					}
 				}
-				else
+				if(dirtyKey != null)
 				{
-					// this updates the head in the map also
-					head.push(sess, map, key, isLeft, v);
+					if(logger.isLoggable(Level.FINE))
+					{
+						logger.log(Level.FINE, "Adding key [" + key + "] to dirtySet [" + dirtyKey +"]");
+					}
+					SetAddRemoveAgent.doOperation(sess, dirtyMap, dirtyKey, Operation.ADD, (Serializable)key);
 				}
 			}
 			// maintain a set of list keys in this partition when they have
 			// a push
-			if(dirtyKey != null)
-			{
-				if(logger.isLoggable(Level.FINE))
-				{
-					logger.log(Level.FINE, "Adding key [" + key + "] to dirtySet [" + dirtyKey +"]");
-				}
-				SetAddRemoveAgent.doOperation(sess, dirtyMap, dirtyKey, Operation.ADD, (Serializable)key);
-			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
 		catch(UndefinedMapException e)
@@ -99,19 +103,41 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 		{
 			logger.log(Level.SEVERE, "Unexpected exception", e);
 			mbean.getKeysMetric().logException(e);
-			e.printStackTrace();
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
 
-	public Object process(Session sess, ObjectMap map, Object key) 
+	public Object reduce(Session sess, ObjectMap map, Collection arg2)
 	{
-		push(sess, map, key, isLeft, values, dirtyKey);
+		push(sess, map, isLeft, values, dirtyKey);
 		return Boolean.TRUE;
 	}
 
-	public Map processAllEntries(Session arg0, ObjectMap arg1) {
-		// TODO Auto-generated method stub
+	/**
+	 * Combine the Boolean results of the process calls using
+	 * AND
+	 */
+	public Object reduceResults(Collection arg0) 
+	{
+		boolean rc = true;
+		for(Object o : arg0)
+		{
+			if(o instanceof Boolean)
+			{
+				Boolean b = (Boolean)o;
+				rc = rc && b;
+			}
+			else
+			{
+				rc = false;
+			}
+			if(!rc) break;
+		}
+		return rc;
+	}
+
+	public Object reduce(Session sess, ObjectMap map) 
+	{
 		return null;
 	}
 
