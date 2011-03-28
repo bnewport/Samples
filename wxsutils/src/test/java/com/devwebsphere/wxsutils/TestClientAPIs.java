@@ -15,8 +15,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -630,52 +633,42 @@ public class TestClientAPIs
 		final String dirtyKey = "DIRTY3";
 		final String key = "M";
         final WXSMapOfLists<String, String> listMap = utils.getMapOfLists("BigList");
-        final int runTimeSeconds = 60 * 60; // 60 minutes
-       
-		Runnable pusher = new Runnable() {
-			
-			public void run() {
-				try
-				{
-					long start = System.currentTimeMillis();
-					long runTime = runTimeSeconds * 1000L;
-					while(System.currentTimeMillis() < start + runTime)
-					{
-						listMap.lpush(key, UUID.randomUUID().toString(), dirtyKey);
-						try
-						{
-//							Thread.currentThread().wait(10);
-						}
-						catch(Exception e) 
-						{
-							logger.log(Level.SEVERE, "Exception", e);
-							Assert.fail();
-						}
-					}
-				}
-				catch(Exception e)
-				{
-					logger.log(Level.SEVERE, "Exception", e);
-					Assert.fail();
-				}
-			}
-		};
-		
+        int numPushers = 200;
+        final int numKeys = 1000;
+        final int numPushesPerPusher = 500;
+        final CountDownLatch counter = new CountDownLatch(numPushers * numPushesPerPusher);
+        
+        final Map<String, AtomicLong> keyPushCounters = new HashMap<String, AtomicLong>();
+        for(int i = 0; i < numKeys; ++i)
+        {
+        	keyPushCounters.put(key + "#" + i, new AtomicLong());
+        }
+        
 		Runnable puller = new Runnable() {
 			public void run()
 			{
 				try
 				{
 					long start = System.currentTimeMillis();
-					long runTime = runTimeSeconds * 1000L;
-					while(System.currentTimeMillis() < start + runTime)
+					while(counter.getCount() > 0)
 					{
 						Set<String> allKeys = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey) ;
 						for(String aKey : allKeys)
 						{
 							ArrayList<String> pList = listMap.popAll(aKey, dirtyKey);
 							if(pList != null && pList.size() > 0)
-								System.out.println("Pulled " + pList.size());
+							{
+								System.out.println("Pulled " + pList.size() + " from " + aKey + ": Remaining = " + counter.getCount());
+								// count down for each job retrieved
+								for(String s : pList)
+								{
+									// value MUST be same as key
+									Assert.assertEquals(aKey, s);
+									// one less value for this list and sanity check
+									Assert.assertTrue(keyPushCounters.get(aKey).decrementAndGet() >= 0);
+									counter.countDown();
+								}
+							}
 						}
 						try
 						{
@@ -697,11 +690,47 @@ public class TestClientAPIs
 			}
 		};
 
-		ArrayList<Thread> allPushers = new ArrayList<Thread>();
 		Thread pullerThread = new Thread(puller);
 		pullerThread.start();
-		for(int i = 0; i < 200; ++i)
+		
+		ArrayList<Thread> allPushers = new ArrayList<Thread>();
+
+		for(int i = 0; i < numPushers; ++i)
 		{
+			Runnable pusher = new Runnable() {
+				int pushesToGo = numPushesPerPusher;
+				
+				public void run() {
+					try
+					{
+						while(pushesToGo > 0)
+						{
+							String aKey = key + "#" + (pushesToGo % numKeys);
+							// twenty keys
+							// added one more for aKey
+							keyPushCounters.get(aKey).incrementAndGet();
+							// push list key as value
+							listMap.lpush(aKey, aKey, dirtyKey);
+							pushesToGo--;
+							try
+							{
+//								Thread.currentThread().wait(10);
+							}
+							catch(Exception e) 
+							{
+								logger.log(Level.SEVERE, "Exception", e);
+								Assert.fail();
+							}
+						}
+					}
+					catch(Exception e)
+					{
+						logger.log(Level.SEVERE, "Exception", e);
+						Assert.fail();
+					}
+				}
+			};
+
 			Thread pusherThread = new Thread(pusher);
 			allPushers.add(pusherThread);
 			pusherThread.start();
@@ -720,5 +749,11 @@ public class TestClientAPIs
 			t.join();
 		
 		pullerThread.join();
+		Assert.assertEquals(0, counter.getCount());
+		// check all keys had the exact number removed as were pushed
+		for(AtomicLong a : keyPushCounters.values())
+		{
+			Assert.assertEquals(0, a.get());
+		}
 	}
 }

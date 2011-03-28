@@ -73,12 +73,26 @@ public class SetAddRemoveAgent<V extends Serializable> implements MapGridAgent
 				if(s != null)
 				{
 					if(op == Operation.ADD)
+					{
 						for(V v : values)
+						{
+							// if linked hash set in use, this moves key
+							// to top
+							s.remove(v);
 							s.add(v);
+						}
+						map.update(bucketKey, s);
+					}
 					else
+					{
 						for(V v : values)
 							s.remove(v);
-					map.update(bucketKey, s);
+						// update the new set contents or remove bucket if empty
+						if(s.size() > 0)
+							map.update(bucketKey, s);
+						else
+							map.remove(bucketKey);
+					}
 				}
 				else
 				{

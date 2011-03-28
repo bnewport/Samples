@@ -586,7 +586,7 @@ public class WXSUtils
 	 * @param bmap The map containing the keys
 	 * @return A Map with the agent result for each key
 	 */
-	public <K, A extends MapGridAgent, X> Map<K,X> callMapAgentAll(Map<K,A> batch, BackingMap bmap)
+	public <K, A extends MapGridAgent, X> Map<K,Object> callMapAgentAll(Map<K,A> batch, BackingMap bmap)
 	{
 		if(batch.size() > 0)
 		{
@@ -604,12 +604,18 @@ public class WXSUtils
 					K key = perPartitionEntries.keySet().iterator().next();
 					
 					// invoke the agent to add the batch of records to the grid
-					MapAgentExecutor<K,A,X> ia = new MapAgentExecutor<K,A,X>();
-					ia.batch = perPartitionEntries;
-					Future<Map<K,X>> fv = threadPool.submit(new CallReduceAgentThread<K,Map<K,X>>(grid, bmap.getName(), key, ia, doneSignal));
-					results.add(fv);
+					// but if no work for this partition then skip it
+					if(perPartitionEntries.size() > 0)
+					{
+						MapAgentExecutor<K,A,X> ia = new MapAgentExecutor<K,A,X>();
+						ia.batch = perPartitionEntries;
+						Future<Map<K,X>> fv = threadPool.submit(new CallReduceAgentThread<K,Map<K,X>>(grid, bmap.getName(), key, ia, doneSignal));
+						results.add(fv);
+					}
+					else
+						doneSignal.countDown();
 				}
-				Map<K,X> result = new HashMap<K, X>();
+				Map<K,Object> result = new HashMap<K, Object>();
 				Iterator<Future<Map<K,X>>> iter = results.iterator();
 				while(iter.hasNext())
 				{
@@ -659,8 +665,14 @@ public class WXSUtils
 						// invoke the agent to add the batch of records to the grid
 						ReduceAgentExecutor<K,A> ia = new ReduceAgentExecutor<K,A>();
 						ia.batch = perPartitionEntries;
-						Future<X> fv = threadPool.submit(new CallReduceAgentThread<K,X>(grid, bmap.getName(), key, ia, doneSignal));
-						results.add(fv);
+						// only call if work to go
+						if(ia.batch.size() > 0)
+						{
+							Future<X> fv = threadPool.submit(new CallReduceAgentThread<K,X>(grid, bmap.getName(), key, ia, doneSignal));
+							results.add(fv);
+						}
+						else
+							doneSignal.countDown(); // reduce countdown if no work
 					}
 					Iterator<Future<X>> iter = results.iterator();
 					A agent = batch.get(batch.keySet().iterator().next());

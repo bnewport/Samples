@@ -185,11 +185,33 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	
 	/**
 	 * This is just a delegate to the JobExecutor. This can return Lists of zero size. Only
-	 * a null return indicates the end of the operation.
+	 * a null return indicates the end of the operation. This returns all keys in a partition
+	 * at a time. This can be potentially expensive as well as holding a lock on the dirty set
+	 * during that time. Pushes using keys for the next partition will block during this time.
 	 * @return
 	 */
 	public ArrayList<V> getNextResult()
 	{
+		desiredMaxKeysPerTrip = Integer.MAX_VALUE;
+		return je.getNextResult();
+	}
+	
+	/**
+	 * This is just a delegate to the JobExecutor. This can return Lists of zero size. Only
+	 * a null return indicates the end of the operation. This method will attempt to fetch keys
+	 * in blocks of at least maxDesiredKeys. This can often ways to limit the time the dirty set
+	 * is locked. This can improve concurrency between pullers fetching dirty keys and pushing.
+	 * @return
+	 */
+	public ArrayList<V> getNextResult(int maxDesiredKeys)
+	{
+		if(maxDesiredKeys <= 0)
+		{
+			logger.log(Level.WARNING, "maxDesired Keys should be > 0");
+		}
+		else
+			maxDesiredKeys = 1000;
+		desiredMaxKeysPerTrip = maxDesiredKeys;
 		return je.getNextResult();
 	}
 	
