@@ -22,7 +22,7 @@ import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
-
+@Deprecated
 public class ListPushAgent<V extends Serializable> implements MapGridAgent 
 {
 	public boolean isLeft;

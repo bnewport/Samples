@@ -11,14 +11,13 @@
 package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
+import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
-import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
@@ -46,7 +45,7 @@ public class SetSizeAgent<V extends Serializable> implements MapGridAgent
  			map.get(key);
 			for(int  b = 0; b < SetAddRemoveAgent.NUM_BUCKETS; ++b)
 			{
-				Set<V> d = (Set<V>)map.get(SetAddRemoveAgent.getBucketKeyForBucket(key, b));
+				LinkedHashSet<SetElement<V>> d = (LinkedHashSet<SetElement<V>>)map.get(SetAddRemoveAgent.getBucketKeyForBucket(key, b));
 				if(d != null)
 				{
 					rc += d.size();
@@ -54,7 +53,7 @@ public class SetSizeAgent<V extends Serializable> implements MapGridAgent
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
-		catch(ObjectGridException e)
+		catch(Exception e)
 		{
 			mbean.getKeysMetric().logException(e);
 			logger.log(Level.SEVERE, "Exception", e);

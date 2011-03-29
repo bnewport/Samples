@@ -13,21 +13,15 @@ package com.devwebsphere.wxsutils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import junit.framework.Assert;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.devwebsphere.wxsutils.WXSMapOfSets.Contains;
-import com.devwebsphere.wxsutils.multijob.pingall.PingAllPartitionsJob;
 import com.devwebsphere.wxsutils.wxsmap.BigListPushAgent;
-import com.devwebsphere.wxsutils.wxsmap.dirtyset.FetchJobsFromAllDirtyListsJob;
-import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
-import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
 /**
  * This test connects to a grid running on the same box. Use the gettingstarted example

@@ -17,7 +17,6 @@ import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
-import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
@@ -26,6 +25,7 @@ import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 public class SetRemoveAgent<V extends Serializable> implements MapGridAgent 
 {
 	static Logger logger = Logger.getLogger(SetRemoveAgent.class.getName());
+	
 	/**
 	 * 
 	 */
@@ -46,7 +46,7 @@ public class SetRemoveAgent<V extends Serializable> implements MapGridAgent
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
-		catch(ObjectGridException e)
+		catch(Exception e)
 		{
 			mbean.getKeysMetric().logException(e);
 			logger.log(Level.SEVERE, "Exception", e);

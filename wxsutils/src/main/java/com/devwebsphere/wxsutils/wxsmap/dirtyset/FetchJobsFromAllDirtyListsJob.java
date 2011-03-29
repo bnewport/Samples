@@ -12,8 +12,8 @@ package com.devwebsphere.wxsutils.wxsmap.dirtyset;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,9 +23,6 @@ import com.devwebsphere.wxsutils.multijob.SinglePartTask;
 import com.devwebsphere.wxsutils.wxsmap.BigListPushAgent;
 import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent;
 import com.ibm.websphere.objectgrid.ObjectGrid;
-import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
-import com.ibm.websphere.objectgrid.ObjectMap;
-import com.ibm.websphere.objectgrid.Session;
 
 /**
  * This will pull dirty lists from a specific dirty set. It returns the keys
@@ -36,7 +33,7 @@ import com.ibm.websphere.objectgrid.Session;
  * @param <K>
  * @param <V>
  */
-public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Serializable> implements MultipartTask<PartitionResult<V>, ArrayList<V>>
+public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Serializable> implements MultipartTask<PartitionResult<V>, ArrayList<DirtyKey<V>>>
 {
 	static Logger logger = Logger.getLogger(FetchJobsFromAllDirtyListsJob.class.getName());
 
@@ -52,91 +49,14 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	 * use in this call also. This is called once per SingleTask call
 	 * by the loops.
 	 */
-	public ArrayList<V> extractResult(PartitionResult<V> rawRC) 
+	public ArrayList<DirtyKey<V>> extractResult(PartitionResult<V> rawRC) 
 	{
 		// The next bucket visited is this plus one
 		lastVisitedBucket = rawRC.nextBucket;
 		return rawRC.result;
 	}
 
-	/**
-	 * This will check a single partition for all keys for the single set called
-	 * dirtyKey within this partition. It iterates over every bucket for
-	 * that set and skips empty buckets
-	 * @author bnewport
-	 *
-	 * @param <K>
-	 * @param <V>
-	 */
-	static public class FetchDirtyJobsInPartitionTask <K extends Serializable, V extends Serializable> implements SinglePartTask<PartitionResult<V>, ArrayList<V>>
-	{
-		K setKey;
-		String setMapName;
-		int nextBucket;
-		int desiredMaxKeys = Integer.MAX_VALUE;
-		
-		static Logger logger = Logger.getLogger(FetchDirtyJobsInPartitionTask.class.getName());
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1722977140374061823L;
-		
-		public FetchDirtyJobsInPartitionTask() {}
-
-		/**
-		 * This can be called to check if a partition result is
-		 * empty and not interesting for clients
-		 */
-		public boolean isResultEmpty(ArrayList<V> result) 
-		{
-			return result.isEmpty();
-		}
-
-		/**
-		 * This will start at nextBucket and scan it and subsequent buckets for non empty set.
-		 * The result is a PartitionResult that indicates the last bucket checked
-		 * and the keys found if any.
-		 */
-		public PartitionResult<V> process(Session sess) 
-		{
-			try
-			{
-				ObjectMap setMap = sess.getMap(setMapName);
-				// serialize access to set
-				setMap.getForUpdate(setKey);
-				Set<V> set = new HashSet<V>();
-				int i = nextBucket;
-				for(i = nextBucket; i < SetAddRemoveAgent.NUM_BUCKETS; ++i)
-				{
-					Set<V> bucketSet = (Set<V>)setMap.get(SetAddRemoveAgent.getBucketKeyForBucket(setKey, i));
-					if(bucketSet != null)
-					{
-						set.addAll(bucketSet);
-						// keep adding buckets until max size exceeded
-						if(set.size() >= desiredMaxKeys)
-							break;
-					}
-				}
-				PartitionResult<V> rc = new PartitionResult<V>();
-				if(set != null)
-					rc.result = new ArrayList<V>(set);
-				else
-					rc.result = new ArrayList<V>();
-				// remember the current bucket so we start at the next one
-				// during the next call to this method
-				rc.nextBucket = i;
-				return rc;
-			}
-			catch(Exception e)
-			{
-				logger.log(Level.SEVERE, "Exception", e);
-				throw new ObjectGridRuntimeException(e);
-			}
-		}
-
-	}
-	
-	JobExecutor<PartitionResult<V>, ArrayList<V>> je;
+	JobExecutor<PartitionResult<V>, ArrayList<DirtyKey<V>>> je;
 	K setKey;
 	String listMapName;
 	int desiredMaxKeysPerTrip = Integer.MAX_VALUE;
@@ -145,11 +65,11 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	{
 		this.setKey = setKey;
 		this.listMapName = listMapName;
-		je = new JobExecutor<PartitionResult<V>, ArrayList<V>>(ogclient, this);
+		je = new JobExecutor<PartitionResult<V>, ArrayList<DirtyKey<V>>>(ogclient, this);
 	}
-	
-	public SinglePartTask<PartitionResult<V>, ArrayList<V>> createTaskForPartition(
-			SinglePartTask<PartitionResult<V>, ArrayList<V>> previousTask) 
+
+	public SinglePartTask<PartitionResult<V>, ArrayList<DirtyKey<V>>> createTaskForPartition(
+			SinglePartTask<PartitionResult<V>, ArrayList<DirtyKey<V>>> previousTask) 
 	{
 		// prevtask is null when called for first time for a partition
 		if(previousTask == null)
@@ -190,7 +110,7 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	 * during that time. Pushes using keys for the next partition will block during this time.
 	 * @return
 	 */
-	public ArrayList<V> getNextResult()
+	public ArrayList<DirtyKey<V>> getNextResult()
 	{
 		desiredMaxKeysPerTrip = Integer.MAX_VALUE;
 		return je.getNextResult();
@@ -203,7 +123,7 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	 * is locked. This can improve concurrency between pullers fetching dirty keys and pushing.
 	 * @return
 	 */
-	public ArrayList<V> getNextResult(int maxDesiredKeys)
+	public ArrayList<DirtyKey<V>> getNextResult(int maxDesiredKeys)
 	{
 		if(maxDesiredKeys <= 0)
 		{
@@ -227,7 +147,7 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 		int count = 0;
 		while(true)
 		{
-			ArrayList<V> list = job.getNextResult();
+			ArrayList<DirtyKey<V>> list = job.getNextResult();
 			if(list == null)
 				break;
 			++count;
@@ -240,7 +160,16 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	 * This code illustrates how to get a ALL of the dirty keys from the grid. It just
 	 * repeatedly calls getNextResult until it returns null. Then it has visited every
 	 * partition. This will return all the keys in a bucket until every bucket in the
-	 * grid has been examined. Empty buckets are skipped
+	 * grid has been examined. Empty buckets are skipped. This isn't really meant to be
+	 * called by an application. This returns ALL the dirty keys. Imagine a grid with
+	 * 1m dirty keys in it. How much heap space would a Set of 1m dirty keys take? How
+	 * long to serialize? Hence, copy the method below in to your application
+	 * and process the returns keys from getNextResult immediately before
+	 * looping around to call getNextResult again.
+	 * The keys are returned in FIFO order. The first list to be pushed is at the
+	 * beginning of the list. Note, this is a per fetch only ordering. If you fetch
+	 * only 5k keys then the list is ordered only with respect to the keys actually
+	 * returned.
 	 * @param <K>
 	 * @param <V>
 	 * @param ogClient
@@ -248,28 +177,31 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	 * @param dirtyKey
 	 * @return
 	 */
-	public static <K extends Serializable, V extends Serializable> Set<V> getAllDirtyKeysInGrid(ObjectGrid ogClient, String listMapName, K dirtyKey)
+	public static <K extends Serializable, V extends Serializable> List<V> getAllDirtyKeysInGrid(ObjectGrid ogClient, String listMapName, K dirtyKey)
 	{
 		// You need a new one of these for each whole grid iteration. Once it getNextResult returns
 		// null then make a new one
 		FetchJobsFromAllDirtyListsJob<K, V> job = new FetchJobsFromAllDirtyListsJob<K, V>(ogClient, listMapName, dirtyKey);
 
 		// we'll add all the dirty list keys to this set
-		Set<V> result = new HashSet<V>();
+		TreeSet<DirtyKey<V>> result = new TreeSet<DirtyKey<V>>();
 		while(true)
 		{
 			// get the next block of dirty list keys
-			ArrayList<V> r = job.getNextResult();
+			// this array r is sorted in first dirtied order
+			ArrayList<DirtyKey<V>> r = job.getNextResult();
 			// when r is null then the whole grid has been checked
 			if(r != null)
 			{
-				// add to set
 				result.addAll(r);
 			}
 			else
 				break;
 		}
-		// job is now of no use, do not reuse it, create a new one
-		return result;
+		// now copy sorted results in to a list
+		List<V> rc = new ArrayList<V>(result.size());
+		for(DirtyKey<V> v : result)
+			rc.add(v.getValue());
+		return rc;
 	}
 }

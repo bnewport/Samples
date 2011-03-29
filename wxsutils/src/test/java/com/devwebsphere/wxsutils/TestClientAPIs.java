@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -409,7 +408,7 @@ public class TestClientAPIs
 			}
 			map.rpush(bulkItems, "BULK_DIRTY");
 
-			Set<String> dirtySet = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", "BULK_DIRTY");
+			List<String> dirtySet = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", "BULK_DIRTY");
 			Assert.assertEquals(numListsToTest, dirtySet.size());
 
 			for(String dirtyKey : dirtySet)
@@ -474,7 +473,7 @@ public class TestClientAPIs
 	
 	public boolean isDirty(String mapName, String dirtyKey, String listKey)
 	{
-		Set<String> set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, mapName, dirtyKey);
+		List<String> set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, mapName, dirtyKey);
 		return(set.contains(listKey));
 	}
 	
@@ -535,7 +534,7 @@ public class TestClientAPIs
             String dirtyKey = "DIRTY2";
             WXSMapOfLists<String, String> listMap = utils.getMapOfLists("BigList");
            
-            Set<String> set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
+            List<String> set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
             Assert.assertEquals(0, set.size());
             
             int numKeys = 10;
@@ -652,7 +651,7 @@ public class TestClientAPIs
 					long start = System.currentTimeMillis();
 					while(counter.getCount() > 0)
 					{
-						Set<String> allKeys = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey) ;
+						List<String> allKeys = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey) ;
 						for(String aKey : allKeys)
 						{
 							ArrayList<String> pList = listMap.popAll(aKey, dirtyKey);

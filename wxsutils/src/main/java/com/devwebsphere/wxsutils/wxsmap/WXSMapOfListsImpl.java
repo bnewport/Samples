@@ -31,6 +31,7 @@ import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
  * @param <K>
  * @param <V>
  */
+@Deprecated
 public class WXSMapOfListsImpl<K,V extends Serializable> extends WXSBaseMap // implements WXSMapOfLists<K, V> 
 {
 	static Logger logger = Logger.getLogger(WXSMapOfListsImpl.class.getName());

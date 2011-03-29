@@ -11,8 +11,8 @@
 package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
+import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -47,13 +47,14 @@ public class SetIsMemberAgent<V extends Serializable> implements MapGridAgent
 			map.get(key); // token lock to prevent deadlocks
 			for(V v : values)
 			{
+				SetElement<V> wrapper = new SetElement<V>(v);
 				String bucketKey = SetAddRemoveAgent.getBucketKeyForValue(key, v);
-				Set<V> s = (Set<V>)map.get(bucketKey);
+				LinkedHashSet<SetElement<V>> s = (LinkedHashSet<SetElement<V>>)map.get(bucketKey);
 				if(s != null)
 				{
 					if(op == Contains.ALL)
 					{
-						if(!s.contains(v))
+						if(!s.contains(wrapper))
 						{
 							rc = false;
 							break;
@@ -66,7 +67,7 @@ public class SetIsMemberAgent<V extends Serializable> implements MapGridAgent
 					}
 					else
 					{
-						if(s.contains(v))
+						if(s.contains(wrapper))
 						{
 							rc = true;
 							break;
@@ -76,7 +77,7 @@ public class SetIsMemberAgent<V extends Serializable> implements MapGridAgent
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
-		catch(ObjectGridException e)
+		catch(Exception e)
 		{
 			mbean.getKeysMetric().logException(e);
 			logger.log(Level.SEVERE, "Exception", e);

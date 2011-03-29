@@ -22,6 +22,8 @@ import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent;
  * as a distinct group of N Sets. This lowers the cost of adding
  * or removing elements or checking for membership but
  * the size of a set is still bounded within a single shard.
+ * Items added to the set MUST implement BOTH hashCode and
+ * equals
  * @author bnewport
  * @see SetAddRemoveAgent#NUM_BUCKETS
  *

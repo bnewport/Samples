@@ -11,14 +11,14 @@
 package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
-import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
@@ -26,6 +26,8 @@ import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
 public class SetGetAgent<V extends Serializable> implements MapGridAgent 
 {
+	static Logger logger = Logger.getLogger(SetGetAgent.class.getName());
+	
 	Filter filter;
 	/**
 	 * 
@@ -35,37 +37,40 @@ public class SetGetAgent<V extends Serializable> implements MapGridAgent
 	 * 
 	 */
 	
-	static public <V extends Serializable> Set<V> get(Session sess, ObjectMap map, Object key, Filter filter)
+	static public <V extends Serializable> LinkedHashSet<V> get(Session sess, ObjectMap map, Object key, Filter filter)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), SetGetAgent.class.getName());
 		long startNS = System.nanoTime();
-		Set<V> rc = new HashSet<V>();
+		LinkedHashSet<V> rc = new LinkedHashSet<V>();
 		try
 		{
 			map.get(key);
 			for(int  b = 0; b < SetAddRemoveAgent.NUM_BUCKETS; ++b)
 			{
-				Set<V> d = (Set<V>)map.get(SetAddRemoveAgent.getBucketKeyForBucket(key, b));
+				LinkedHashSet<SetElement<V>> d = (LinkedHashSet<SetElement<V>>)map.get(SetAddRemoveAgent.getBucketKeyForBucket(key, b));
 				if(d != null)
 				{
 					if(filter == null)
-						rc.addAll(d);
+					{
+						for(SetElement<V> s : d)
+							rc.add(s.value);
+					}
 					else
 					{
-						for(V v : d)
+						for(SetElement<V> v : d)
 						{
-							if(filter.filter(v))
-								rc.add(v);
+							if(filter.filter(v.value))
+								rc.add(v.value);
 						}
 					}
 				}
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
-		catch(ObjectGridException e)
+		catch(Exception e)
 		{
 			mbean.getKeysMetric().logException(e);
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 		return rc;

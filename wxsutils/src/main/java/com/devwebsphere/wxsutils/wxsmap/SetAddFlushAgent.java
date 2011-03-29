@@ -11,16 +11,14 @@
 package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent.Operation;
-import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
@@ -40,7 +38,7 @@ public class SetAddFlushAgent<V extends Serializable> implements MapGridAgent
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
 		long startNS = System.nanoTime();
-		Set<V> rc = new HashSet<V>();
+		LinkedHashSet<V> rc = new LinkedHashSet<V>();
 		try
 		{
 			map.getForUpdate(key);
@@ -60,7 +58,7 @@ public class SetAddFlushAgent<V extends Serializable> implements MapGridAgent
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
-		catch(ObjectGridException e)
+		catch(Exception e)
 		{
 			mbean.getKeysMetric().logException(e);
 			logger.log(Level.SEVERE, "Exception", e);
