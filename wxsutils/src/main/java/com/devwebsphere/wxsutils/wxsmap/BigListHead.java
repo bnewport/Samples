@@ -322,7 +322,7 @@ public class BigListHead <V extends Serializable> implements Serializable
 			{
 				size = Math.min(size, size(sess, map, key));
 				ObjectMap bmap = getBucketMap(sess, map);
-				ArrayList<V> lList = (ArrayList<V>)bmap.get(getBucketKey(key, leftBucket));
+				ArrayList<V> lList = (ArrayList<V>)bmap.getForUpdate(getBucketKey(key, leftBucket)); // BN
 				
 				// calculate the offset of the right most element
 				int bucket = (size - 1) / bucketSize + 1;
@@ -337,7 +337,7 @@ public class BigListHead <V extends Serializable> implements Serializable
 						offset += lList.size();
 				}
 				String bkey = getBucketKey(key, bucket);
-				ArrayList<V> list = (ArrayList<V>)bmap.get(bkey);
+				ArrayList<V> list = (ArrayList<V>)bmap.getForUpdate(bkey); // BN
 				ArrayList<V> copy = new ArrayList<V>(offset + 1);
 				for(int i = 0; i <= offset; ++i)
 				{
