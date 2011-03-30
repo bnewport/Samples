@@ -73,7 +73,7 @@ public final class MinMaxAvgMetric
 		totalTimeNS.addAndGet(durationNS);
 		int durationMS = (int)(durationNS / 1000000L);
 		
-		responseTimeArray.incrementAndGet((durationMS < 1000) ? durationMS : 999);
+		responseTimeArray.incrementAndGet((durationMS >= 0 && durationMS < 1000) ? durationMS : 999);
 		if(c == 1)
 		{
 			// make sure in the window between fetch count

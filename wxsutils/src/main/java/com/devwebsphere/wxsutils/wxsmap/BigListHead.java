@@ -143,7 +143,7 @@ public class BigListHead <V extends Serializable> implements Serializable
 	{
 		ObjectMap bmap = getBucketMap(sess, map);
 		String bkey = getBucketKey(key, isLeft == LR.LEFT ? leftBucket : rightBucket);
-		ArrayList<V> list = (ArrayList<V>)bmap.get(bkey);
+		ArrayList<V> list = (ArrayList<V>)bmap.getForUpdate(bkey); // BN
 		V rc = null;
 		if(list != null)
 		{
