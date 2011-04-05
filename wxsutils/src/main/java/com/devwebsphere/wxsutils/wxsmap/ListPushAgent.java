@@ -32,7 +32,7 @@ public class ListPushAgent<V extends Serializable> implements MapGridAgent
 	 */
 	private static final long serialVersionUID = 8842082032401137638L;
 	
-	static public <V> Boolean push(Session sess, ObjectMap map, Object key, boolean isLeft, V value)
+	static public <V extends Serializable> Boolean push(Session sess, ObjectMap map, Object key, boolean isLeft, V value)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), ListPushAgent.class.getName());
 		long startNS = System.nanoTime();

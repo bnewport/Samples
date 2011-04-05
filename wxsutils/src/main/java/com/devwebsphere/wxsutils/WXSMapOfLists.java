@@ -55,18 +55,57 @@ public interface WXSMapOfLists<K,V> {
 	 * This pushes a value on the left side of the list
 	 * @param key The key for the list
 	 * @param value The value to push
+	 */
+	public void lpush(K key, V value);
+	
+	/**
+	 * This will push the value on the list only if
+	 * no existing element matches the Filter
+	 * @param key
+	 * @param value
+	 * @param condition
+	 */
+	public void lcpush(K key, V value, Filter condition);
+	
+	public void lcpush(K key, V value, Filter condition, K dirtyKey);
+
+	public void rcpush(K key, V value, Filter condition);
+	
+	public void rcpush(K key, V value, Filter condition, K dirtyKey);
+	
+	/**
+	 * This pushes a value on the left side of the list
+	 * @param key The key for the list
+	 * @param value The value to push
 	 * @param dirtySet The key for the per shard dirty set to add this key to. Optional
 	 */
-	public void lpush(K key, V value, K... dirtySet);
+	public void lpush(K key, V value, K dirtySet);
 
+	/**
+	 * This pushes the value on the left of the list moving over the list from 0 to its size
+	 * @param key
+	 * @param values
+	 */
+	public void lpush(K key, List<V> values);
+	
 	/**
 	 * This pushes the value on the left of the list moving over the list from 0 to its size
 	 * @param key
 	 * @param values
 	 * @param dirtySet
 	 */
-	public void lpush(K key, List<V> values, K... dirtySet);
+	public void lpush(K key, List<V> values, K dirtySet);
 
+	/**
+	 * This takes a Map of list keys and the entries to push and does a push
+	 * of all those key and lists in bulk. Each Map Entry is like a normal
+	 * call to lpush(K, List<V>). It tries to do at most one RPC
+	 * per partition and does those RPCs in parallel using
+	 * the WXSUtils thread pool.
+	 * @param items
+	 */
+	public void lpush(Map<K, List<V>> items);
+	
 	/**
 	 * This takes a Map of list keys and the entries to push and does a push
 	 * of all those key and lists in bulk. Each Map Entry is like a normal
@@ -76,7 +115,17 @@ public interface WXSMapOfLists<K,V> {
 	 * @param items
 	 * @param dirtySet
 	 */
-	public void lpush(Map<K, List<V>> items, K... dirtySet);
+	public void lpush(Map<K, List<V>> items, K dirtySet);
+	
+	/**
+	 * This takes a Map of list keys and the entries to push and does a push
+	 * of all those key and lists in bulk. Each Map Entry is like a normal
+	 * call to rpush(K, List<V>). It tries to do at most one RPC
+	 * per partition and does those RPCs in parallel using
+	 * the WXSUtils thread pool.
+	 * @param items
+	 */
+	public void rpush(Map<K, List<V>> items);
 	
 	/**
 	 * This takes a Map of list keys and the entries to push and does a push
@@ -87,7 +136,7 @@ public interface WXSMapOfLists<K,V> {
 	 * @param items
 	 * @param dirtySet
 	 */
-	public void rpush(Map<K, List<V>> items, K... dirtySet);
+	public void rpush(Map<K, List<V>> items, K dirtySet);
 
 	/**
 	 * This removes and returns the left most element in the list
@@ -147,12 +196,45 @@ public interface WXSMapOfLists<K,V> {
 	 * This pushes the value on the righthand side of the list
 	 * @param key The key for the list
 	 * @param value The value to add on the right side of the list
+	 */
+	public void rpush(K key, V value);
+	
+	/**
+	 * This pushes the value on the righthand side of the list
+	 * @param key The key for the list
+	 * @param value The value to add on the right side of the list
 	 * @param dirtySet The key for the per shard dirty set to add this key to. Optional
 	 */
-	public void rpush(K key, V value, K... dirtySet);
-	
-	public void rpush(K key, List<V> values, K... dirtySet);
+	public void rpush(K key, V value, K dirtySet);
 
+	/**
+	 * This pushes a list of value together on to the right side
+	 * of a list.
+	 * @param key
+	 * @param values
+	 */
+	public void rpush(K key, List<V> values);
+
+	/**
+	 * This pushes a list of value together on to the right side
+	 * of a list.
+	 * @param key
+	 * @param values
+	 * @param dirtySet
+	 */
+	public void rpush(K key, List<V> values, K dirtySet);
+
+	/**
+	 * This returns the elements in the list from index low to index high
+	 * inclusive. This list may be shorter than usual if the
+	 * list is size is less than low or high.
+	 * @param key The key for the list
+	 * @param low The 0-index for the left most element to return
+	 * @param high The 0-index for the right most element to return
+	 * @return An array with the list elements. It may be shorter than expected
+	 */
+	public ArrayList<V> lrange(K key, int low, int high);
+	
 	/**
 	 * This returns the elements in the list from index low to index high
 	 * inclusive. This list may be shorter than usual if the
@@ -164,7 +246,7 @@ public interface WXSMapOfLists<K,V> {
 	 * @param filter If specified then elements are only returned if they match the Filter
 	 * @return An array with the list elements. It may be shorter than expected
 	 */
-	public ArrayList<V> lrange(K key, int low, int high, Filter... filter);
+	public ArrayList<V> lrange(K key, int low, int high, Filter filter);
 
 	/**
 	 * The length of the list for the key. 0 if the list doesn't
@@ -173,5 +255,12 @@ public interface WXSMapOfLists<K,V> {
 	 * @return The size of the list
 	 */
 	public int llen(K key);
-
+	
+	/**
+	 * This returns true if the list has no elements. This is usually faster
+	 * than calling size to compare with zero.
+	 * @param key
+	 * @return
+	 */
+	public boolean isEmpty(K key);
 }

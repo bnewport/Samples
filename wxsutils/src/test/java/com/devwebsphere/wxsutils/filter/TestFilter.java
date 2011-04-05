@@ -56,10 +56,10 @@ public class TestFilter
 	@Test
 	public void testQB()
 	{
-		FilterBuilder fb = new FilterBuilder();
 		ValuePath fn = new PojoPropertyPath("FirstName");
 		ValuePath sn = new PojoFieldPath("surname");
 		
+		FilterBuilder fb = new FilterBuilder();
 		Filter f = fb.and(fb.eq(fn, "Billy"), fb.eq(sn, "Newport"));
 		
 		Assert.assertEquals(f.filter(c), true);

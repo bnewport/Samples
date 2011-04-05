@@ -40,7 +40,7 @@ import com.ibm.websphere.objectgrid.Session;
  *
  * @param <RK> The actual key of the entities being indexed.
  */
-public abstract class Index<C, RK> 
+public abstract class Index<C, RK extends Serializable> 
 {
 
 	static String DYN_INDEX_MAP_SUFFIX = "Index";

@@ -32,7 +32,7 @@ public class ListRangeAgent<V extends Serializable> implements MapGridAgent
 	public int low;
 	public int high;
 	
-	static public <V> ArrayList<V> range(Session sess, ObjectMap map, Object key, int low, int high)
+	static public <V extends Serializable> ArrayList<V> range(Session sess, ObjectMap map, Object key, int low, int high)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), ListRangeAgent.class.getName());
 		long startNS = System.nanoTime();

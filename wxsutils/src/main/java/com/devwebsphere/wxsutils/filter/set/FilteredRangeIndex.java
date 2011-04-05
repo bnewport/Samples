@@ -10,6 +10,7 @@
 //
 package com.devwebsphere.wxsutils.filter.set;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,7 +28,7 @@ import com.ibm.websphere.objectgrid.plugins.index.MapRangeIndex;
  * @param <K>
  * @param <V>
  */
-public class FilteredRangeIndex <K,V> extends FilteredIndex<K, V> 
+public class FilteredRangeIndex <K extends Serializable,V extends Serializable> extends FilteredIndex<K, V> 
 {
 	private enum Operation
 	{

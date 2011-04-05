@@ -22,6 +22,7 @@ import com.devwebsphere.wxsutils.multijob.MultipartTask;
 import com.devwebsphere.wxsutils.multijob.SinglePartTask;
 import com.devwebsphere.wxsutils.wxsmap.BigListPushAgent;
 import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent;
+import com.devwebsphere.wxsutils.wxsmap.WXSMapOfBigListsImpl;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 
 /**
@@ -177,11 +178,12 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	 * @param dirtyKey
 	 * @return
 	 */
-	public static <K extends Serializable, V extends Serializable> List<V> getAllDirtyKeysInGrid(ObjectGrid ogClient, String listMapName, K dirtyKey)
+	public static <K extends Serializable, V extends Serializable> List<V> getAllDirtyKeysInGrid(ObjectGrid ogClient, String listName, K dirtyKey)
 	{
 		// You need a new one of these for each whole grid iteration. Once it getNextResult returns
 		// null then make a new one
-		FetchJobsFromAllDirtyListsJob<K, V> job = new FetchJobsFromAllDirtyListsJob<K, V>(ogClient, listMapName, dirtyKey);
+		String listHeadMapName = WXSMapOfBigListsImpl.getListHeadMapName(listName);
+		FetchJobsFromAllDirtyListsJob<K, V> job = new FetchJobsFromAllDirtyListsJob<K, V>(ogClient, listHeadMapName, dirtyKey);
 
 		// we'll add all the dirty list keys to this set
 		TreeSet<DirtyKey<V>> result = new TreeSet<DirtyKey<V>>();

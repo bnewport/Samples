@@ -10,6 +10,7 @@
 //
 package com.devwebsphere.wxsutils.filter.set;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -28,7 +29,7 @@ import com.ibm.websphere.objectgrid.plugins.index.MapIndex;
  * @param <K>
  * @param <V>
  */
-public class FilteredIndex <K,V>
+public class FilteredIndex <K extends Serializable,V extends Serializable>
 {
 	MapIndex index;
 	WXSMap<K,V> map;

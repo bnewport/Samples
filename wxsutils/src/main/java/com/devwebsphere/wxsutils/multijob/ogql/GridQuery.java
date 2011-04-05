@@ -25,19 +25,19 @@ import com.ibm.websphere.objectgrid.ObjectGrid;
  * @author bnewport
  *
  */
-public class GridQuery implements MultipartTask<ArrayList<Object>, ArrayList<Object>>
+public class GridQuery implements MultipartTask<GridQueryChunk, ArrayList<Serializable>>
 {
 	Map<String, Serializable> queryParameters;
 	Map<String, Serializable> queryHints;
 	int limit;
 	String queryString;
-	JobExecutor<ArrayList<Object>, ArrayList<Object>> je;
+	JobExecutor<GridQueryChunk, ArrayList<Serializable>> je;
 
 	boolean lastExtractWasFull = false;
 	
-	public ArrayList<Object> extractResult(ArrayList<Object> rawRC)
+	public ArrayList<Serializable> extractResult(GridQueryChunk rawRC)
 	{
-		ArrayList<Object> rc = rawRC;
+		ArrayList<Serializable> rc = rawRC.result;
 		// check if last block was < limit records and if it was then
 		// assume there is no more data in this partition
 		lastExtractWasFull = (rc.size() == limit);
@@ -55,7 +55,7 @@ public class GridQuery implements MultipartTask<ArrayList<Object>, ArrayList<Obj
 	{
 		this.queryString = queryString;
 		this.limit = limit;
-		je = new JobExecutor<ArrayList<Object>, ArrayList<Object>>(ogclient, this);
+		je = new JobExecutor<GridQueryChunk, ArrayList<Serializable>>(ogclient, this);
 	}
 	
 	/**
@@ -63,7 +63,7 @@ public class GridQuery implements MultipartTask<ArrayList<Object>, ArrayList<Obj
 	 * otherwise it should return null to indicate all data can been consumed for the current
 	 * partition
 	 */
-	public SinglePartTask<ArrayList<Object>, ArrayList<Object>> createTaskForPartition(SinglePartTask<ArrayList<Object>, ArrayList<Object>> previousTask)
+	public SinglePartTask<GridQueryChunk, ArrayList<Serializable>> createTaskForPartition(SinglePartTask<GridQueryChunk, ArrayList<Serializable>> previousTask)
 	{
 		// prevtask is null when called for first time for a partition
 		if(previousTask == null)
@@ -113,7 +113,7 @@ public class GridQuery implements MultipartTask<ArrayList<Object>, ArrayList<Obj
 	 * a null return indicates the end of the operation.
 	 * @return
 	 */
-	public ArrayList<Object> getNextResult()
+	public ArrayList<Serializable> getNextResult()
 	{
 		return je.getNextResult();
 	}

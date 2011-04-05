@@ -11,6 +11,8 @@
 package com.devwebsphere.wxsutils.filter.path;
 
 import java.lang.reflect.Method;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.filter.ValuePath;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
@@ -18,12 +20,15 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 /**
  * This fetches the named attribute using the appropriately
  * named getter method on the class. The attribute name
- * MUST be capitalized.
+ * MUST be capitalized. If the field doesn't exist then
+ * null is returned
  * @author bnewport
  *
  */
 public class PojoPropertyPath implements ValuePath 
 {
+	static Logger logger = Logger.getLogger(PojoPropertyPath.class.getName());
+	
 	/**
 	 * 
 	 */
@@ -38,6 +43,7 @@ public class PojoPropertyPath implements ValuePath
 		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
@@ -48,8 +54,13 @@ public class PojoPropertyPath implements ValuePath
 			Method getMethod = fo.getClass().getMethod("get" + propertyName, null);
 			return getMethod.invoke(fo);
 		}
+		catch(NoSuchMethodException e)
+		{
+			return null;
+		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}

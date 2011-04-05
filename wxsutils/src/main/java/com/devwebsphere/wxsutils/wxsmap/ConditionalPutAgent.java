@@ -61,10 +61,11 @@ public class ConditionalPutAgent<K,V> implements ReduceGridAgent
 			for(K key : keys)
 			{
 				V currValue = (V)m.getForUpdate(key);
+				V origValue = batchBefore.get(key);
 				Boolean b = false;
 				if(currValue != null)
 				{
-					if(currValue.equals(batchBefore.get(key)))
+					if(origValue != null && currValue.equals(batchBefore.get(key)))
 					{
 						m.update(key, newValues.get(key));
 						b = true;
@@ -72,7 +73,8 @@ public class ConditionalPutAgent<K,V> implements ReduceGridAgent
 				}
 				else
 				{
-					m.insert(key, newValues.get(key));
+					if(origValue == null)
+						m.insert(key, newValues.get(key));
 					b = true;
 				}
 				results.put(key, b);

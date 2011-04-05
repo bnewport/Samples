@@ -10,12 +10,13 @@
 //
 package com.devwebsphere.wxssearch;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
 import com.devwebsphere.wxssearch.type.PrefixIndex;
 
-public class PrefixIndexImpl<C,RK> extends Index<C,RK> 
+public class PrefixIndexImpl<C,RK extends Serializable> extends Index<C,RK> 
 {
 	PrefixIndex config;
 

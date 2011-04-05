@@ -12,9 +12,11 @@ package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxsutils.EvictionType;
 import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent.Operation;
 import com.ibm.websphere.objectgrid.ObjectGridException;
@@ -30,6 +32,13 @@ import com.ibm.websphere.objectgrid.UndefinedMapException;
  * right bucket. The other holds the buckets as normal lists. The leftmost and rightmost
  * buckets can have less than BUCKET_SIZE items but buckets in the middle are always
  * full. Items can only be removed from the left or right using pop.
+ * 
+ * Eviction Design.
+ * All list eviction times are scheduled for the minute following
+ * the actual time. A scheduled list has its key added to a
+ * set named after the list. A list keeps track of eviction sets and
+ * pops them when they are removed. A well known list tracks
+ * lists within this shard with eviction enabled
  * @author bnewport
  *
  */
@@ -44,9 +53,10 @@ public class BigListHead <V extends Serializable> implements Serializable
 	 */
 	private static final long serialVersionUID = -1121567440619553717L;
 
-	
 	int leftBucket;
 	int rightBucket;
+	EvictionType evictionType = EvictionType.NONE;
+	
 	/**
 	 * This is the maximum size of a bucket
 	 */
@@ -57,9 +67,53 @@ public class BigListHead <V extends Serializable> implements Serializable
 		
 	}
 
+	void updateEviction(Session sess, ObjectMap map, Object key)
+	{
+		switch(evictionType)
+		{
+		case NONE:
+			break;
+		case FIXED:
+			// nothing to do
+			break;
+		case LAST_ACCESS_TIME:
+			
+			break;
+		default:
+			logger.log(Level.SEVERE, "Unknown eviction type", evictionType);
+			throw new ObjectGridRuntimeException("Unknown eviction type:" + evictionType);
+		}
+	}
+	
+	public void setEvictionPolicy(Session sess, ObjectMap map, Object key, EvictionType eType, int intervalMinutes)
+	{
+		
+	}
+
+	/**
+	 * Given the name of the head template map for a list, this
+	 * returns the list name
+	 * @param lhMapName
+	 * @return
+	 */
+	public static String getListNameFromHeadMapName(String lhMapName)
+	{
+		// strlen("LHEAD.") = 6
+		String listName = lhMapName.substring(6);
+		return listName;
+	}
+
+	/**
+	 * This returns the name of the bucket map for this
+	 * list
+	 * @param sess
+	 * @param map The head map
+	 * @return
+	 */
 	ObjectMap getBucketMap(Session sess, ObjectMap map)
 	{
-		String bucketMapName = map.getName() + "_b";
+		String listName = getListNameFromHeadMapName(map.getName());
+		String bucketMapName = WXSMapOfBigListsImpl.getListBucketMapName(listName);
 		try
 		{
 			return sess.getMap(bucketMapName);
@@ -71,14 +125,23 @@ public class BigListHead <V extends Serializable> implements Serializable
 		}
 	}
 	
+	static String hash = "#";
+	
+	/**
+	 * This returns the key for a bucket of list elements
+	 * given the bucket number
+	 * @param key
+	 * @param bucket
+	 * @return
+	 */
 	String getBucketKey(Object key, int bucket)
 	{
 		StringBuilder sb = new StringBuilder(key.toString());
-		sb.append("#");
+		sb.append(hash);
 		sb.append(Integer.toString(bucket));
 		return sb.toString();
 	}
-	
+
 	public BigListHead(Session sess, ObjectMap map, Object key, V value, int bSize)
 		throws ObjectGridException
 	{
@@ -102,10 +165,18 @@ public class BigListHead <V extends Serializable> implements Serializable
 	 * @param value
 	 * @throws ObjectGridException
 	 */
-	public void push(Session sess, ObjectMap map, Object key, LR isLeft, V value)
+	public void push(Session sess, ObjectMap map, Object key, LR isLeft, V value, Filter cfilter)
 		throws ObjectGridException
 	{
 		ObjectMap bmap = getBucketMap(sess, map);
+		// if a filter is specified then if any matching
+		// elements exist, do not push.
+		if(cfilter != null)
+		{
+			ArrayList<V> matchingElements = range(sess, map, key, 0, Integer.MAX_VALUE, cfilter);
+			if(matchingElements.size() > 0)
+				return;
+		}
 		while(true)
 		{
 			// get current bucket
@@ -357,5 +428,26 @@ public class BigListHead <V extends Serializable> implements Serializable
 			logger.log(Level.SEVERE, "Exception:", e);
 			throw new ObjectGridRuntimeException(e);
 		}
+	}
+	
+	/**
+	 * This gets the eviction key for the specified time
+	 * @param when
+	 * @return
+	 */
+	public static String getEvictionTime(int when)
+	{
+		Calendar c = Calendar.getInstance();
+		c.add(Calendar.MINUTE, when);
+		StringBuilder sb = new StringBuilder(Integer.toString(c.get(Calendar.YEAR)));
+		sb.append("/");
+		sb.append(Integer.toString(c.get(Calendar.MONTH)+1));
+		sb.append("/");
+		sb.append(Integer.toString(c.get(Calendar.DAY_OF_MONTH)));
+		sb.append("-");
+		sb.append(Integer.toString(c.get(Calendar.HOUR_OF_DAY)));
+		sb.append(":");
+		sb.append(Integer.toString(c.get(Calendar.MINUTE)));
+		return sb.toString();
 	}
 }

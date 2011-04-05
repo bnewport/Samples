@@ -11,46 +11,40 @@
 package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
-import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
-@Deprecated
-public class ListLenAgent<V extends Serializable> implements MapGridAgent 
+public class BigListIsEmptyAgent<V extends Serializable> implements MapGridAgent 
 {
-	static Logger logger = Logger.getLogger(ListLenAgent.class.getName());
+	static Logger logger = Logger.getLogger(BigListIsEmptyAgent.class.getName());
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -3736978703392897531L;
 	
-	static public <V extends Serializable> int size(Session sess, ObjectMap map, Object key)
+	static public <V extends Serializable> boolean isEmpty(Session sess, ObjectMap map, Object key)
 	{
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), ListLenAgent.class.getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListIsEmptyAgent.class.getName());
 		long startNS = System.nanoTime();
-		Integer rc = new Integer(0);
+		boolean rc = false;
 		try
 		{
-			ArrayList<V> list = (ArrayList<V>)map.get(key);
-			if(list != null)
-			{
-				if(!list.isEmpty())
-					rc = list.size();
-			}
+			BigListHead<V> head = (BigListHead<V>)map.get(key);
+			rc = (head == null);
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
-		catch(ObjectGridException e)
+		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			mbean.getKeysMetric().logException(e);
-			e.printStackTrace();
 			throw new ObjectGridRuntimeException(e);
 		}
 		return rc;
@@ -60,7 +54,7 @@ public class ListLenAgent<V extends Serializable> implements MapGridAgent
 	 */
 	public Object process(Session sess, ObjectMap map, Object key) 
 	{
-		return new Integer(size(sess, map, key));
+		return new Boolean(isEmpty(sess, map, key));
 	}
 	
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {

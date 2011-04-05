@@ -12,6 +12,8 @@ package com.devwebsphere.wxsutils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -23,6 +25,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+import com.devwebsphere.wxsutils.wxsmap.BigListHead;
 import com.devwebsphere.wxsutils.wxsmap.SetElement;
 import com.devwebsphere.wxsutils.wxsmap.dirtyset.DirtyKey;
 
@@ -178,5 +181,12 @@ public class TestLinkedHashSets
 //			tree.add(item);
 //		}
 //		Assert.assertEquals(numItems, tree.size());
+	}
+	
+	@Test
+	public void testEvictionBasics()
+	{
+		for(int i = 0; i < 24; ++i)
+			System.out.println(BigListHead.getEvictionTime(60 * i));
 	}
 }

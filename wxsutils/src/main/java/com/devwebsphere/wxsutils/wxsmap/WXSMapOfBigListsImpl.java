@@ -22,6 +22,7 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxsutils.EvictionType;
 import com.devwebsphere.wxsutils.WXSMapOfLists;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.filter.Filter;
@@ -37,14 +38,38 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 	static Logger logger = Logger.getLogger(WXSMapOfBigListsImpl.class.getName());
 	static LazyMBeanManagerAtomicReference<WXSMapOfListsMBeanManager> wxsMapOfListsMBeanManager = new LazyMBeanManagerAtomicReference<WXSMapOfListsMBeanManager>(WXSMapOfListsMBeanManager.class);
 	
-	public WXSMapOfBigListsImpl(WXSUtils utils, String mapName)
+	String listName;
+	
+	public static String getListHeadMapName(String listName)
 	{
-		super(utils, mapName);
+		StringBuilder sb = new StringBuilder("LHEAD.");
+		sb.append(listName);
+		return sb.toString();
+	}
+
+	public static String getListBucketMapName(String listName)
+	{
+		StringBuilder sb = new StringBuilder("LBUCK.");
+		sb.append(listName);
+		return sb.toString();
+	}
+	
+	public static String getListDirtySetMapName(String listName)
+	{
+		StringBuilder sb = new StringBuilder("LDIRTY.");
+		sb.append(listName);
+		return sb.toString();
+	}
+	
+	public WXSMapOfBigListsImpl(WXSUtils utils, String listName)
+	{
+		super(utils, getListHeadMapName(listName));
+		this.listName = listName;
 	}
 
 	public int llen(K key) 
 	{
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try
 		{
@@ -68,6 +93,32 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		}
 	}
 
+	public boolean isEmpty(K key) 
+	{
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
+		long start = System.nanoTime();
+		try
+		{
+			BigListIsEmptyAgent<V> a = new BigListIsEmptyAgent<V>();
+			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
+			Object rcV = rc.get(key);
+			if(rcV != null && rcV instanceof EntryErrorValue)
+			{
+				logger.log(Level.SEVERE, "llen failed");
+				throw new ObjectGridRuntimeException(rcV.toString());
+			}
+			Boolean b = (Boolean)rcV;
+			mbean.getLenMetrics().logTime(System.nanoTime() - start);
+			return b;
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.SEVERE, "Exception", e);
+			mbean.getLenMetrics().logException(e);
+			throw new ObjectGridRuntimeException(e);
+		}
+	}
+
 	public V lpop(K key)
 	{
 		return pop(key, LR.LEFT, null);
@@ -79,7 +130,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 	}
 	
 	V pop(K key, LR isLeft, K dirtyKey) {
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try
 		{
@@ -108,31 +159,39 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		}
 	}
 
-	public void lpush(K key, V value, K... dirtySet)
+	public void lpush(K key, V value)
+	{
+		lpush(key, value, null);
+	}
+	
+	public void lpush(K key, V value, K dirtySet)
 	{
 		List<V> list = new ArrayList<V>(1);
 		list.add(value);
-		push(key, list, LR.LEFT, dirtySet);
+		push(key, list, LR.LEFT, dirtySet, null);
 	}
 	
-	public void lpush(K key, List<V> values, K... dirtySet)
+	public void lpush(K key, List<V> values)
 	{
-		push(key, values, LR.LEFT, dirtySet);
+		lpush(key, values, null);
 	}
 	
-	void push(K key, List<V> values, LR isLeft, K[] dirtySet) {
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
+	public void lpush(K key, List<V> values, K dirtySet)
+	{
+		push(key, values, LR.LEFT, dirtySet, null);
+	}
+	
+	void push(K key, List<V> values, LR isLeft, K dirtyKey, Filter cfilter) {
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
-		if(dirtySet != null && dirtySet.length > 1)
-			throw new ObjectGridRuntimeException("push does not allow multiple dirtySet key");
 		try
 		{
 			BigListPushAgent<K, V> pushAgent = new BigListPushAgent<K, V>();
 			pushAgent.isLeft = isLeft;
 			pushAgent.values = new HashMap<K, List<V>>();
 			pushAgent.values.put(key, values);
-			if(dirtySet != null && dirtySet.length == 1)
-				pushAgent.dirtyKey = dirtySet[0];
+			pushAgent.dirtyKey = dirtyKey;
+			pushAgent.cfilter = cfilter;
 			Object rc = tls.getMap(mapName).getAgentManager().callReduceAgent(pushAgent, Collections.singletonList(key));
 			if(rc != null && !(rc instanceof Boolean))
 			{
@@ -154,18 +213,20 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		}
 	}
 	
-	public ArrayList<V> lrange(K key, int low, int high, Filter... filters) {
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
+	public ArrayList<V> lrange(K key, int low, int high)
+	{
+		return lrange(key, low, high, null);
+	}
+	
+	public ArrayList<V> lrange(K key, int low, int high, Filter filter) {
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
-		if(filters.length > 1)
-		{
-			throw new ObjectGridRuntimeException("Only one filter can be specified");
-		}
 		try
 		{
 			BigListRangeAgent<V> a = new BigListRangeAgent<V>();
 			a.low = low;
 			a.high = high;
+			a.filter = filter;
 			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if(rcV != null && rcV instanceof EntryErrorValue)
@@ -190,7 +251,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 	}
 	
 	public ArrayList<V> popAll(K key, K dirtyKey) {
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try
 		{
@@ -215,7 +276,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 	}
 
 	public void rtrim(K key, int size) {
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try
 		{
@@ -247,31 +308,51 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		return pop(key, LR.RIGHT, dirtyKey);
 	}
 
-	public void rpush(K key, V value, K... dirtySet) 
+	public void rpush(K key, V value) 
+	{
+		rpush(key, value, null);
+	}
+	
+	public void rpush(K key, V value, K dirtyKey) 
 	{
 		List<V> list = new ArrayList<V>(1);
 		list.add(value);
-		push(key, list, LR.RIGHT, dirtySet);
+		push(key, list, LR.RIGHT, dirtyKey, null);
 	}
 
-	public void rpush(Map<K, List<V>> items, K... dirtySet)
+	public void rpush(Map<K, List<V>> items)
 	{
-		bulkPushAll(bmap, items, LR.RIGHT, dirtySet);
+		rpush(items, null);
 	}
 	
-	public void lpush(Map<K, List<V>> items, K... dirtySet)
+	public void rpush(Map<K, List<V>> items, K dirtyKey)
+	{
+		bulkPushAll(bmap, items, LR.RIGHT, dirtyKey);
+	}
+	
+	public void lpush(Map<K, List<V>> items)
+	{
+		lpush(items, null);
+	}
+	
+	public void lpush(Map<K, List<V>> items, K dirtySet)
 	{
 		bulkPushAll(bmap, items, LR.LEFT, dirtySet);
 	}
 	
-	public void rpush(K key, List<V> values, K... dirtySet) 
+	public void rpush(K key, List<V> values)
 	{
-		push(key, values, LR.RIGHT, dirtySet);
+		rpush(key, values, null);
+	}
+	
+	public void rpush(K key, List<V> values, K dirtySet) 
+	{
+		push(key, values, LR.RIGHT, dirtySet, null);
 	}
 	
 	public void remove(K key)
 	{
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try
 		{
@@ -293,13 +374,8 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		}
 	}
 
-	void bulkPushAll(BackingMap bmap, Map<K,List<V>> batch, LR side, K[] dirtySet)
+	void bulkPushAll(BackingMap bmap, Map<K,List<V>> batch, LR side, K dirtyKey)
 	{
-		if(dirtySet != null && dirtySet.length > 1)
-			throw new ObjectGridRuntimeException("push does not allow multiple dirtySet key");
-		K dirtyKey = null;
-		if(dirtySet != null && dirtySet.length == 1)
-			dirtyKey = dirtySet[0];
 		if(batch.size() > 0)
 		{
 			Map<Integer, Map<K,List<V>>> pmap = WXSUtils.convertToPartitionEntryMap(bmap, batch);
@@ -330,5 +406,31 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 				throw new ObjectGridRuntimeException("pushAll failed");
 			}
 		}
+	}
+
+	public void setEvictionPolicyFor(K key, EvictionType type,
+			int evictionTimeInMinutes) 
+	{
+	}
+
+	public void lcpush(K key, V value, Filter condition) 
+	{
+		lcpush(key, value, condition, null);
+	}
+
+	public void lcpush(K key, V value, Filter condition, K dirtyKey) {
+		List<V> list = new ArrayList<V>(1);
+		list.add(value);
+		push(key, list, LR.LEFT, dirtyKey, condition);
+	}
+
+	public void rcpush(K key, V value, Filter condition) {
+		rcpush(key, value, condition, null);
+	}
+
+	public void rcpush(K key, V value, Filter condition, K dirtyKey) {
+		List<V> list = new ArrayList<V>(1);
+		list.add(value);
+		push(key, list, LR.RIGHT, dirtyKey, condition);
 	}
 }

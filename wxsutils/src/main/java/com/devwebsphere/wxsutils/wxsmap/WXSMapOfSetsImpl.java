@@ -92,6 +92,31 @@ public class WXSMapOfSetsImpl<K,V extends Serializable> extends WXSBaseMap imple
 		}
 	}
 
+	public boolean isEmpty(K key) {
+		WXSMapOfSetsMBeanImpl mbean = wxsMapOfSetsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
+		long start = System.nanoTime();
+		try
+		{
+			SetIsEmptyAgent<V> a = new SetIsEmptyAgent<V>();
+			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
+			Object rcV = rc.get(key);
+			if(rcV != null && rcV instanceof EntryErrorValue)
+			{
+				logger.log(Level.SEVERE, "isEmpty failed");
+				throw new ObjectGridRuntimeException(rcV.toString());
+			}
+			Boolean b = (Boolean)rcV;
+			mbean.getSizeMetrics().logTime(System.nanoTime() - start);
+			return b;
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.SEVERE, "Exception", e);
+			mbean.getSizeMetrics().logException(e);
+			throw new ObjectGridRuntimeException(e);
+		}
+	}
+
 	public boolean contains(K key, Contains op, V... values) {
 		WXSMapOfSetsMBeanImpl mbean = wxsMapOfSetsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
@@ -119,14 +144,14 @@ public class WXSMapOfSetsImpl<K,V extends Serializable> extends WXSBaseMap imple
 		}
 	}
 
-	public Set<V> get(K key, Filter... filters) {
+	public Set<V> get(K key)
+	{
+		return get(key, null);
+	}
+	
+	public Set<V> get(K key, Filter filter) {
 		WXSMapOfSetsMBeanImpl mbean = wxsMapOfSetsMBeanManager.getLazyRef().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
-		if(filters != null && filters.length > 1)
-			throw new ObjectGridRuntimeException("Only one filter can be specified");
-		Filter filter = null;
-		if(filters != null && filters.length == 1)
-			filter = filters[0];
 		try
 		{
 			SetGetAgent<V> a = new SetGetAgent<V>();

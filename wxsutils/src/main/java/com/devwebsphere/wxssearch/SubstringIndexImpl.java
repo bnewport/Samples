@@ -10,12 +10,13 @@
 //
 package com.devwebsphere.wxssearch;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
 import com.devwebsphere.wxssearch.type.SubstringIndex;
 
-public class SubstringIndexImpl<C, RK> extends Index<C, RK> 
+public class SubstringIndexImpl<C, RK extends Serializable> extends Index<C, RK> 
 {
 	SubstringIndexImpl(IndexManager<C,RK> im, String indexName, SubstringIndex s) {
 		super(im, indexName, s.maxMatches());

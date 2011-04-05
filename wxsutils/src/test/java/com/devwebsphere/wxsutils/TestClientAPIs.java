@@ -28,8 +28,14 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.devwebsphere.wxsutils.WXSMapOfSets.Contains;
+import com.devwebsphere.wxsutils.filter.Filter;
+import com.devwebsphere.wxsutils.filter.FilterBuilder;
+import com.devwebsphere.wxsutils.filter.ValuePath;
+import com.devwebsphere.wxsutils.filter.path.PojoPropertyPath;
+import com.devwebsphere.wxsutils.multijob.Person;
 import com.devwebsphere.wxsutils.multijob.pingall.PingAllPartitionsJob;
 import com.devwebsphere.wxsutils.wxsmap.BigListPushAgent;
+import com.devwebsphere.wxsutils.wxsmap.WXSMapOfBigListsImpl;
 import com.devwebsphere.wxsutils.wxsmap.dirtyset.FetchJobsFromAllDirtyListsJob;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
@@ -162,7 +168,7 @@ public class TestClientAPIs
 			// this is expected
 		}
 		// now make maps same size
-		original.put("10", "DUMMY");
+		original.put("10", null); // 10 doesn't exist so only update 10 if 10 doesn't already exist
 		Map<String, Boolean> rc = utils.cond_putAll(original, newValues, bmFarMap3);
 		Assert.assertNotNull(rc);
 		for(Map.Entry<String, Boolean> e : rc.entrySet())
@@ -210,6 +216,7 @@ public class TestClientAPIs
 		// check popping an empty list returns the right value
 		String rc = map.lpop(key);
 		Assert.assertNull(rc);
+		Assert.assertTrue(map.isEmpty(key));
 		rc = map.rpop(key);
 		Assert.assertNull(rc);
 		
@@ -217,6 +224,7 @@ public class TestClientAPIs
 		{
 			map.rpush(key, "" + i);
 			Assert.assertEquals(i + 1, map.llen(key));
+			Assert.assertFalse(map.isEmpty(key));
 		}
 		
 		for(int i = numItems; i >= 0; --i)
@@ -233,6 +241,11 @@ public class TestClientAPIs
 				Assert.assertEquals(i, list.size());
 				for(int j = 0; j < i; ++j)
 					Assert.assertEquals("" + j, list.get(j));
+				Assert.assertFalse(map.isEmpty(key));
+			}
+			else
+			{
+				Assert.assertTrue(map.isEmpty(key));
 			}
 		}
 
@@ -240,6 +253,7 @@ public class TestClientAPIs
 		{
 			map.rpush(key, "" + i);
 			Assert.assertEquals(i + 1, map.llen(key));
+			Assert.assertFalse(map.isEmpty(key));
 		}
 
 		for(int j = 0; j < numItems; ++j)
@@ -300,17 +314,56 @@ public class TestClientAPIs
 	}
 	
 	@Test
+	public void testConditionalPush()
+	{
+		WXSMapOfLists<String, Person> map = utils.getMapOfLists("PersonList");
+		String key = "key";
+		
+		map.remove(key);
+		ValuePath firstName = new PojoPropertyPath("FirstName");
+		ValuePath surname = new PojoPropertyPath("Surname");
+		
+		FilterBuilder fb = new FilterBuilder();
+		Filter isBillyFilter = fb.and(fb.eq(firstName, "Billy"), fb.eq(surname, "Newport"));
+
+		Person billy = new Person();
+		billy.setFirstName("Billy");
+		billy.setSurname("Newport");
+		billy.setCreditLimit(1);
+		billy.setMiddleInitial("A");
+		Assert.assertTrue(isBillyFilter.filter(billy));
+		
+		Person bobby = new Person();
+		bobby.setFirstName("Bobby");
+		bobby.setSurname("Newport");
+		bobby.setCreditLimit(1);
+		bobby.setMiddleInitial("I");
+		Assert.assertFalse(isBillyFilter.filter(bobby));
+
+		Assert.assertTrue(map.isEmpty(key));
+		map.lcpush(key, bobby, isBillyFilter);
+		Assert.assertFalse(map.isEmpty(key));
+		map.lcpush(key, billy, isBillyFilter);
+		Assert.assertEquals(2, map.llen(key));
+		
+		map.lcpush(key, billy, isBillyFilter);
+		Assert.assertEquals(2, map.llen(key)); // no push this time
+	}
+	
+	@Test
 	public void testListOperations()
 	{
 		WXSMapOfLists<String, String> map = utils.getMapOfLists("BigList");
 		Assert.assertNotNull(map);
 		String key = "TEST";
 		map.remove(key);
+		Assert.assertTrue(map.isEmpty(key));
 		int numItems = 10;
 		for(int i = 0; i < numItems; ++i)
 		{
 			map.rpush(key, "" + i);
 			Assert.assertEquals(i + 1, map.llen(key));
+			Assert.assertFalse(map.isEmpty(key));
 		}
 		map.rtrim(key, numItems - 2);
 		Assert.assertEquals(numItems - 2, map.llen(key));
@@ -335,6 +388,7 @@ public class TestClientAPIs
 		}
 		map.remove(key);
 		Assert.assertEquals(0, map.llen(key));
+		Assert.assertTrue(map.isEmpty(key));
 		
 		for(int i = 0; i < numItems; ++i)
 		{
@@ -444,6 +498,7 @@ public class TestClientAPIs
 		}
 		map.add(key, "" + 0);
 		Assert.assertEquals(numKeys, map.size(key));
+		Assert.assertFalse(map.isEmpty(key));
 		map.remove(key, "" + 0);
 		Assert.assertFalse(map.contains(key, Contains.ALL, "" + 0));
 		Assert.assertEquals(numKeys - 1, map.size(key));
@@ -456,6 +511,7 @@ public class TestClientAPIs
 		map.remove(key);
 		Assert.assertNull(map.get(key));
 		Assert.assertEquals(0, map.size(key));
+		Assert.assertTrue(map.isEmpty(key));
 		
 		
 		int maxSize = 3;
@@ -481,7 +537,7 @@ public class TestClientAPIs
 	public void testDirtySet()
 	{
 		String dirtyKey = "DIRTY";
-		WXSMapOfSets<String, String> dirtySetMap = utils.getMapOfSets("BigList_dirty");
+		WXSMapOfSets<String, String> dirtySetMap = utils.getMapOfSets(WXSMapOfBigListsImpl.getListDirtySetMapName("BigList"));
 		WXSMapOfLists<String, String> listMap = utils.getMapOfLists("BigList");
 		
 		// check set is empty
@@ -679,6 +735,123 @@ public class TestClientAPIs
 							Assert.fail();
 						}
 						
+					}
+				}
+				catch(Exception e)
+				{
+					logger.log(Level.SEVERE, "Exception", e);
+					Assert.fail();
+				}
+			}
+		};
+
+		Thread pullerThread = new Thread(puller);
+		pullerThread.start();
+		
+		ArrayList<Thread> allPushers = new ArrayList<Thread>();
+
+		for(int i = 0; i < numPushers; ++i)
+		{
+			Runnable pusher = new Runnable() {
+				int pushesToGo = numPushesPerPusher;
+				
+				public void run() {
+					try
+					{
+						while(pushesToGo > 0)
+						{
+							String aKey = key + "#" + (pushesToGo % numKeys);
+							// twenty keys
+							// added one more for aKey
+							keyPushCounters.get(aKey).incrementAndGet();
+							// push list key as value
+							listMap.lpush(aKey, aKey, dirtyKey);
+							pushesToGo--;
+							try
+							{
+//								Thread.currentThread().wait(10);
+							}
+							catch(Exception e) 
+							{
+								logger.log(Level.SEVERE, "Exception", e);
+								Assert.fail();
+							}
+						}
+					}
+					catch(Exception e)
+					{
+						logger.log(Level.SEVERE, "Exception", e);
+						Assert.fail();
+					}
+				}
+			};
+
+			Thread pusherThread = new Thread(pusher);
+			allPushers.add(pusherThread);
+			pusherThread.start();
+			try
+			{
+				Thread.currentThread().sleep(10);
+			}
+			catch(InterruptedException e) 
+			{
+				logger.log(Level.SEVERE, "Exception", e);
+				Assert.fail();
+			}
+		}
+		
+		for(Thread t : allPushers)
+			t.join();
+		
+		pullerThread.join();
+		Assert.assertEquals(0, counter.getCount());
+		// check all keys had the exact number removed as were pushed
+		for(AtomicLong a : keyPushCounters.values())
+		{
+			Assert.assertEquals(0, a.get());
+		}
+	}
+	
+	@Test
+	public void testMultiThreadPushPop()
+		throws InterruptedException
+	{
+		final String dirtyKey = "DIRTY4";
+		final String key = "N";
+        final WXSMapOfLists<String, String> listMap = utils.getMapOfLists("BigList");
+        int numPushers = 50;
+        final int numKeys = 20;
+        final int numPushesPerPusher = 100;
+        final CountDownLatch counter = new CountDownLatch(numPushers * numPushesPerPusher);
+        
+        final Map<String, AtomicLong> keyPushCounters = new HashMap<String, AtomicLong>();
+        for(int i = 0; i < numKeys; ++i)
+        {
+        	keyPushCounters.put(key + "#" + i, new AtomicLong());
+        }
+        
+		Runnable puller = new Runnable() {
+			public void run()
+			{
+				try
+				{
+					long start = System.currentTimeMillis();
+					while(counter.getCount() > 0)
+					{
+						List<String> allKeys = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey) ;
+						for(String aKey : allKeys)
+						{
+							String aValue = listMap.rpop(aKey, dirtyKey);
+							if(aValue != null)
+							{
+								System.out.println("Pulled from " + aKey + ": Remaining = " + counter.getCount());
+								// value MUST be same as key
+								Assert.assertEquals(aKey, aValue);
+								// one less value for this list and sanity check
+								Assert.assertTrue(keyPushCounters.get(aKey).decrementAndGet() >= 0);
+								counter.countDown();
+							}
+						}
 					}
 				}
 				catch(Exception e)

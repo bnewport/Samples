@@ -16,13 +16,16 @@ Licensed Materials - Property of IBM
 
     <objectgridDeployment objectgridName="Grid">
         <mapSet name="mapSet" numberOfPartitions="13" minSyncReplicas="0" maxSyncReplicas="1" >
+        	<!-- You need to define these templates for List/Sets, this is ALL you need -->
+        	<!-- No matter how many List/Set maps you use -->
+            <map ref="LHEAD.*"/> <map ref="LBUCK.*"/> <map ref="LDIRTY.*"/> <map ref="LEVICT.*"/>
+            <!-- End of templates for List/Sets -->
+            
             <map ref="Map1"/>
             <map ref="Map2"/>
             <map ref="FarMap3"/>
             <map ref="List"/>
-            <map ref="BigList"/>
-            <map ref="BigList_b"/>
-            <map ref="BigList_dirty"/>
+            
             <map ref="Set"/>
             
             <map ref="RouterKeyI32"/>

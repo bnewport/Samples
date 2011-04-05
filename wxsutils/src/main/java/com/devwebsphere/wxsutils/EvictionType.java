@@ -8,26 +8,25 @@
 //5724-J34 (C) COPYRIGHT International Business Machines Corp. 2005
 //All Rights Reserved * Licensed Materials - Property of IBM
 //
-package com.devwebsphere.wxssearch;
+package com.devwebsphere.wxsutils;
 
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
-
-import com.devwebsphere.wxssearch.type.ExactIndex;
-
-public class ExactIndexImpl<C,RK extends Serializable> extends Index<C,RK> {
-
-	ExactIndexImpl(IndexManager<C,RK> im, String indexName, ExactIndex e) {
-		super(im, indexName, e.maxMatches());
-	}
-
-	@Override
-	public Set<String> generate(String str) 
-	{
-		Set<String> rc = new HashSet<String>();
-		rc.add(str);
-		return rc;
-	}
-
+/**
+ * This is the type of eviction required for a data structure.
+ * @author bnewport
+ *
+ */
+public enum EvictionType 
+{ 
+	/**
+	 * This is an interval since the item was marked for eviction
+	 */
+	FIXED, 
+	/**
+	 * This is an interval since the item was last accessed
+	 */
+	LAST_ACCESS_TIME, 
+	/**
+	 * This is no eviction
+	 */
+	NONE 
 }

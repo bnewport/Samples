@@ -10,6 +10,7 @@
 //
 package com.devwebsphere.wxssearch;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -38,7 +39,7 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
  * should make one Index for each attribute that needs to be searchable.
  *
  */
-public class IndexManager<A,RK>
+public class IndexManager<A,RK extends Serializable>
 {
 	static String DYN_ATTRIBUTES_MAP_SUFFIX = "Attributes";
 	

@@ -10,14 +10,12 @@
 //
 package com.devwebsphere.wxsutils.multijob.pingall;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.multijob.JobExecutor;
 import com.devwebsphere.wxsutils.multijob.MultipartTask;
 import com.devwebsphere.wxsutils.multijob.SinglePartTask;
 import com.ibm.websphere.objectgrid.ObjectGrid;
-import com.ibm.websphere.objectgrid.Session;
 
 /**
  * This simply invokes some code on every partition. This can be useful
@@ -42,35 +40,6 @@ public class PingAllPartitionsJob implements MultipartTask<Boolean, Boolean>
 		return rawRC;
 	}
 
-	static public class PingSinglePartitionTask implements SinglePartTask<Boolean, Boolean>
-	{
-		static Logger logger = Logger.getLogger(PingSinglePartitionTask.class.getName());
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1722977140374061823L;
-		
-		public PingSinglePartitionTask() {}
-
-		/**
-		 * This can be called to check if a partition result is
-		 * empty and not interesting for clients
-		 */
-		public boolean isResultEmpty(Boolean result) 
-		{
-			return true;
-		}
-
-		public Boolean process(Session sess) 
-		{
-			String aMap = (String)sess.getObjectGrid().getListOfMapNames().iterator().next();
-			int partitionId = sess.getObjectGrid().getMap(aMap).getPartitionId();
-			logger.log(Level.INFO, "Ping to partition " + partitionId);
-			return Boolean.TRUE;
-		}
-
-	}
-	
 	JobExecutor<Boolean, Boolean> je;
 	
 	public PingAllPartitionsJob(ObjectGrid ogclient)

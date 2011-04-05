@@ -10,6 +10,7 @@
 //
 package com.devwebsphere.wxsutils.multijob;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.logging.Level;
@@ -32,7 +33,7 @@ import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
  * @param <R> The user consumable type returned from each SinglePartTask
  * @param <V> The raw value returned directly from SinglePartTask
  */
-public class JobExecutor <V,R>
+public class JobExecutor <V extends Serializable,R>
 {
 	static Logger logger = Logger.getLogger(JobExecutor.class.getName());
 	MultipartTask<V, R> mtask;

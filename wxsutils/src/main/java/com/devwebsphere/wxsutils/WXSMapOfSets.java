@@ -93,11 +93,21 @@ public interface WXSMapOfSets<K,V>
 	 * @param filter The optional filter to use. Only one should be specified
 	 * @return The list of entries. It's empty if the set doesn't exist
 	 */
-	public Set<V> get(K key, Filter... filter);
+	
+	public Set<V> get(K key);
+	
+	public Set<V> get(K key, Filter filter);
 
 	/**
 	 * This removes the set with the specified key if it exists
 	 * @param key
 	 */
 	public void remove(K key);
+	
+	/**
+	 * This returns true is the set if not empty. This is typically
+	 * faster than a size() == 0 test
+	 * @return
+	 */
+	public boolean isEmpty(K key);
 }

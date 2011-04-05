@@ -55,7 +55,6 @@ import com.devwebsphere.wxsutils.wxsmap.ThreadLocalSession;
 import com.devwebsphere.wxsutils.wxsmap.WXSBaseMap;
 import com.devwebsphere.wxsutils.wxsmap.WXSMapImpl;
 import com.devwebsphere.wxsutils.wxsmap.WXSMapOfBigListsImpl;
-import com.devwebsphere.wxsutils.wxsmap.WXSMapOfListsImpl;
 import com.devwebsphere.wxsutils.wxsmap.WXSMapOfSetsImpl;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ClientClusterContext;
@@ -169,31 +168,36 @@ public class WXSUtils
 		tls = new ThreadLocalSession(this);
 	}
 
-	public <K extends Serializable,V extends Serializable> WXSMapOfLists<K,V> getMapOfLists(String mapName)
+	public <K extends Serializable,V extends Serializable> WXSMapOfLists<K,V> getMapOfLists(String listName)
 	{
-		WXSBaseMap bmap = maps.get(mapName);
+		WXSBaseMap bmap = maps.get(listName);
 		if(bmap != null && !(bmap instanceof WXSMapOfBigListsImpl))
 		{
-			throw new ObjectGridRuntimeException(mapName + " is not a list");
+			throw new ObjectGridRuntimeException(listName + " is not a list");
 		}
 		WXSMapOfBigListsImpl<K,V> rc = (WXSMapOfBigListsImpl<K,V>)bmap;
 		if(rc == null)
 		{
 			try
 			{
-				if(grid.getSession().getMap(mapName) != null)
+				Session sess = getSessionForThread();
+				ObjectMap headMap = sess.getMap(WXSMapOfBigListsImpl.getListHeadMapName(listName));
+				ObjectMap bucketMap = sess.getMap(WXSMapOfBigListsImpl.getListBucketMapName(listName));
+				ObjectMap dirtySetMap = sess.getMap(WXSMapOfBigListsImpl.getListDirtySetMapName(listName));
+				if(headMap != null && bucketMap != null && dirtySetMap != null)
 				{
-					rc = new WXSMapOfBigListsImpl<K,V>(this, mapName);
-					maps.put(mapName, rc);
+					rc = new WXSMapOfBigListsImpl<K,V>(this, listName);
+					maps.put(listName, rc);
 				}
 				else
 				{
-					logger.log(Level.SEVERE, "Unknown map of lists " + mapName);
-					throw new ObjectGridRuntimeException("Unknown map of lists:" + mapName);
+					logger.log(Level.SEVERE, "Templates for LH_, LDIRTY_ and LHB_ missing in xml files [" + listName + "]");
+					throw new ObjectGridRuntimeException("Cannot create list:" + listName);
 				}
 			}
-			catch(ObjectGridException e)
+			catch(Exception e)
 			{
+				logger.log(Level.SEVERE, "Templates for LH_, LDIRTY_ and LHB_ likely missing in xml files [" + listName + "]");
 				logger.log(Level.SEVERE, "Exception", e);
 				throw new ObjectGridRuntimeException(e);
 			}
@@ -239,7 +243,7 @@ public class WXSUtils
 	 * @param mapName
 	 * @return
 	 */
-	public <K,V> WXSMap<K,V> getCache(String mapName)
+	public <K extends Serializable,V extends Serializable> WXSMap<K,V> getCache(String mapName)
 	{
 		WXSBaseMap bmap = maps.get(mapName);
 		if(bmap != null && !(bmap instanceof WXSMapImpl))
@@ -365,6 +369,17 @@ public class WXSUtils
 		internalPutAll(batch, bmap, true);
 	}
 
+	/**
+	 * This updates the current values for a set of keys only if the current
+	 * value matches the original value passed OR the new value is inserted
+	 * if the passed original value is NULL.
+	 * @param <K>
+	 * @param <V>
+	 * @param original The list of original values to check for in order to update (NULL to insert)
+	 * @param updated The values to set the key entries to if the condition matches
+	 * @param bmap The map to use
+	 * @return True for every key updated/inserted, false if not updated/inserted
+	 */
 	public <K,V> Map<K, Boolean> cond_putAll(Map<K,V> original, Map<K,V> updated, BackingMap bmap)
 	{
 		if(updated.size() != original.size())
@@ -387,6 +402,13 @@ public class WXSUtils
 			{
 				Map.Entry<Integer,Map<K,V>> origPerPartitionEntries = origItems.next();
 				Map<K,V> updPerPartitionEntries = updPmap.get(origPerPartitionEntries.getKey());
+				// if there are items for this partition
+				int updSize = updPerPartitionEntries.size();
+				int origSize = origPerPartitionEntries.getValue().size();
+				if(updSize != origSize)
+				{
+					throw new ObjectGridRuntimeException("Orig and new maps must have same keys");
+				}
 				// we need one key for partition routing
 				// so get the first one
 				K key = origPerPartitionEntries.getValue().keySet().iterator().next();
@@ -696,12 +718,13 @@ public class WXSUtils
 	}
 	
 	/**
-	 * This takes a Map of K/V pairs and sorts them in to buckets per partition.
+	 * This takes a Map of K/V pairs and sorts them in to buckets per partition. Partitions
+	 * with no pairs are not in the returned Map.
 	 * @param <K1>
 	 * @param <V1>
 	 * @param baseMap
 	 * @param items
-	 * @return
+	 * @return A Map with entries for each partition with pairs
 	 */
 	static public <K1, V1> Map<Integer, Map<K1,V1>> convertToPartitionEntryMap(BackingMap baseMap, Map<K1,V1> items)
 	{
@@ -723,7 +746,8 @@ public class WXSUtils
 	}
 	
 	/**
-	 * This takes a list of keys and places them in partition aligned buckets
+	 * This takes a list of keys and places them in partition aligned buckets.
+	 * Partitions with no keys have no entries in the returned Map.
 	 * @param <K>
 	 * @param baseMap
 	 * @param keys
@@ -748,6 +772,15 @@ public class WXSUtils
 	
 	static Container container;
 
+	/**
+	 * This starts a Catalog Server instance within this JVM. This is intended for development
+	 * scenarios where the developer wants a catalog running within the JVM with the code
+	 * being debugged. However, startTestServer is usually the recommended approach
+	 * for this
+	 * @param cep
+	 * @param catName
+	 * @see WXSUtils#startTestServer(String, String, String)
+	 */
 	public static void startCatalogServer(String cep, String catName)
 	{
 		try
@@ -787,20 +820,20 @@ public class WXSUtils
 			
 			com.ibm.websphere.objectgrid.server.Server server = ServerFactory.getInstance();
 			
-			System.out.println("Started catalog");
+			logger.log(Level.INFO, "Started catalog");
 			URL serverObjectgridXML =  WXSUtils.class.getResource(og_xml_path);
 			URL deployment =  WXSUtils.class.getResource(dep_xml_path);
 			if(serverObjectgridXML == null)
 				throw new ObjectGridRuntimeException("ObjectGrid xml file not found: " + og_xml_path);
 			if(deployment == null)
 				throw new ObjectGridRuntimeException("Deployment xml file not found: " + dep_xml_path);
-			System.out.println("OG is " + serverObjectgridXML.toString() + " DP is " + deployment.toString());
+			logger.log(Level.INFO, "OG is " + serverObjectgridXML.toString() + " DP is " + deployment.toString());
 			DeploymentPolicy policy = DeploymentPolicyFactory.createDeploymentPolicy(deployment, serverObjectgridXML);
 			container = server.createContainer(policy);
-			System.out.println("Container started");
+			logger.log(Level.INFO, "Container started");
 			ClientClusterContext ccc = ObjectGridManagerFactory.getObjectGridManager().connect(null, null);
 			ObjectGrid client = ObjectGridManagerFactory.getObjectGridManager().getObjectGrid(ccc, gridName);
-			System.out.println("Got client");
+			logger.log(Level.INFO, "Got client");
 			return client;
 		}
 		catch(Exception e)
@@ -879,17 +912,20 @@ public class WXSUtils
 	}
 	
 	/**
-	 * This waits for all the Futures to be complete
+	 * This waits for all the Futures to be complete. Note the maximum wait time
+	 * is limited to 120 seconds!
 	 * @param results The list of Futures to wait on.
 	 */
 	static public void blockForAllFuturesToFinish(CountDownLatch doneSignal)
 	{
+		int maxWait = 120;
 		try 
 		{
-			doneSignal.await(60, TimeUnit.SECONDS);
-		} catch (InterruptedException e) 
+			doneSignal.await(maxWait, TimeUnit.SECONDS);
+		} catch (Throwable e) 
 		{
-			logger.log(Level.WARNING, "Time out detected waiting for agent");
+			logger.log(Level.SEVERE, "Time out detected waiting for agent", e);
+			throw new ObjectGridRuntimeException("Timeout waiting for agents (" + maxWait + " seconds)", e);
 		}		
 	}
 
@@ -1015,8 +1051,9 @@ public class WXSUtils
 				}
 			}
 		}
-		catch(ObjectGridException e)
+		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}

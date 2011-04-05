@@ -34,7 +34,7 @@ import com.ibm.websphere.objectgrid.Session;
  * Map methods like put, bulk methods and so on.
  *
  */
-public class WXSMapImpl <K,V> extends WXSBaseMap implements WXSMap<K, V>
+public class WXSMapImpl <K extends Serializable,V extends Serializable> extends WXSBaseMap implements WXSMap<K, V>
 {
 	static Logger logger = Logger.getLogger(WXSMapImpl.class.getName());
 	
@@ -350,7 +350,7 @@ public class WXSMapImpl <K,V> extends WXSBaseMap implements WXSMap<K, V>
 		mbean.getUnlockMetrics().logTime(System.nanoTime() - start);
 	}
 
-	public GridFilteredIndex<K, V> btwn(String indexName, Serializable low,
+	public GridFilteredIndex btwn(String indexName, Serializable low,
 			Serializable high, Filter f) {
 		GridFilteredIndex<K, V> g = new GridFilteredIndex<K, V>(tls.getObjectGrid(), mapName, indexName, f, low, high);
 		return g;

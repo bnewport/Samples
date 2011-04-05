@@ -24,7 +24,8 @@ import com.devwebsphere.wxsutils.filter.set.GridFilteredIndex;
  *
  */
 
-public interface WXSMap<K,V> {
+public interface WXSMap<K extends Serializable,V extends Serializable> 
+{
 	/**
 	 * Clear the Map
 	 */
@@ -67,7 +68,8 @@ public interface WXSMap<K,V> {
 
 	/**
 	 * This will update the entries to the newValue only if the current value for the
-	 * key matches the original value or if absent. True is returned for each key changed
+	 * key matches the original value. A null original value will only update if the key
+	 * doesn't currently exist. True is returned for each key changed
 	 * during this operation
 	 * @param originalValues The original value to check against
 	 * @param newValues The new value to be used if the entry value is unchanged compared with original

@@ -18,6 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
+import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.wxsmap.BigListHead.LR;
 import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent.Operation;
@@ -37,6 +38,7 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 	public LR isLeft;
 	public Map<K,List<V>> values;
 	public K dirtyKey;
+	public Filter cfilter;
 	
 	/**
 	 * 
@@ -45,12 +47,12 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 	
 	static public String getDirtySetMapNameForListMap(String mapName)
 	{
-		StringBuilder sb = new StringBuilder(mapName);
-		sb.append("_dirty");
+		StringBuilder sb = new StringBuilder("LDIRTY.");
+		sb.append(BigListHead.getListNameFromHeadMapName(mapName));
 		return sb.toString();
 	}
 	
-	static <K extends Serializable, V extends Serializable> void push(Session sess, ObjectMap map, LR isLeft, Map<K, List<V>> values, K dirtyKey)
+	static <K extends Serializable, V extends Serializable> void push(Session sess, ObjectMap map, LR isLeft, Map<K, List<V>> values, K dirtyKey, Filter cfilter)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListPushAgent.class.getName());
 		long startNS = System.nanoTime();
@@ -78,7 +80,7 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 					else
 					{
 						// this updates the head in the map also
-						head.push(sess, map, key, isLeft, v);
+						head.push(sess, map, key, isLeft, v, cfilter);
 					}
 				}
 				if(dirtyKey != null)
@@ -109,7 +111,7 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 
 	public Object reduce(Session sess, ObjectMap map, Collection arg2)
 	{
-		push(sess, map, isLeft, values, dirtyKey);
+		push(sess, map, isLeft, values, dirtyKey, cfilter);
 		return Boolean.TRUE;
 	}
 

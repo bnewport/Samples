@@ -18,7 +18,7 @@ Licensed Materials - Property of IBM
     	<!--  always specify a transaction timeout, the default lock timeout is also 15 -->
     	<!--  for debugging, do not set a tx timeout, txTimeout="15" -->
         <objectGrid name="Grid" >
-	        <bean id="TransactionCallback" className="purequery.loader.PQTxCallback">
+	        <bean id="TransactionCallback" className="com.devwebsphere.purequery.loader.PQTxCallback">
 <!--             	<property name="connecturi" type="java.lang.String" value="jdbc:db2://172.16.129.129:50000/SAMPLE"/>  -->
 				<property name="connecturi" type="java.lang.String" value="jdbc:mysql://localhost/chirp"/>
             	<property name="username" type="java.lang.String" value="root"/>
@@ -77,35 +77,35 @@ Licensed Materials - Property of IBM
 
 	<backingMapPluginCollections>
     	<backingMapPluginCollection id="long-string">
-        	<bean id="Loader" className="purequery.loader.value.LongStringValueLoader">
+        	<bean id="Loader" className="com.devwebsphere.purequery.loader.value.LongStringValueLoader">
             	<property name="tableName" 
                       type="java.lang.String" 
                       value="LONGSTRINGPROPERTY"/>
         	</bean>
     	</backingMapPluginCollection>
     	<backingMapPluginCollection id="string-string">
-        	<bean id="Loader" className="purequery.loader.value.StringStringValueLoader">
+        	<bean id="Loader" className="com.devwebsphere.purequery.loader.value.StringStringValueLoader">
             	<property name="tableName" 
                       type="java.lang.String" 
                       value="STRINGSTRINGPROPERTY"/>
         	</bean>
     	</backingMapPluginCollection>
     	<backingMapPluginCollection id="string-long">
-        	<bean id="Loader" className="purequery.loader.value.StringLongValueLoader">
+        	<bean id="Loader" className="com.devwebsphere.purequery.loader.value.StringLongValueLoader">
             	<property name="tableName" 
                       type="java.lang.String" 
                       value="STRINGLONGPROPERTY"/>
         	</bean>
     	</backingMapPluginCollection>
     	<backingMapPluginCollection id="long-long">
-        	<bean id="Loader" className="purequery.loader.value.LongLongValueLoader">
+        	<bean id="Loader" className="com.devwebsphere.purequery.loader.value.LongLongValueLoader">
             	<property name="tableName" 
                       type="java.lang.String" 
                       value="LONGLONGPROPERTY"/>
         	</bean>
     	</backingMapPluginCollection>
     	<backingMapPluginCollection id="list-head-string-long">
-        	<bean id="Loader" className="purequery.loader.GenericPQLoader">
+        	<bean id="Loader" className="com.devwebsphere.purequery.loader.GenericPQLoader">
             	<property name="tableName" 
                       type="java.lang.String" 
                       value="LISTHEADSTRINGLONG"/>
@@ -115,7 +115,7 @@ Licensed Materials - Property of IBM
         	</bean>
     	</backingMapPluginCollection>
     	<backingMapPluginCollection id="list-item-string-long">
-        	<bean id="Loader" className="purequery.loader.GenericPQLoader">
+        	<bean id="Loader" className="com.devwebsphere.purequery.loader.GenericPQLoader">
             	<property name="tableName" 
                       type="java.lang.String" 
                       value="LISTITEMSTRINGLONG"/>
@@ -125,7 +125,7 @@ Licensed Materials - Property of IBM
         	</bean>
     	</backingMapPluginCollection>
     	<backingMapPluginCollection id="set-head-string-long">
-        	<bean id="Loader" className="purequery.loader.GenericPQLoader">
+        	<bean id="Loader" className="com.devwebsphere.purequery.loader.GenericPQLoader">
             	<property name="tableName" 
                       type="java.lang.String" 
                       value="SETHEADSTRINGLONG"/>
@@ -135,7 +135,7 @@ Licensed Materials - Property of IBM
         	</bean>
     	</backingMapPluginCollection>
     	<backingMapPluginCollection id="set-item-string-long">
-        	<bean id="Loader" className="purequery.loader.GenericPQLoader">
+        	<bean id="Loader" className="com.devwebsphere.purequery.loader.GenericPQLoader">
             	<property name="tableName" 
                       type="java.lang.String" 
                       value="SETITEMSTRINGLONG"/>

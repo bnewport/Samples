@@ -1,5 +1,7 @@
 package com.devwebsphere.wxsutils.multijob;
 
+import java.io.Serializable;
+
 import com.ibm.websphere.objectgrid.Session;
 //
 //This sample program is provided AS IS and may be used, executed, copied and
@@ -12,7 +14,7 @@ import com.ibm.websphere.objectgrid.Session;
 //All Rights Reserved * Licensed Materials - Property of IBM
 //
 
-public interface MultipartTask<V,R>
+public interface MultipartTask<V extends Serializable,R>
 {
 	/**
 	 * This is called with the previous task for a partition to create the next one.

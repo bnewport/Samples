@@ -53,7 +53,7 @@
         	<systemProperties>
         		<systemProperty>
         			<name>java.endorsed.dirs</name>
-        			<value>/Users/ibm/Documents/Development/og7001/lib/endorsed</value>
+        			<value>/Users/ibm/Documents/Development/og71/lib/endorsed</value>
         		</systemProperty>
         		<systemProperty>
 					<name>com.sun.management.jmxremote</name> <value></value>

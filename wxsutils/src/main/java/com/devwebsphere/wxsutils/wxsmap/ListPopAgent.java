@@ -13,10 +13,11 @@ package com.devwebsphere.wxsutils.wxsmap;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
-import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
@@ -25,7 +26,7 @@ import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 @Deprecated
 public class ListPopAgent<V extends Serializable> implements MapGridAgent 
 {
-
+	static Logger logger = Logger.getLogger(ListPopAgent.class.getName());
 	static public class EmptyMarker implements Serializable
 	{
 
@@ -38,7 +39,7 @@ public class ListPopAgent<V extends Serializable> implements MapGridAgent
 	
 	public boolean isLeft;
 	
-	static public <V> Object pop(Session sess, ObjectMap map, Object key, boolean isLeft)
+	static public <V extends Serializable> Object pop(Session sess, ObjectMap map, Object key, boolean isLeft)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), ListPopAgent.class.getName());
 		long startNS = System.nanoTime();
@@ -65,10 +66,10 @@ public class ListPopAgent<V extends Serializable> implements MapGridAgent
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
-		catch(ObjectGridException e)
+		catch(Exception e)
 		{
 			mbean.getKeysMetric().logException(e);
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Exception:", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 		return rc;

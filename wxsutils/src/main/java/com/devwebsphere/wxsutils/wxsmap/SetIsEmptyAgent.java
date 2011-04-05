@@ -11,56 +11,60 @@
 package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
-import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
-@Deprecated
-public class ListLenAgent<V extends Serializable> implements MapGridAgent 
+public class SetIsEmptyAgent<V extends Serializable> implements MapGridAgent 
 {
-	static Logger logger = Logger.getLogger(ListLenAgent.class.getName());
+	static Logger logger = Logger.getLogger(SetIsEmptyAgent.class.getName());
+	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -3736978703392897531L;
+	/**
+	 * 
+	 */
 	
-	static public <V extends Serializable> int size(Session sess, ObjectMap map, Object key)
+	static public <V extends Serializable> boolean isEmpty(Session sess, ObjectMap map, Object key)
 	{
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), ListLenAgent.class.getName());
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), SetIsEmptyAgent.class.getName());
 		long startNS = System.nanoTime();
-		Integer rc = new Integer(0);
+		boolean rc = true;
 		try
 		{
-			ArrayList<V> list = (ArrayList<V>)map.get(key);
-			if(list != null)
+ 			map.get(key);
+			for(int  b = 0; rc == true && b < SetAddRemoveAgent.NUM_BUCKETS; ++b)
 			{
-				if(!list.isEmpty())
-					rc = list.size();
+				LinkedHashSet<SetElement<V>> d = (LinkedHashSet<SetElement<V>>)map.get(SetAddRemoveAgent.getBucketKeyForBucket(key, b));
+				if(d != null && d.size() > 0)
+				{
+					rc = false;
+				}
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
-		catch(ObjectGridException e)
+		catch(Exception e)
 		{
 			mbean.getKeysMetric().logException(e);
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 		return rc;
 	}
-	/**
-	 * 
-	 */
+	
 	public Object process(Session sess, ObjectMap map, Object key) 
 	{
-		return new Integer(size(sess, map, key));
+		return new Boolean(isEmpty(sess, map, key));
 	}
 	
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {

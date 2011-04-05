@@ -29,7 +29,7 @@ import com.ibm.websphere.objectgrid.query.ObjectQuery;
  * @author bnewport
  *
  */
-public class GridQueryPartitionTask implements SinglePartTask<ArrayList<Object>, ArrayList<Object>> 
+public class GridQueryPartitionTask implements SinglePartTask<GridQueryChunk, ArrayList<Serializable>> 
 {
 	/**
 	 * 
@@ -42,7 +42,7 @@ public class GridQueryPartitionTask implements SinglePartTask<ArrayList<Object>,
 	int limit;
 	String queryString;
 
-	public ArrayList<Object> process(Session sess) 
+	public GridQueryChunk process(Session sess) 
 	{
 		ObjectQuery q = sess.createObjectQuery(queryString);
 		q.setFirstResult(offset);
@@ -59,17 +59,18 @@ public class GridQueryPartitionTask implements SinglePartTask<ArrayList<Object>,
 				q.setHint(e.getKey(), e.getValue());
 			}
 		
-		Iterator<Object> rc = q.getResultIterator();
-		ArrayList<Object> list = new ArrayList<Object>();
+		Iterator<Serializable> rc = q.getResultIterator();
+		ArrayList<Serializable> list = new ArrayList<Serializable>();
 		while(rc.hasNext())
 		{
 			list.add(rc.next());
 		}
-		return list;
+		GridQueryChunk result = new GridQueryChunk();
+		result.result = list;
+		return result;
 	}
 
-	public boolean isResultEmpty(ArrayList<Object> result) {
+	public boolean isResultEmpty(ArrayList<Serializable> result) {
 		return result.isEmpty();
 	}
-	
 }

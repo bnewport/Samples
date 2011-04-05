@@ -11,6 +11,7 @@
 package com.devwebsphere.wxsutils.filter.set;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -38,7 +39,7 @@ import com.ibm.websphere.objectgrid.plugins.index.MapRangeIndex;
  * @param <K>
  * @param <V>
  */
-public class GridFilteredIndex<K,V> implements MultipartTask<Map<K,V>, Map<K,V>>
+public class GridFilteredIndex<K extends Serializable,V extends Serializable> implements MultipartTask<HashMap<K,V>, HashMap<K,V>>
 {
 	static Logger logger = Logger.getLogger(GridFilteredIndex.class.getName());
 	public enum Operation {eq, lt, lte, gt, gte, btwn};
@@ -47,7 +48,7 @@ public class GridFilteredIndex<K,V> implements MultipartTask<Map<K,V>, Map<K,V>>
 	 * This is called to convert from the network form to the
 	 * client form. Its the same in this case.
 	 */
-	public Map<K, V> extractResult(Map<K, V> rawRC) 
+	public HashMap<K, V> extractResult(HashMap<K, V> rawRC) 
 	{
 		return rawRC;
 	}
@@ -61,7 +62,7 @@ public class GridFilteredIndex<K,V> implements MultipartTask<Map<K,V>, Map<K,V>>
 	 * @param <K>
 	 * @param <V>
 	 */
-	static public class GridFilteredIndexSingleTask<K,V> implements SinglePartTask<Map<K,V>, Map<K, V>>
+	static public class GridFilteredIndexSingleTask<K extends Serializable,V extends Serializable> implements SinglePartTask<HashMap<K,V>, HashMap<K, V>>
 	{
 		static Logger logger = Logger.getLogger(GridFilteredIndexSingleTask.class.getName());
 		/**
@@ -99,7 +100,7 @@ public class GridFilteredIndex<K,V> implements MultipartTask<Map<K,V>, Map<K,V>>
 		 * This can be called to check if a partition result is
 		 * empty and not interesting for clients
 		 */
-		public boolean isResultEmpty(Map<K, V> result) 
+		public boolean isResultEmpty(HashMap<K, V> result) 
 		{
 			return result.isEmpty();
 		}
@@ -109,7 +110,7 @@ public class GridFilteredIndex<K,V> implements MultipartTask<Map<K,V>, Map<K,V>>
 		 * index criteria and then filter those results with the
 		 * filter.
 		 */
-		public Map<K, V> process(Session sess) 
+		public HashMap<K, V> process(Session sess) 
 		{
 			try
 			{
@@ -124,34 +125,34 @@ public class GridFilteredIndex<K,V> implements MultipartTask<Map<K,V>, Map<K,V>>
 				{
 					rindex = (MapRangeIndex)index;
 				}
-				Map<K,V> rc = null;
+				HashMap<K,V> rc = null;
 				FilteredIndex<K,V> fi = null;
 				FilteredRangeIndex<K, V> fir = null;
 				switch(opCode)
 				{
 				case eq:
 					fi = new FilteredIndex<K, V>(wMap, index);
-					rc = fi.eq(value1, filter);
+					rc = new HashMap(fi.eq(value1, filter));
 					break;
 				case lt:
 					fir = new FilteredRangeIndex<K, V>(wMap, rindex);
-					rc = fir.lt(value1, filter);
+					rc = new HashMap(fir.lt(value1, filter));
 					break;
 				case lte:
 					fir = new FilteredRangeIndex<K, V>(wMap, rindex);
-					rc = fir.lte(value1, filter);
+					rc = new HashMap(fir.lte(value1, filter));
 					break;
 				case gt:
 					fir = new FilteredRangeIndex<K, V>(wMap, rindex);
-					rc = fir.gt(value1, filter);
+					rc = new HashMap(fir.gt(value1, filter));
 					break;
 				case gte:
 					fir = new FilteredRangeIndex<K, V>(wMap, rindex);
-					rc = fir.gte(value1, filter);
+					rc = new HashMap(fir.gte(value1, filter));
 					break;
 				case btwn:
 					fir = new FilteredRangeIndex<K, V>(wMap, rindex);
-					rc = fir.btwn(value1, value2, filter);
+					rc = new HashMap(fir.btwn(value1, value2, filter));
 					break;
 				}
 				return rc;
@@ -170,7 +171,7 @@ public class GridFilteredIndex<K,V> implements MultipartTask<Map<K,V>, Map<K,V>>
 	Filter filter;
 	Serializable value1, value2;
 	Operation op;
-	JobExecutor<Map<K,V>, Map<K,V>> je;
+	JobExecutor<HashMap<K,V>, HashMap<K,V>> je;
 	
 	/**
 	 * This allows a relational operation against the index and then a filter. Operations allowed
@@ -191,7 +192,7 @@ public class GridFilteredIndex<K,V> implements MultipartTask<Map<K,V>, Map<K,V>>
 		if(op == Operation.btwn)
 			throw new ObjectGridRuntimeException("Between needs two values");
 		this.value1 = v;
-		je = new JobExecutor<Map<K,V>, Map<K,V>>(ogclient, this);
+		je = new JobExecutor<HashMap<K,V>, HashMap<K,V>>(ogclient, this);
 	}
 
 	/**
@@ -211,11 +212,11 @@ public class GridFilteredIndex<K,V> implements MultipartTask<Map<K,V>, Map<K,V>>
 		this.op = Operation.btwn;
 		this.value1 = v1;
 		this.value2 = v2;
-		je = new JobExecutor<Map<K,V>, Map<K,V>>(ogclient, this);
+		je = new JobExecutor<HashMap<K,V>, HashMap<K,V>>(ogclient, this);
 	}
 	
-	public SinglePartTask<Map<K, V>, Map<K, V>> createTaskForPartition(
-			SinglePartTask<Map<K, V>, Map<K, V>> previousTask) {
+	public SinglePartTask<HashMap<K, V>, HashMap<K, V>> createTaskForPartition(
+			SinglePartTask<HashMap<K, V>, HashMap<K, V>> previousTask) {
 		// prevtask is null when called for first time for a partition
 		if(previousTask == null)
 		{
@@ -241,7 +242,7 @@ public class GridFilteredIndex<K,V> implements MultipartTask<Map<K,V>, Map<K,V>>
 		return je.getNextResult();
 	}
 	
-	public JobExecutor<Map<K,V>, Map<K,V>> getJE()
+	public JobExecutor<HashMap<K,V>, HashMap<K,V>> getJE()
 	{
 		return je;
 	}

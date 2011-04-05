@@ -11,9 +11,12 @@ package com.devwebsphere.wxsutils.multijob;
 //
 
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Assert;
@@ -75,6 +78,7 @@ public class TestSequentialQuery
 		clearMap();
 		WXSMap<String, Person> map = utils.getCache("Person");
 		Set<String> personSet = new HashSet<String>();
+		Map<String, Person> batch = new HashMap<String, Person>();
 		for(int i = 0; i < 1000; ++i)
 		{
 			Person p = new Person();
@@ -84,10 +88,12 @@ public class TestSequentialQuery
 			p.setCreditLimit(10000 * i);
 			p.setDateOfBirth(new Date(System.currentTimeMillis()));
 			p.setMiddleInitial("T");
-			map.put(Integer.toString(i), p);
+			batch.put(Integer.toString(i), p);
 		}
+		// insert all Persons in a batch
+		map.putAll(batch);
 		GridQuery q = new GridQuery(ogclient, "select p from Person p", 2);
-		ArrayList<Object> block = q.getNextResult();
+		ArrayList<Serializable> block = q.getNextResult();
 		while(block != null)
 		{
 			for(Object r : block)

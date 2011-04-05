@@ -11,18 +11,23 @@
 package com.devwebsphere.wxsutils.filter.path;
 
 import java.lang.reflect.Field;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.filter.ValuePath;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
 /**
  * This fetches the named attributed from a POJO assuming
- * there is a public field on the class of that name.
+ * there is a public field on the class of that name. If the field
+ * doesn't exist then null is returned
  * @author bnewport
  *
  */
 public class PojoFieldPath implements ValuePath 
 {
+	static Logger logger = Logger.getLogger(PojoFieldPath.class.getName());
+	
 	/**
 	 * 
 	 */
@@ -37,6 +42,7 @@ public class PojoFieldPath implements ValuePath
 		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
@@ -47,8 +53,13 @@ public class PojoFieldPath implements ValuePath
 			Field f = fo.getClass().getField(propertyName);
 			return f.get(fo);
 		}
+		catch(NoSuchFieldException e)
+		{
+			return null;
+		}
 		catch(Exception e)
 		{
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}

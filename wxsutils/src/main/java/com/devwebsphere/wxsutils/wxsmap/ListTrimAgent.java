@@ -13,10 +13,11 @@ package com.devwebsphere.wxsutils.wxsmap;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
-import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
@@ -25,14 +26,14 @@ import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 @Deprecated
 public class ListTrimAgent<V extends Serializable> implements MapGridAgent 
 {
-
+	static Logger logger = Logger.getLogger(ListTrimAgent.class.getName());
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -984733774220708513L;
 	public int newSize;
 	
-	static public <V> Boolean trim(Session sess, ObjectMap map, Object key, int newSize)
+	static public <V extends Serializable> Boolean trim(Session sess, ObjectMap map, Object key, int newSize)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), ListTrimAgent.class.getName());
 		long startNS = System.nanoTime();
@@ -52,10 +53,10 @@ public class ListTrimAgent<V extends Serializable> implements MapGridAgent
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}
-		catch(ObjectGridException e)
+		catch(Exception e)
 		{
 			mbean.getKeysMetric().logException(e);
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 		return rc;
