@@ -129,9 +129,8 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 		if(maxDesiredKeys <= 0)
 		{
 			logger.log(Level.WARNING, "maxDesired Keys should be > 0");
-		}
-		else
 			maxDesiredKeys = 1000;
+		}
 		desiredMaxKeysPerTrip = maxDesiredKeys;
 		return je.getNextResult();
 	}

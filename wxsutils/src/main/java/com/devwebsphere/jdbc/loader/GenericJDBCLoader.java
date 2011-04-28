@@ -22,9 +22,12 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.persistence.Table;
+
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanImpl;
 import com.ibm.websphere.objectgrid.BackingMap;
+import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.TxID;
 import com.ibm.websphere.objectgrid.plugins.Loader;
@@ -42,8 +45,13 @@ import com.ibm.websphere.projector.annotations.Id;
  * @see Id
  *
  */
-public class GenericJDBCLoader extends BaseJDBCLoader implements Loader 
+public class GenericJDBCLoader<KEY,T> extends BaseJDBCLoader<KEY> implements Loader
 {
+	static public class ValueHolder
+	{
+		public Object _wxsutil_value;
+	}
+	
 	static Logger logger = Logger.getLogger(GenericJDBCLoader.class.getName());
 	
 	public String getClassName() {
@@ -54,7 +62,7 @@ public class GenericJDBCLoader extends BaseJDBCLoader implements Loader
 	{
 		try
 		{
-			theClass = Class.forName(className);
+			theClass = (Class<T>)Class.forName(className);
 			createSQLStrings();
 		}
 		catch(ClassNotFoundException e)
@@ -67,7 +75,12 @@ public class GenericJDBCLoader extends BaseJDBCLoader implements Loader
 	/**
 	 * The POJO class to persist. Need this to reflect the annotations
 	 */
-	private Class theClass;
+	private Class<T> theClass;
+	
+	/**
+	 * Created from annotation on class
+	 */
+	private String tableName;
 
 	/**
 	 * This is the insert SQL command 
@@ -101,12 +114,77 @@ public class GenericJDBCLoader extends BaseJDBCLoader implements Loader
 	{
 		if(insertSQL != null)
 			return;
+
+		Table t = theClass.getAnnotation(Table.class);
+		if(t != null)
+		{
+			tableName = t.name();
+			if(tableName.isEmpty())
+			{
+				logger.log(Level.CONFIG, "Table annotation name cannot be empty for " + theClass.getName());
+				throw new ObjectGridRuntimeException("Table name cannot be empty for " + theClass.getName());
+			}
+		}
+		else
+		{
+			logger.log(Level.CONFIG, "Table annotation require for " + theClass.getName());
+			throw new ObjectGridRuntimeException("@Table annotation must be present for " + theClass.getName());
+		}
 		keyFieldNames = new ArrayList<String>();
 		keyFields = new ArrayList<Field>();
 		normalFieldNames = new ArrayList<String>();
 		normalFields = new ArrayList<Field>();
 		allFieldNames = new ArrayList<String>();
 		allFields = new ArrayList<Field>();
+		
+		CompositeKey ckey = theClass.getAnnotation(CompositeKey.class);
+		SimpleKey skey = theClass.getAnnotation(SimpleKey.class);
+		if(ckey == null && skey == null)
+		{
+			String s = "Pojo " + theClass.getName() + " needs either SimpleKey or CompositeKey annotations";
+			logger.log(Level.SEVERE, s);
+			throw new ObjectGridRuntimeException(s);
+		}
+		if(ckey != null && skey != null)
+		{
+			String s = "Pojo " + theClass.getName() + " cannot have both SimpleKey or CompositeKey annotations";
+			logger.log(Level.SEVERE, s);
+			throw new ObjectGridRuntimeException(s);
+		}
+		if(ckey != null)
+		{
+			keyClass = (Class<KEY>)ckey.clazz();
+			Field[] fields = keyClass.getDeclaredFields();
+			for(Field f : fields)
+			{
+				if((f.getModifiers() & Modifier.STATIC) == 0)
+				{
+					keyFieldNames.add(f.getName());
+					keyFields.add(f);
+					allFieldNames.add(f.getName());
+					allFields.add(f);
+				}
+			}
+		}
+		if(skey != null)
+		{
+			try
+			{
+				keyClass = skey.clazz();
+				keyAttributeColumn = skey.name();
+				Field f = ValueHolder.class.getDeclaredField("value");
+				keyFieldNames.add(VALUE_FIELD);
+				keyFields.add(f);
+				
+				allFieldNames.add(VALUE_FIELD);
+				allFields.add(f);
+			}
+			catch(NoSuchFieldException e)
+			{
+				logger.log(Level.SEVERE, "_wxsutil_value property not found on ValueHolder class");
+				throw new ObjectGridRuntimeException("_wxsutil_value property not found on ValueHolder class");
+			}
+		}
 		Field[] fields = theClass.getDeclaredFields();
 		for(Field f : fields)
 		{
@@ -116,8 +194,7 @@ public class GenericJDBCLoader extends BaseJDBCLoader implements Loader
 				// is it a key field?
 				if(f.getAnnotation(Id.class) != null)
 				{
-					keyFieldNames.add(f.getName());
-					keyFields.add(f);
+					throw new ObjectGridRuntimeException("Id annotation not allowed");
 				}
 				else
 				{
@@ -131,31 +208,31 @@ public class GenericJDBCLoader extends BaseJDBCLoader implements Loader
 		insertSQL = "INSERT INTO " + tableName + " (";
 		for(int i = 0; i < allFieldNames.size(); ++i)
 		{
-			insertSQL += allFieldNames.get(i).toUpperCase() + ((i != allFieldNames.size() - 1) ? "," : "");
+			insertSQL += getSQLColumnName(allFields.get(i)) + ((i != allFieldNames.size() - 1) ? "," : "");
 		}
 		insertSQL += ") VALUES (";
 		for(int i = 0; i < allFieldNames.size(); ++i)
 		{
-			insertSQL += ":" + allFieldNames.get(i) + ((i != allFieldNames.size() - 1) ? "," : "");
+			insertSQL += ":" + getSQLColumnName(allFields.get(i)) + ((i != allFieldNames.size() - 1) ? "," : "");
 		}
 		insertSQL += ")";
 		deleteSQL = "DELETE FROM " + tableName;
 		String whereSQL = " WHERE ";
 		for(int i = 0; i < keyFieldNames.size(); ++i)
 		{
-			whereSQL += keyFieldNames.get(i).toUpperCase() + "=:" + keyFieldNames.get(i) + ((i != keyFieldNames.size() - 1) ? " AND " : "");
+			whereSQL += getSQLColumnName(keyFields.get(i)) + "=:" + keyFieldNames.get(i) + ((i != keyFieldNames.size() - 1) ? " AND " : "");
 		}
 		deleteSQL += whereSQL;
 		updateSQL = "UPDATE " + tableName + " SET ";
 		for(int i = 0; i < normalFieldNames.size(); ++i)
 		{
-			updateSQL += normalFieldNames.get(i).toUpperCase() + "=:" + normalFieldNames.get(i) + ((i != normalFieldNames.size() - 1) ? "," : "");
+			updateSQL += getSQLColumnName(normalFields.get(i)) + "=:" + normalFieldNames.get(i) + ((i != normalFieldNames.size() - 1) ? "," : "");
 		}
 		updateSQL += whereSQL;
 		selectSQL = "SELECT ";
 		for(int i = 0; i < allFieldNames.size(); ++i)
 		{
-			selectSQL += allFieldNames.get(i) + ((i != allFieldNames.size() - 1) ? "," : "");
+			selectSQL += getSQLColumnName(allFields.get(i)) + ((i != allFieldNames.size() - 1) ? "," : "");
 		}
 		selectSQL +=" FROM " + tableName + whereSQL;
 		logger.fine("ISQL: " + insertSQL);
@@ -178,9 +255,9 @@ public class GenericJDBCLoader extends BaseJDBCLoader implements Loader
 		long startNS = System.nanoTime();
 		// start a hetero batch.
 		// make empty lists for the objects that are inserted or updated or deleted
-		ArrayList<Object> iList = new ArrayList<Object>(1000);
-		ArrayList<Object> uList = new ArrayList<Object>(1000);
-		ArrayList<Object> dList = new ArrayList<Object>(1000);
+		ArrayList<LogElement> iList = new ArrayList<LogElement>(1000);
+		ArrayList<LogElement> uList = new ArrayList<LogElement>(1000);
+		ArrayList<LogElement> dList = new ArrayList<LogElement>(1000);
 		try
 		{
 			// get the Data instance for this transaction
@@ -190,7 +267,6 @@ public class GenericJDBCLoader extends BaseJDBCLoader implements Loader
 			Iterator<LogElement> iter = ls.getPendingChanges();
 			// the key object. We may need to wrap primitive POJOs (Long, Integer etc) with a wrapped
 			// with a key attribute for purequery.
-			Object key;
 			while(iter.hasNext())
 			{
 				// get next transaction change
@@ -198,14 +274,13 @@ public class GenericJDBCLoader extends BaseJDBCLoader implements Loader
 				switch(e.getType().getCode())
 				{
 				case LogElement.CODE_INSERT: // add to insert POJO list
-					iList.add(e.getCurrentValue());
+					iList.add(e);
 					break;
 				case LogElement.CODE_UPDATE:
-					uList.add(e.getCurrentValue()); // add to update POJO list
+					uList.add(e); // add to update POJO list
 					break;
 				case LogElement.CODE_DELETE: // add to delete POJO list
-					key = e.getCacheEntry().getKey();
-					dList.add(key);
+					dList.add(e);
 					break;
 				}
 			}
@@ -214,19 +289,19 @@ public class GenericJDBCLoader extends BaseJDBCLoader implements Loader
 			{
 				if(logger.isLoggable(Level.FINE))
 					logger.fine("Inserting " + ls.getMapName() + " " + iList.toString());
-				copyPojoListToBatch(conn, insertSQL, iList, allFields);
+				copyPojoListToBatch(conn, insertSQL, iList, normalFields, normalFieldNames, keyFields, keyFieldNames);
 			}
 			if(uList.size() > 0)
 			{
 				if(logger.isLoggable(Level.FINE))
 					logger.fine("Updating " + ls.getMapName() + " " + uList.toString());
-				copyPojoListToBatch(conn, updateSQL, uList, allFields);
+				copyPojoListToBatch(conn, updateSQL, uList, normalFields, normalFieldNames, keyFields, keyFieldNames);
 			}
 			if(dList.size() > 0)
 			{
 				if(logger.isLoggable(Level.FINE))
 					logger.fine("Deleting " + ls.getMapName() + " " + dList.toString());
-				copyPojoListToBatch(conn, deleteSQL, dList, keyFields);
+				copyPojoListToBatch(conn, deleteSQL, dList, normalFields, normalFieldNames, keyFields, keyFieldNames);
 			}
 			mbean.recordOperationRows(iList.size(), uList.size(), dList.size());
 			mbean.getBatchUpdateMetrics().logTime(System.nanoTime() - startNS);
@@ -264,7 +339,7 @@ public class GenericJDBCLoader extends BaseJDBCLoader implements Loader
 			ArrayList rc = new ArrayList();
 			Iterator iter = keys.iterator();
 			Object key = theClass.newInstance();
-			Field keyField = theClass.getField("keyz");
+			ValueHolder v = new ValueHolder();
 			
 			NamedParameterStatement s = new NamedParameterStatement(conn, selectSQL);
 			// for each key in the list
@@ -273,19 +348,19 @@ public class GenericJDBCLoader extends BaseJDBCLoader implements Loader
 				Object keyValue = iter.next();
 				Object value = null;
 				// wrap with a Key object for purequery if needed
-				if(keyValue.getClass().isPrimitive() || keyValue instanceof String)
+				if(keyAttributeColumn != null)
 				{
-					keyField.set(key, keyValue);
-					copyPojoToStatement(s, key, keyFields);
+					v._wxsutil_value = keyValue;
+					copyPojoToStatement(s, v, keyFieldNames, keyFields);
 				}
 				else
 				{
-					copyPojoToStatement(s, keyValue, keyFields);
+					copyPojoToStatement(s, keyValue, keyFieldNames, keyFields);
 				}
 				ResultSet rs = s.executeQuery();
 				if(rs.first())
 				{
-					value = copyResultSetToPojo(rs, theClass, allFields);
+					value = copyResultSetToPojo(rs, theClass, normalFields);
 				}
 				// if we found the value then add it otherwise add KEY_NOT_FOUND
 				if(value != null)

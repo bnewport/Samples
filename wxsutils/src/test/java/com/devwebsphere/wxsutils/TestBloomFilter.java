@@ -21,6 +21,12 @@ import com.devwebsphere.wxsutils.bloom.BloomFilter;
 public class TestBloomFilter 
 {
 	@Test
+	public void testV()
+	{
+		BloomFilter filter = new BloomFilter(1000, 10, 0.5);
+		System.out.println(filter.getExpectedFalsePositive());
+	}
+	@Test
 	public void testPowersOfTwo()
 	{
 		for(int power = 2; power < 32; ++power)
@@ -30,7 +36,7 @@ public class TestBloomFilter
 			Assert.assertEquals(expected, BloomFilter.nextHighestPowerOfTwo(expected - 1));
 		}
 	}
-	
+
 	@Test
 	public void testBitSet()
 	{

@@ -14,6 +14,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,8 +26,6 @@ import com.devwebsphere.wxsutils.filter.set.GridFilteredIndex;
 import com.devwebsphere.wxsutils.filter.set.GridFilteredIndex.Operation;
 import com.devwebsphere.wxsutils.jmx.wxsmap.WXSMapMBeanImpl;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
-import com.ibm.websphere.objectgrid.ObjectMap;
-import com.ibm.websphere.objectgrid.Session;
 
 /**
  * This is a simplified interface to a WXS Map. It throws runtime exceptions and is completely
@@ -291,42 +290,50 @@ public class WXSMapImpl <K extends Serializable,V extends Serializable> extends 
 	 * @param timeOutMS Desired max wait time for a lock
 	 * @return true if lock is acquired.
 	 */
-	public boolean lock(K k, V value, int timeOutMS)
+	public boolean lockPrim(boolean isLock, K k, V value, int timeOutMS)
 	{
 		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
-		Session sess = tls.getSession();
 		try
 		{
-			sess.begin();
-			ObjectMap map = sess.getMap(mapName);
-			map.setLockTimeout(timeOutMS);
-			V old = (V)map.getForUpdate(k);
-			if(old != null)
+			LockAgent<K, V> a = new LockAgent<K, V>();
+			a.isLock = isLock;
+			a.key = k;
+			a.value = value;
+			a.timeOutMS = timeOutMS;
+			
+			Object o = tls.getMap(mapName).getAgentManager().callReduceAgent(a, Collections.singletonList(k));
+			if(isLock)
+				mbean.getLockMetrics().logTime(System.nanoTime() - start);
+			else
+				mbean.getUnlockMetrics().logTime(System.nanoTime() - start);
+				
+			if(o instanceof Boolean)
 			{
-				map.update(k, value);
+				Boolean b = (Boolean)o;
+				return b;
 			}
 			else
 			{
-				map.insert(k, value);
+				String c = isLock ? "lock" : "unlock";
+				logger.log(Level.SEVERE, c + " failed", o.toString());
+				throw new ObjectGridRuntimeException(c + " failed");
 			}
-			sess.commit();
-			mbean.getLockMetrics().logTime(System.nanoTime() - start);
-			return true;
 		}
 		catch(Exception e)
 		{
 			logger.log(Level.SEVERE, "Exception", e);
-			mbean.getLockMetrics().logException(e);
+			if(isLock)
+				mbean.getLockMetrics().logException(e);
+			else
+				mbean.getUnlockMetrics().logException(e);
+			throw new ObjectGridRuntimeException(e);
 		}
-		finally
-		{
-			if(sess.isTransactionActive())
-			{
-				try { sess.rollback(); } catch(Exception e2) {}
-			}
-		}
-		return false;
+	}
+	
+	public boolean lock(K k, V value, int timeOutMS)
+	{
+		return lockPrim(true, k, value, timeOutMS);
 	}
 	
 	/**
@@ -335,19 +342,7 @@ public class WXSMapImpl <K extends Serializable,V extends Serializable> extends 
 	 */
 	public void unlock(K k)
 	{
-		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
-		long start = System.nanoTime();
-		try
-		{
-			tls.getMap(mapName).remove(k);
-		}
-		catch(Exception e)
-		{
-			logger.log(Level.SEVERE, "Exception", e);
-			mbean.getUnlockMetrics().logException(e);
-			throw new ObjectGridRuntimeException(e);
-		}
-		mbean.getUnlockMetrics().logTime(System.nanoTime() - start);
+		lockPrim(false, k, null, 0);
 	}
 
 	public GridFilteredIndex btwn(String indexName, Serializable low,
@@ -381,5 +376,18 @@ public class WXSMapImpl <K extends Serializable,V extends Serializable> extends 
 			Filter f) {
 		GridFilteredIndex<K, V> g = new GridFilteredIndex<K, V>(tls.getObjectGrid(), mapName, indexName, f, Operation.lte, v);
 		return g;
+	}
+
+	public void updateEveryWhere(Map<K,V> entriesToUpdate, List<K> entriesToRemove)
+	{
+		try
+		{
+			UpdateEveryWhereAgent.updateEveryWhere(utils.getSessionForThread(), entriesToUpdate, entriesToRemove, mapName);
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.SEVERE, "Exception", e);
+			throw new ObjectGridRuntimeException(e);
+		}
 	}
 }

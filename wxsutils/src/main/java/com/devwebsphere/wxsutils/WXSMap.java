@@ -12,6 +12,7 @@ package com.devwebsphere.wxsutils;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import com.devwebsphere.wxsutils.filter.Filter;
@@ -179,4 +180,17 @@ public interface WXSMap<K extends Serializable,V extends Serializable>
 	 * @return
 	 */
 	abstract public GridFilteredIndex<K,V> btwn(String indexName, Serializable low, Serializable high, Filter f);
+
+	/**
+	 * This is used to update a REFERENCE map that is used to hold identical data in EVERY
+	 * partition. This allows a client to easily modify existing entries and remove entries. This
+	 * operation is executed in parallel against EVERY partition. ALL entries are operated on
+	 * in every partition. This means if the entriesToUpdate Map below has an entry "Billy","12"
+	 * then it will make sure there is an entry in EVERY partition with the key "Billy"
+	 * and the value "12". There is no hashing or routing with this type of partition. It's
+	 * typically used to store reference data in every partition for agents to do local joins.
+	 * @param entriesToUpdate These entries are either updated OR inserted
+	 * @param entriesToRemove Any entries with these keys are removed.
+	 */
+	abstract public void updateEveryWhere(Map<K,V> entriesToUpdate, List<K> entriesToRemove);
 }

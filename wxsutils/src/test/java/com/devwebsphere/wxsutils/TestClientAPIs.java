@@ -95,6 +95,23 @@ public class TestClientAPIs
 		Assert.assertEquals(value, v);
 	}
 
+	@Test
+	public void testLock()
+		throws InterruptedException
+	{
+		clearMap();
+		WXSMap<String, String> lockMap = utils.getCache("Locks");
+		Assert.assertNotNull(lockMap);
+		
+		Assert.assertTrue(lockMap.lock("1", "Billy", 1000));
+		lockMap.unlock("1");
+		Assert.assertTrue(lockMap.lock("1", "Billy", 1000));
+		Assert.assertFalse(lockMap.lock("1", "Billy", 1000));
+//		Thread.currentThread().sleep(60 * 1000L);
+//		Assert.assertTrue(lockMap.lock("1", "Billy", 1000));
+		
+	}
+	
 	/**
 	 * This tests the basic putAll/getAll/removeAll capabilities
 	 */
@@ -679,6 +696,15 @@ public class TestClientAPIs
 				System.out.println("Batch of " + batchSize + " rate is " + rate + " <" + (batch.size() * maxTests) + ":" + duration + ">");
 			}
 		}
+	}
+	
+	@Test
+	public void testListEviction()
+	{
+        WXSMapOfLists<String, String> list = utils.getMapOfLists("EvictionList");
+        
+        list.lpush("1", "12");
+        list.evict("1", EvictionType.FIXED, 30);
 	}
 	
 	@Test

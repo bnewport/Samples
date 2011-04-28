@@ -13,6 +13,9 @@ package com.devwebsphere.wxsutils.wxsmap;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -56,6 +59,7 @@ public class BigListHead <V extends Serializable> implements Serializable
 	int leftBucket;
 	int rightBucket;
 	EvictionType evictionType = EvictionType.NONE;
+	long evictionTime; // ms eviction time
 	
 	/**
 	 * This is the maximum size of a bucket
@@ -85,9 +89,41 @@ public class BigListHead <V extends Serializable> implements Serializable
 		}
 	}
 	
-	public void setEvictionPolicy(Session sess, ObjectMap map, Object key, EvictionType eType, int intervalMinutes)
+	// round up eviction times to 60 second buckets
+	final int roundUpSeconds = 60;
+	
+	public <K extends Serializable>void setEvictionPolicy(Session sess, ObjectMap map, Object key, EvictionType eType, int intervalSeconds)
 	{
-		
+		try
+		{
+			String listName = getListNameFromHeadMapName(map.getName());
+			String evictSetName = WXSMapOfBigListsImpl.getListEvictionSetMapName(listName); // Long, Set<K>
+			String evictListName = WXSMapOfBigListsImpl.getListEvictionListMapName(listName);
+			ObjectMap eSetMap = sess.getMap(evictSetName);
+			ObjectMap eList = sess.getMap(evictListName);
+			
+			long now = System.currentTimeMillis();
+			long round = roundUpSeconds * 1000;
+			now = (now + intervalSeconds * 1000 + round - 1) / round;
+			now = now * round; // round up to next time bucket
+			Long evictSetKey = new Long(now);
+
+			// if new eviction time then add to list in time order
+			if(SetIsEmptyAgent.isEmpty(sess, eSetMap, evictSetKey))
+			{
+				Map<String, List<Long>> batch = new HashMap<String, List<Long>>();
+				batch.put(listName, java.util.Collections.singletonList(evictSetKey));
+				// most recent eviction set on left, oldest or next to expire on right
+				BigListPushAgent.push(sess, eList, LR.LEFT, batch, null, null);
+			}
+			// add list to set for this time
+			SetAddRemoveAgent.doOperation(sess, eSetMap, evictSetKey, Operation.ADD, (K)key);
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.SEVERE, "Exception", e);
+			throw new ObjectGridRuntimeException(e);
+		}
 	}
 
 	/**

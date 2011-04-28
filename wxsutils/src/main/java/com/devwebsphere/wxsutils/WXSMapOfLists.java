@@ -67,10 +67,35 @@ public interface WXSMapOfLists<K,V> {
 	 */
 	public void lcpush(K key, V value, Filter condition);
 	
+	/**
+	 * This will push the value on the list only if
+	 * no existing element matches the Filter. If an item
+	 * is pushed on the list then the list key will
+	 * be added to the set DirtyKey
+	 * @param key
+	 * @param value
+	 * @param condition
+	 */
 	public void lcpush(K key, V value, Filter condition, K dirtyKey);
 
+	/**
+	 * This will push the value on the list only if
+	 * no existing element matches the Filter
+	 * @param key
+	 * @param value
+	 * @param condition
+	 */
 	public void rcpush(K key, V value, Filter condition);
 	
+	/**
+	 * This will push the value on the list only if
+	 * no existing element matches the Filter. If an item
+	 * is pushed on the list then the list key will
+	 * be added to the set DirtyKey
+	 * @param key
+	 * @param value
+	 * @param condition
+	 */
 	public void rcpush(K key, V value, Filter condition, K dirtyKey);
 	
 	/**
@@ -263,4 +288,12 @@ public interface WXSMapOfLists<K,V> {
 	 * @return
 	 */
 	public boolean isEmpty(K key);
+	
+	/**
+	 * This marks the list for eviction after a specified time.
+	 * @param key The list to evict
+	 * @param type Last Creation time or last access time
+	 * @param intervalSeconds The time in seconds after which to evict
+	 */
+	public void evict(K key, EvictionType type, int intervalSeconds);
 }

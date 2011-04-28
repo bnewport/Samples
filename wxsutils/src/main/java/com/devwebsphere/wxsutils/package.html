@@ -5,6 +5,8 @@ WebSphere eXtreme Scale client. It also provides a simplified, non transactional
 grid APIs using runtime exceptions. This is an easier interface than the normal transactional, session based interface to grid
 maps  but you lose certain operations around locking and transactions.
 <p/>
+If you are using WXSUtils in a WAR module then be sure to add the WXSUtilsServletListener as a listener in your
+web.xml to ensure it's cleaned up properly.
 <hr/>
 
 </body>

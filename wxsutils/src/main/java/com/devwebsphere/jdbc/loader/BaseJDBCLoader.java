@@ -15,39 +15,31 @@ import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 
+import javax.persistence.Column;
+
+import com.devwebsphere.jdbc.loader.GenericJDBCLoader.ValueHolder;
 import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanManager;
 import com.ibm.websphere.objectgrid.TxID;
+import com.ibm.websphere.objectgrid.plugins.LogElement;
 
 /**
- * This class is meant as a base class for purequery loaders. It's main purpose is to provide
+ * This class is meant as a base class for loaders. It's main purpose is to provide
  * a common table name and the getData method.
  * @author bnewport
  *
  */
-public abstract class BaseJDBCLoader
+public abstract class BaseJDBCLoader <KEY>
 {
 	protected String mapName = LoaderMBeanManager.UNKNOWN_MAP;
 	
+	Class<KEY> keyClass;
 	/**
-	 * This returns the table to use for the POJOs mapped using this Loader
-	 * @return
+	 * This holds the simple key column name if specified
 	 */
-	public String getTableName() {
-		return tableName;
-	}
-
-	/**
-	 * This is normally specified in the objectgrid.xml file to specify
-	 * the table name for the mapper
-	 * @param tableName
-	 */
-	public void setTableName(String tableName) {
-		this.tableName = tableName;
-	}
-
-	protected String tableName;
+	String keyAttributeColumn;
 
 	/**
 	 * This will create a JDBC Connection instance or return the current one associated with this
@@ -65,60 +57,90 @@ public abstract class BaseJDBCLoader
 		return cb.getConnection(tx);
 	}
 
-	static public <I> void copyPojoListToBatch(Connection conn, String sql, ArrayList<I> list, ArrayList<Field> fields)
+	public void copyPojoListToBatch(Connection conn, String sql, ArrayList<LogElement> list, ArrayList<Field> fields, ArrayList<String> fieldNames, ArrayList<Field> keyFields, ArrayList<String> keyFieldNames)
 		throws SQLException, IllegalAccessException, NoSuchFieldException
 	{
 		NamedParameterStatement s = new NamedParameterStatement(conn, sql);
-		
+		ValueHolder v = new ValueHolder();
 		for(int row = 0; row < list.size(); ++row)
 		{
-			I item = list.get(row);
-			copyPojoToStatement(s, item, fields);
+			LogElement item = list.get(row);
+			if(keyAttributeColumn != null)
+			{
+				v._wxsutil_value = item.getCacheEntry().getKey();
+				copyPojoToStatement(s, v, keyFieldNames, keyFields);
+			}
+			else
+				copyPojoToStatement(s, item.getCacheEntry().getKey(), keyFieldNames, keyFields);
+			copyPojoToStatement(s, item.getCurrentValue(), fieldNames, fields);
 			s.addBatch();
 		}
 		s.executeUpdate();
 	}
 	
-	static public <I> void copyPojoToStatement(NamedParameterStatement s, I item, ArrayList<Field> fields)
+	static final String VALUE_FIELD = "_wxsutil_value";
+	
+	String getSQLColumnName(Field f)
+	{
+		String name = null;
+		if(f.getName().equals(VALUE_FIELD))
+			return keyAttributeColumn;
+		if(f.isAnnotationPresent(Column.class))
+		{
+			Column col = f.getAnnotation(Column.class);
+			if(col.name().length() > 0)
+				name = col.name();
+		}
+		else
+			name = f.getName().toUpperCase();
+		return name;
+	}
+	
+	public <I> void copyPojoToStatement(NamedParameterStatement s, I item, ArrayList<String> fieldNames, ArrayList<Field> fields)
 		throws IllegalAccessException, SQLException, NoSuchFieldException
 	{
 		for(int i = 0; i < fields.size(); ++i)
 		{
 			Field f_typical = fields.get(i);
-			// in case the key class is different, assume fields have
-			// same name
+			Class fieldType = f_typical.getType();
+			if(f_typical.getName().equals(VALUE_FIELD))
+				fieldType = keyClass;
+			String sqlColumn = getSQLColumnName(f_typical);
 			Field f = item.getClass().getField(f_typical.getName());
-			String name = f_typical.getName();
-			if(f.getType().equals(String.class))
+			Object fValue = f.get(item);
+			if(fieldType.equals(String.class))
 			{
-				String sv = (String)f.get(item);
-				s.setString(name, sv);
-			} else if(f.getType().equals(Integer.class))
+				String sv = (String)fValue;
+				s.setString(sqlColumn, sv);
+			} else if(fieldType.equals(Integer.class))
 			{
-				Integer o = (Integer)f.get(item);
-				s.setInt(name, o.intValue());
-			} else if(f.getType().getName().equals("int"))
+				Integer o = (Integer)fValue;
+				s.setInt(sqlColumn, o.intValue());
+			} else if(fieldType.getName().equals("int"))
 			{
 				int ii = f.getInt(item);
-				s.setInt(name, ii);
-			} else if(f.getType().equals(Long.class))
+				s.setInt(sqlColumn, ii);
+			} else if(fieldType.equals(Long.class))
 			{
-				Long l = (Long)f.get(item);
-				s.setLong(name, l.longValue());
-			} else if(f.getType().getName().equals("long"))
+				Long l = (Long)fValue;
+				s.setLong(sqlColumn, l.longValue());
+			} else if(fieldType.getName().equals("long"))
 			{
 				long l = f.getLong(item);
-				s.setLong(name, l);
+				s.setLong(sqlColumn, l);
+			} else if(fieldType.equals(Timestamp.class))
+			{
+				Timestamp t = (Timestamp)fValue;
+				s.setTimestamp(sqlColumn, t);
 			} else
 			{
-				// add more types above if you get this exception
-				Class t = f.getType();
-				throw new IllegalArgumentException("Non supported type:" + t.getName());
+				Object t = fValue;
+				s.setObject(sqlColumn, t);
 			}
 		}
 	}
 	
-	static public <T> T copyResultSetToPojo(ResultSet rs, Class<T> c, ArrayList<Field> allFields)
+	public <T> T copyResultSetToPojo(ResultSet rs, Class<T> c, ArrayList<Field> allFields)
 		throws InstantiationException, IllegalAccessException, SQLException
 	{
 		T value = c.newInstance();
@@ -126,25 +148,31 @@ public abstract class BaseJDBCLoader
 		for(int i = 0; i < allFields.size(); ++i)
 		{
 			Field f = allFields.get(i);
-			if(f.getType().equals(String.class))
+			Class fieldType = f.getType();
+			if(f.getName().equals(VALUE_FIELD))
+				fieldType = keyClass;
+			String sqlColumn = getSQLColumnName(f);
+			if(fieldType.equals(String.class))
 			{
-				f.set(value, rs.getString(f.getName()));
-			} else if(f.getType().equals(Integer.class))
+				f.set(value, rs.getString(sqlColumn));
+			} else if(fieldType.equals(Integer.class))
 			{
-				f.set(value, new Integer(rs.getInt(f.getName())));
-			} else if(f.getType().getName().equals("int"))
+				f.set(value, new Integer(rs.getInt(sqlColumn)));
+			} else if(fieldType.getName().equals("int"))
 			{
-				f.setInt(value, rs.getInt(f.getName()));
-			} else if(f.getType().equals(Long.class))
+				f.setInt(value, rs.getInt(sqlColumn));
+			} else if(fieldType.equals(Long.class))
 			{
-				f.set(value, new Long(rs.getLong(f.getName())));
-			} else if(f.getType().getName().equals("long"))
+				f.set(value, new Long(rs.getLong(sqlColumn)));
+			} else if(fieldType.getName().equals("long"))
 			{
-				f.setLong(value, rs.getLong(f.getName()));
+				f.setLong(value, rs.getLong(sqlColumn));
+			} else if(fieldType.equals(Timestamp.class))
+			{
+				f.set(value, rs.getTimestamp(sqlColumn));
 			} else
 			{
-				// add more types above if you get this exception
-				throw new IllegalArgumentException("Non supported type: " + f.getType().getName());
+				f.set(value, rs.getObject(sqlColumn));
 			}
 		}
 		return value;

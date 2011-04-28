@@ -61,6 +61,20 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		return sb.toString();
 	}
 	
+	public static String getListEvictionSetMapName(String listName)
+	{
+		StringBuilder sb = new StringBuilder("SEVICT.");
+		sb.append(listName);
+		return sb.toString();
+	}
+	
+	public static String getListEvictionListMapName(String listName)
+	{
+		StringBuilder sb = new StringBuilder("LEVICT.");
+		sb.append(listName);
+		return sb.toString();
+	}
+	
 	public WXSMapOfBigListsImpl(WXSUtils utils, String listName)
 	{
 		super(utils, getListHeadMapName(listName));
@@ -432,5 +446,31 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		List<V> list = new ArrayList<V>(1);
 		list.add(value);
 		push(key, list, LR.RIGHT, dirtyKey, condition);
+	}
+
+	public void evict(K key, EvictionType type, int intervalSeconds) 
+	{
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
+		long start = System.nanoTime();
+		try
+		{
+			BigListSetEvictionAgent<V> a = new BigListSetEvictionAgent<V>();
+			a.eType = type;
+			a.intervalSeconds = intervalSeconds;
+			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
+			Object rcV = rc.get(key);
+			if(rcV != null && rcV instanceof EntryErrorValue)
+			{
+				logger.log(Level.SEVERE, "evict(K) failed");
+				throw new ObjectGridRuntimeException(rcV.toString());
+			}
+			mbean.getRemoveMetrics().logTime(System.nanoTime() - start);
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.SEVERE, "Exception", e);
+			mbean.getRemoveMetrics().logException(e);
+			throw new ObjectGridRuntimeException(e);
+		}
 	}
 }

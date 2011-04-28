@@ -7,12 +7,7 @@ http://www.ibm.com/developerworks/downloads/ws/wsdg/index.html
 Unzip the trial and then add the objectgrid.jar files to
 the local maven repository like this:
 
-mvn install:install-file
-  -Dfile=XXX/lib/objectgrid.jar
-  -DgroupId=com.ibm.websphere.objectgrid
-  -DartifactId=objectgrid-server
-  -Dversion=7.1
-  -Dpackaging=jar
+mvn install:install-file -Dfile=XXX/lib/objectgrid.jar -DgroupId=com.ibm.websphere.objectgrid -DartifactId=objectgrid-server -Dversion=7.1 -Dpackaging=jar
   
 Add this to your .profile or start up script file
 

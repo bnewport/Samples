@@ -15,11 +15,12 @@ Licensed Materials - Property of IBM
  xmlns="http://ibm.com/ws/objectgrid/config">
 
     <objectGrids>
-        <objectGrid name="Grid" txTimeout="10">
-            <!-- You need to define these templates for Lists and Sets -->
+        <objectGrid name="Grid" > <!-- txTimeout="10" for production -->
+            <!-- You need to define these templates for Lists and Sets --> 	
             <backingMap name="LHEAD.*" template="true" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES" lockTimeout="20"/>
             <backingMap name="LBUCK.*" template="true" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES" lockTimeout="20"/>
             <backingMap name="LDIRTY.*" template="true" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES" lockTimeout="20"/>
+            <backingMap name="SEVICT.*" template="true" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES" lockTimeout="20"/>
             <backingMap name="LEVICT.*" template="true" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES" lockTimeout="20"/>
             <!-- End of List/Set templates -->
             
@@ -29,6 +30,8 @@ Licensed Materials - Property of IBM
             <backingMap name="List" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES"/>
 
             <backingMap name="Set" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES" lockTimeout="20"/>
+            
+            <backingMap name="Locks" lockStrategy="PESSIMISTIC" ttlEvictorType="CREATION_TIME" timeToLive="3600" copyMode="COPY_TO_BYTES" lockTimeout="20"/>
             
             <backingMap name="RouterKeyI32" lockStrategy="PESSIMISTIC"/>
         </objectGrid>
