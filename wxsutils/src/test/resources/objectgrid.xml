@@ -35,6 +35,9 @@ Licensed Materials - Property of IBM
             
             <backingMap name="RouterKeyI32" lockStrategy="PESSIMISTIC"/>
         </objectGrid>
+        <objectGrid name="PerContainerGrid">
+        	<backingMap name="M.*" template="true" lockStrategy="PESSIMISTIC" copyMode="COPY_TO_BYTES" lockTimeout="20"/>
+        </objectGrid>
     </objectGrids>
 
 </objectGridConfig>

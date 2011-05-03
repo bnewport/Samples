@@ -1,6 +1,7 @@
 package com.devwebsphere.wxs.jdbcloader;
 
 import java.sql.Connection;
+import java.sql.Statement;
 
 import javax.sql.DataSource;
 
@@ -31,6 +32,7 @@ public class TestPreloaderFramework extends TestCase
 		
 		Connection connTest = ds.getConnection();
 		Assert.assertNotNull(connTest);
+		Statement stmt = connTest.createStatement();
 
 		String sql = "DROP TABLE IF EXISTS `DEVICE`; ";
 		sql += " CREATE TABLE IF NOT EXISTS `DEVICE` ( ";
@@ -40,7 +42,7 @@ public class TestPreloaderFramework extends TestCase
 		sql += " `ACTIVE` tinyint(1) NOT NULL, ";
 		sql += " PRIMARY KEY (`MDM`) ";
 		sql += ")";
-		String rc = connTest.nativeSQL(sql);
+		stmt.execute(sql);
 		
 		sql = "DROP TABLE IF EXISTS `DEVICEDATA`; ";
 		sql += "CREATE TABLE IF NOT EXISTS `DEVICEDATA` ( ";
@@ -51,7 +53,7 @@ public class TestPreloaderFramework extends TestCase
 		sql += "  `VENDOR` varchar(100) NOT NULL,";
 		sql += "  PRIMARY KEY (`DEVICE_CODE`)";
 		sql += ")";
-		rc = connTest.nativeSQL(sql);
+		stmt.execute(sql);
 		
 		sql = "DROP TABLE IF EXISTS `FEATURES`;";
 		sql += "CREATE TABLE IF NOT EXISTS `FEATURES` (";
@@ -60,7 +62,8 @@ public class TestPreloaderFramework extends TestCase
 		sql += "  `ACTIVE_DATE` date NOT NULL,";
 		sql += "  PRIMARY KEY (`MDM`,`FEATURE_CODE`)";
 		sql += " )";
-		rc = connTest.nativeSQL(sql);
+		stmt.execute(sql);
+		stmt.close();
 		connTest.close();
 	}
 

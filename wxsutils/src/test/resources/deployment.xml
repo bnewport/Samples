@@ -32,5 +32,10 @@ Licensed Materials - Property of IBM
             <map ref="RouterKeyI32"/>
         </mapSet>
     </objectgridDeployment>
+    <objectgridDeployment objectgridName="PerContainerGrid">
+    	<mapSet name="mapSet" numberOfPartitions="1" placementStrategy="PER_CONTAINER">
+    		<map ref="M.*"/>
+    	</mapSet>
+    </objectgridDeployment>
 
 </deploymentPolicy>
