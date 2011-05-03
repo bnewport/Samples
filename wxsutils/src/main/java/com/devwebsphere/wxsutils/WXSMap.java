@@ -193,4 +193,11 @@ public interface WXSMap<K extends Serializable,V extends Serializable>
 	 * @param entriesToRemove Any entries with these keys are removed.
 	 */
 	abstract public void updateEveryWhere(Map<K,V> entriesToUpdate, List<K> entriesToRemove);
+	
+	
+	/**
+	 * This returns the associated WXSUtils with this Map
+	 * @return
+	 */
+	abstract public WXSUtils getWXSUtils();
 }

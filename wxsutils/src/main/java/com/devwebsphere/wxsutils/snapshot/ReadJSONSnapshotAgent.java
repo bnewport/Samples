@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -39,11 +40,16 @@ import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 
 /**
- * This agent runs on every partition and then reads a local file that
+ * This agent runs on every container and then reads a local file that
  * contains the json encoded key/value pairs to read in to memory
  * It returns the partition id as an integer and the callReduceAgent
  * method should return a list of partition ids that have been processed
- * @author ibm
+ * 
+ * A PER_CONTAINER grid should be used to execute this agent once
+ * PER container JVM. A file level lock based around the timestamp the
+ * client invoked the agent is used to ensure only one container PER
+ * box actually reads the local snapshot.
+ * @author bnewport
  *
  */
 public class ReadJSONSnapshotAgent implements ReduceGridAgent 
@@ -53,6 +59,8 @@ public class ReadJSONSnapshotAgent implements ReduceGridAgent
 	public String rootFolder;
 	public String gridName;
 	public String mapName;
+	
+	private long lockTimestamp = System.currentTimeMillis();
 
 	/**
 	 * 
@@ -69,11 +77,30 @@ public class ReadJSONSnapshotAgent implements ReduceGridAgent
 		return remoteMap;
 	}
 
+	boolean isAlreadyInProgress()
+		throws IOException
+	{
+		// this code make sures that only one JVM on a specific physical server box
+		// will do the preload.
+		String lockFileName = rootFolder + File.separator + Long.toString(lockTimestamp) + ".lock";
+		
+		File lockFile = new File(lockFileName);
+		boolean alreadyInProgress = false;
+		alreadyInProgress = lockFile.exists();
+		if(!alreadyInProgress)
+		{
+			alreadyInProgress = !lockFile.createNewFile();
+		}
+		return alreadyInProgress;
+	}
+	
 	public Object reduce(Session sess, ObjectMap map) 
 	{
 		try
 		{
-			
+			if(isAlreadyInProgress())
+				return new ArrayList<Integer>();
+				
 			File directory = new File(rootFolder);
 			if(directory.isDirectory() == false)
 			{
@@ -101,7 +128,8 @@ public class ReadJSONSnapshotAgent implements ReduceGridAgent
 					try
 					{
 						String magic = rd.readLine();
-						if(magic.equals(CreateJSONSnapshotAgent.MAGIC) == false)
+						// check if first line has magic code
+						if(magic == null || magic.equals(CreateJSONSnapshotAgent.MAGIC) == false)
 							continue;
 						String partitionLine = rd.readLine();
 						try
@@ -122,12 +150,13 @@ public class ReadJSONSnapshotAgent implements ReduceGridAgent
 					}
 					catch(Exception e)
 					{
+						// not our kind of file, just skip it
 						continue;
 					}
 					
 					logger.log(Level.INFO, "Reading snapshot in file " + fileName);
 					WXSMap<Serializable, Serializable> remoteMap = getRemoteMap(gridName, mapName);
-					
+					int partitionCount = remoteMap.getWXSUtils().getObjectGrid().getMap(mapName).getPartitionManager().getNumOfPartitions();
 					ObjectMapper mapper = new ObjectMapper();
 					
 					boolean readKeyValueClassNames = false;
@@ -152,7 +181,7 @@ public class ReadJSONSnapshotAgent implements ReduceGridAgent
 						Serializable key = mapper.readValue(keyJSON, keyClass);
 						Serializable value = mapper.readValue(valueJSON, valueClass);
 						batch.put(key, value);
-						if(entryCounter++ > 10000)
+						if(entryCounter++ > 500 * partitionCount) // we want a decent batch size per partition
 						{
 							entryCounter = 0;
 							remoteMap.putAll(batch);
