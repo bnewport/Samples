@@ -1,0 +1,27 @@
+<html>
+<body>
+This package has code to dump a grid based map to local JSON formatted files and the load them back again.
+
+<h3>Introduction</h3>
+If a large dataset has been copied or preloaded in to a grid then typically this can take some time. We have seen
+customers take hours to get data in to the grid. The bottleneck is ALWAYS the source system, not the grid. Once the
+data is in the grid then no body wants to bring the grid down given the cost of loading everything back again. This
+code provides a simple way to dump or create a snapshot of the data currently in the grid to the grid local file system.
+Each container in the grid will write a file for each partition and store the whole partition in this file. We provide
+another code segment to allow this data to be reloaded from the local file system after the grid can been restarted. This
+is useful to reduce down-time when performing maintenance that requires restarting the whole grid or it could be used to
+schedule periodic dumps that could be used for a faster restart to those known points in the event the grid went down. This
+can also be used in development to preload a grid to a known state for testing purposes quickly.
+<h3>File format</h3>
+Each container creates one file per partition in a well known folder on the box hosting the container JVM. The file is
+named after the partition and map. The first line of the file is a magic text sequence. The second line is the partition
+number and the third line is the mapname. The next two lines are the Java class names for the key and value classes in the Map.
+Each entry is then written to the file with two lines for each entry. The first line is the JSON encoded key, the second line
+is the JSON encoded value.
+<h3>Ensuring one container per box only loads the snapshot</h3>
+We use a simple file lock to ensure that when multiple container JVMs are present on a box, only one
+will actually load the snapshot files on that box. The lock has a .lock postfix and is named after the
+time the client asked for the snapshot to be read. Every time a client does a new read from snapshot a
+new lock file name is generated so we don't need to worry about old lock files stopping new read from
+snapshot requests.
+</body></html>

@@ -184,12 +184,12 @@ public class ReadJSONSnapshotAgent implements ReduceGridAgent
 						if(entryCounter++ > 500 * partitionCount) // we want a decent batch size per partition
 						{
 							entryCounter = 0;
-							remoteMap.putAll(batch);
+							remoteMap.putAll_noLoader(batch);
 							batch = new HashMap<Serializable, Serializable>();
 						}
 					}
 					if(batch.size() > 0)
-						remoteMap.putAll(batch);
+						remoteMap.putAll_noLoader(batch);
 				}
 				finally {
 					rd.close();

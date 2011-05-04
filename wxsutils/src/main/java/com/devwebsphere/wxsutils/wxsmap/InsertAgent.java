@@ -45,6 +45,7 @@ public class InsertAgent<K,V> implements ReduceGridAgent
 	private static final long serialVersionUID = 6568906743945108310L;
 	
 	public java.util.Map<K,V> batch;
+	public boolean isWriteThrough = true;
 	
 	/**
 	 * For a preload especially with a Loader plugged in then we don't want to do a get
@@ -63,7 +64,10 @@ public class InsertAgent<K,V> implements ReduceGridAgent
 		{
 			Session s = sess.getObjectGrid().getSession();
 			ObjectMap m = s.getMap(map.getName());
-			s.beginNoWriteThrough();
+			if(!isWriteThrough)
+				s.beginNoWriteThrough();
+			else
+				s.begin();
 			ArrayList keys = new ArrayList(batch.keySet());
 			if(doGet)
 			{

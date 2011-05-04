@@ -112,6 +112,7 @@ public class WXSMapImpl <K extends Serializable,V extends Serializable> extends 
 			a.doGet = true;
 			a.batch = new HashMap<K, V>();
 			a.batch.put(k, v);
+			a.isWriteThrough = true;
 			Object o = tls.getMap(mapName).getAgentManager().callReduceAgent(a, Collections.singletonList(k));
 			if(o instanceof Boolean)
 			{
@@ -159,6 +160,14 @@ public class WXSMapImpl <K extends Serializable,V extends Serializable> extends 
 	 * @param batch
 	 */
 	public void putAll(Map<K,V> batch)
+	{
+		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
+		long start = System.nanoTime();
+		utils.putAll(batch, bmap);
+		mbean.getPutMetrics().logTime(System.nanoTime() - start);
+	}
+	
+	public void putAll_noLoader(Map<K,V> batch)
 	{
 		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();

@@ -48,9 +48,14 @@ public interface WXSMap<K extends Serializable,V extends Serializable>
 
 	/**
 	 * Set the value for the key. If the entry doesn't exist then it
-	 * is inserted otherwise it's updated.
+	 * is inserted otherwise it's updated. This will push the change
+	 * through a Loader if one is plugged in to this Map. Therefore
+	 * use putAll_noLoader for skipping the Loader if thats the intention
+	 * 
 	 * @param k
 	 * @param v
+	 * 
+	 * @see WXSMap#putAll_noLoader(Map)
 	 */
 	abstract public void put(K k, V v);
 	
@@ -62,10 +67,19 @@ public interface WXSMap<K extends Serializable,V extends Serializable>
 	abstract public void insert(K k, V v);
 	
 	/**
-	 * Parallel put all the entries.
+	 * Parallel put all the entries. This is written to the Loader on the Maps
+	 * if present therefore DO NOT USE for preload type scenarios.
+	 * @see WXSMap#putAll_noLoader(Map)
 	 * @param batch
 	 */
 	abstract public void putAll(Map<K,V> batch);
+	
+	/**
+	 * This is a putAll but any changes are not written to the Loader. This is used
+	 * for preload scenarios when a Loader is plugged in to a Map.
+	 * @param batch
+	 */
+	abstract public void putAll_noLoader(Map<K,V> batch);
 
 	/**
 	 * This will update the entries to the newValue only if the current value for the

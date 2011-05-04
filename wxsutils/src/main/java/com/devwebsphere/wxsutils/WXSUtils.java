@@ -366,9 +366,24 @@ public class WXSUtils
 	 */
 	public <K,V> void putAll(Map<K,V> batch, BackingMap bmap)
 	{
-		internalPutAll(batch, bmap, true);
+		internalPutAll(batch, bmap, true, true);
 	}
 
+	/**
+	 * This is a putAll but it does not write the data through the Loader. This
+	 * is useful for preload type scenarios where data is being read from the backend
+	 * and copied in to the grid but we don't want that data to be pushed back to the
+	 * backend in a loop.
+	 * @param <K>
+	 * @param <V>
+	 * @param batch
+	 * @param bmap
+	 */
+	public <K,V> void putAll_noLoader(Map<K,V> batch, BackingMap bmap)
+	{
+		internalPutAll(batch, bmap, true, false);
+	}
+	
 	/**
 	 * This updates the current values for a set of keys only if the current
 	 * value matches the original value passed OR the new value is inserted
@@ -458,10 +473,10 @@ public class WXSUtils
 	 */
 	public <K,V> void insertAll(Map<K,V> batch, BackingMap bmap)
 	{
-		internalPutAll(batch, bmap, false);
+		internalPutAll(batch, bmap, false, true);
 	}
 	
-	<K,V> void internalPutAll(Map<K,V> batch, BackingMap bmap, boolean doGet)
+	<K,V> void internalPutAll(Map<K,V> batch, BackingMap bmap, boolean doGet, boolean isWriteThrough)
 	{
 		if(batch.size() > 0)
 		{
@@ -480,6 +495,7 @@ public class WXSUtils
 				InsertAgent<K,V> ia = new InsertAgent<K,V>();
 				ia.doGet = doGet;
 				ia.batch = perPartitionEntries;
+				ia.isWriteThrough = isWriteThrough;
 				// Insert all keys for one partition using the first key as a routing key
 				Future<?> fv = threadPool.submit(new CallReduceAgentThread(grid, bmap.getName(), key, ia, doneSignal));
 				results.add(fv);
