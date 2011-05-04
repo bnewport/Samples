@@ -27,8 +27,10 @@ import java.util.logging.Logger;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
+import com.devwebsphere.wxs.jdbcloader.Customer;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
+import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ClientClusterContext;
 import com.ibm.websphere.objectgrid.ConnectException;
 import com.ibm.websphere.objectgrid.ObjectGrid;
@@ -36,6 +38,7 @@ import com.ibm.websphere.objectgrid.ObjectGridManagerFactory;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
+import com.ibm.websphere.objectgrid.datagrid.AgentManager;
 import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 
@@ -77,6 +80,13 @@ public class ReadJSONSnapshotAgent implements ReduceGridAgent
 		return remoteMap;
 	}
 
+	/**
+	 * One JVM on a box attempts to create a specific lock file. Only one will succeed and
+	 * it will be the one that reads the snapshot. Every separate attempt to read a snapshot
+	 * uses a different lock file so they do not have to be cleared out.
+	 * @return
+	 * @throws IOException
+	 */
 	boolean isAlreadyInProgress()
 		throws IOException
 	{
@@ -102,6 +112,14 @@ public class ReadJSONSnapshotAgent implements ReduceGridAgent
 				return new ArrayList<Integer>();
 				
 			File directory = new File(rootFolder);
+			if(directory.exists() == false)
+			{
+				if(directory.mkdir() == false)
+				{
+					logger.log(Level.SEVERE, "Cannot create folder for snapshot at " + rootFolder);
+					throw new ObjectGridRuntimeException("Cannot create root folder for snapshot " + rootFolder);
+				}
+			}
 			if(directory.isDirectory() == false)
 			{
 				logger.log(Level.SEVERE, "Root must be a directory " + rootFolder);
@@ -111,7 +129,7 @@ public class ReadJSONSnapshotAgent implements ReduceGridAgent
 			ArrayList<Integer> partitionsLoaded = new ArrayList<Integer>();
 			for(String fileName : files)
 			{
-				if(!fileName.endsWith(".txt"))
+				if(!fileName.endsWith(CreateJSONSnapshotAgent.EXTENSION))
 					continue;
 				fileName = rootFolder + File.separator + fileName;
 				File file = new File(fileName);
@@ -229,5 +247,56 @@ public class ReadJSONSnapshotAgent implements ReduceGridAgent
 		}
 		return list;
 	}
-
+	
+	/**
+	 * This method will load a snapshot from the specified folder on the grid side
+	 * boxes.
+	 * @param utils
+	 * @param mapName
+	 * @param rootFolder
+	 * @param cep
+	 * @throws ObjectGridRuntimeException If an issue occurs during loading the snapshot
+	 */
+	static public void readSnapshot(WXSUtils utils, String mapName, String rootFolder, String cep)
+	{
+		try
+		{
+			ReadJSONSnapshotAgent agent = new ReadJSONSnapshotAgent();
+			agent.rootFolder = rootFolder;
+			agent.gridName = utils.getObjectGrid().getName();
+			agent.mapName = mapName;
+	
+			WXSMap<String, Customer> map = utils.getCache(mapName);
+	
+			ObjectGrid perContainerClient = WXSUtils.connectClient(cep, "PerContainerGrid", null);
+			
+			AgentManager am = perContainerClient.getSession().getMap("M.MAIN").getAgentManager();
+			Object rawRC = am.callReduceAgent(agent);
+			if(rawRC instanceof EntryErrorValue)
+			{
+				logger.log(Level.SEVERE, "Remote exception reading snapshot: " + rawRC.toString());
+				throw new ObjectGridRuntimeException(rawRC.toString());
+			}
+			List<Integer> pids = (List<Integer>)rawRC; 
+			BackingMap bmap = utils.getObjectGrid().getMap(mapName);
+			if(bmap.getPartitionManager().getNumOfPartitions() != pids.size())
+			{
+				logger.log(Level.SEVERE, "Partitions were not fully loaded from the snapshot");
+				throw new ObjectGridRuntimeException("Partitions were not fully loaded from the snapshot");
+			}
+			for(int i = 0; i < pids.size(); ++i)
+			{
+				if(!pids.contains(new Integer(i)))
+				{
+					logger.log(Level.SEVERE, "Partition #" + i + " was not reloaded");
+					throw new ObjectGridRuntimeException("Partition " + i + " wasn't read from snapshot");
+				}
+			}
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.SEVERE, "Exception reading snapshot", e);
+			throw new ObjectGridRuntimeException("Exception reading snapshot", e);
+		}
+	}
 }

@@ -24,4 +24,8 @@ will actually load the snapshot files on that box. The lock has a .lock postfix 
 time the client asked for the snapshot to be read. Every time a client does a new read from snapshot a
 new lock file name is generated so we don't need to worry about old lock files stopping new read from
 snapshot requests.
-</body></html>
+<h3>Dependencies</h3>
+You will need to place the jackson jars on the container classpaths and the client class paths to get this code
+to run.
+</body>
+</html>

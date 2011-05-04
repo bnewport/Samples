@@ -13,18 +13,26 @@ package com.devwebsphere.wxsutils.snapshot;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.sql.Date;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
+import com.devwebsphere.wxs.jdbcloader.Customer;
+import com.devwebsphere.wxsutils.WXSMap;
+import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.filter.Filter;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
+import com.ibm.websphere.objectgrid.UndefinedMapException;
+import com.ibm.websphere.objectgrid.datagrid.AgentManager;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 import com.ibm.ws.objectgrid.index.MapKeyIndex;
 
@@ -42,11 +50,12 @@ public class CreateJSONSnapshotAgent implements ReduceGridAgent
 
 	public static String getFileName(String rootFolder, int pid, String mapName)
 	{
-		String fileName = rootFolder + File.separator + pid + "-" + mapName + ".txt";
+		String fileName = rootFolder + File.separator + pid + "-" + mapName + EXTENSION;
 		return fileName;
 	}
 	
 	public static String MAGIC = "(:JSONSNAPSHOT:)";
+	public static String EXTENSION = ".txt";
 	
 	public Object reduce(Session sess, ObjectMap map) 
 	{
@@ -124,4 +133,59 @@ public class CreateJSONSnapshotAgent implements ReduceGridAgent
 		return list;
 	}
 
+	/**
+	 * This writes a remote disk based snapshot of a given map in a grid. The snapshot
+	 * files are placed remotely in the specified rootFolder
+	 * @param utils The client to the grid with the map
+	 * @param mapName The map to dump
+	 * @param rootFolder The name of a directory. It will be created if it is missing
+	 * @throws ObjectGridRuntimeException
+	 */
+	public static void writeSnapshot(WXSUtils utils, String mapName, String rootFolder)
+		throws ObjectGridRuntimeException
+	{
+		try
+		{
+			CreateJSONSnapshotAgent agent = new CreateJSONSnapshotAgent();
+			agent.rootFolder = rootFolder;
+	
+			WXSMap<String, Customer> map = utils.getCache(mapName);
+	
+			Calendar calendar = Calendar.getInstance();
+			
+			for(int i = 0; i < 1000; ++i)
+			{
+				Customer c = new Customer();
+				c.id = Integer.toString(i);
+				calendar.set(1945, 3 /* Month - 1 */, 3 /* day */); // April 3, 1945
+				c.dob = new Date(calendar.getTimeInMillis());
+				c.firstName = "Billy";
+				c.surname = "Newport";
+				map.put(c.id, c);
+			}
+			
+			AgentManager am = utils.getSessionForThread().getMap(mapName).getAgentManager();
+			Object rawRC = am.callReduceAgent(agent);
+			List<Integer> pids = (List<Integer>)rawRC; 
+			if(utils.getObjectGrid().getMap(mapName).getPartitionManager().getNumOfPartitions() != pids.size())
+			{
+				logger.log(Level.SEVERE, "Cannot write all partitions to snapshot");
+				throw new ObjectGridRuntimeException("Problem writing all partitions to snapshot on remote side");
+			}
+			for(int i = 0; i < pids.size(); ++i)
+			{
+				if(!pids.contains(new Integer(i)))
+				{
+					String msg = "Partition #" + i + " was not written to snapshot";
+					logger.log(Level.SEVERE, msg);
+					throw new ObjectGridRuntimeException(msg);
+				}
+			}
+		}
+		catch(UndefinedMapException e)
+		{
+			logger.log(Level.SEVERE, "Exception", e);
+			throw new ObjectGridRuntimeException("Map doesn't exist: " + mapName);
+		}
+	}
 }

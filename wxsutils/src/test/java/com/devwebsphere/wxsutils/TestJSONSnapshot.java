@@ -1,6 +1,7 @@
 package com.devwebsphere.wxsutils;
 
 import java.sql.Date;
+import java.util.Calendar;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -56,68 +57,32 @@ public class TestJSONSnapshot
 	public void testCreateSnapshot()
 		throws Exception
 	{
-		CreateJSONSnapshotAgent agent = new CreateJSONSnapshotAgent();
-		agent.rootFolder = "/tmp";
-
 		clearMap();
 		
 		WXSMap<String, Customer> map = utils.getCache(bmFarMap3.getName());
 
+		Calendar calendar = Calendar.getInstance();
+		
 		for(int i = 0; i < 1000; ++i)
 		{
 			Customer c = new Customer();
 			c.id = Integer.toString(i);
-			c.dob = new Date(1945, 5, 3);
+			calendar.set(1945, 3 /* Month - 1 */, 3 /* day */); // April 3, 1945
+			c.dob = new Date(calendar.getTimeInMillis());
 			c.firstName = "Billy";
 			c.surname = "Newport";
 			map.put(c.id, c);
 		}
 		
-		AgentManager am = utils.getSessionForThread().getMap(bmFarMap3.getName()).getAgentManager();
-		Object rawRC = am.callReduceAgent(agent);
-		List<Integer> pids = (List<Integer>)rawRC; 
-		Assert.assertEquals(bmFarMap3.getPartitionManager().getNumOfPartitions(), pids.size());
-		for(int i = 0; i < pids.size(); ++i)
-		{
-			Assert.assertTrue(pids.contains(new Integer(i)));
-		}
+		CreateJSONSnapshotAgent.writeSnapshot(utils, bmFarMap3.getName(), "/tmp");
 	}
 	
 	@Test
 	public void testReadSnapshot()
 		throws Exception
 	{
-		ReadJSONSnapshotAgent agent = new ReadJSONSnapshotAgent();
-		agent.rootFolder = "/tmp";
-		agent.gridName = utils.getObjectGrid().getName();
-		agent.mapName = bmFarMap3.getName();
-
-		clearMap();
-		
-		WXSMap<String, Customer> map = utils.getCache(bmFarMap3.getName());
-
-		ObjectGrid perContainerClient = WXSUtils.connectClient("localhost:2809", "PerContainerGrid", "/objectgrid.xml");
-		
-		AgentManager am = perContainerClient.getSession().getMap("M.MAIN").getAgentManager();
-		Object rawRC = am.callReduceAgent(agent);
-		if(rawRC instanceof EntryErrorValue)
-		{
-			System.out.println("Failed " + rawRC.toString());
-			Assert.fail();
-		}
-		List<Integer> pids = (List<Integer>)rawRC; 
-		Assert.assertEquals(bmFarMap3.getPartitionManager().getNumOfPartitions(), pids.size());
-		for(int i = 0; i < pids.size(); ++i)
-		{
-			Assert.assertTrue(pids.contains(new Integer(i)));
-		}
-		
-		for(int i = 0; i < 1000; ++i)
-		{
-			Customer c = map.get(Integer.toString(i));
-			Assert.assertNotNull(c);
-			Assert.assertEquals(Integer.toString(i), c.id);
-		}
-		
+		clearMap(); // read does not do a clear, do the clear first if you need it
+		// Read the map bmFarMap3 from the remote snapshot
+		ReadJSONSnapshotAgent.readSnapshot(utils, bmFarMap3.getName(), "/tmp", "localhost:2809");
 	}
 }
