@@ -67,6 +67,7 @@ import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.TransactionException;
 import com.ibm.websphere.objectgrid.datagrid.AgentManager;
+import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 import com.ibm.websphere.objectgrid.deployment.DeploymentPolicy;
@@ -522,6 +523,12 @@ public class WXSUtils
 		{
 			for(Future<?> f : results)
 			{
+				if(f.get() != null && f.get() instanceof EntryErrorValue)
+				{
+					EntryErrorValue ev = (EntryErrorValue)f.get();
+					logger.log(Level.SEVERE, "Remote exception: " + ev.toString());
+					throw new ObjectGridRuntimeException(ev.toString());
+				}
 				Boolean b = (Boolean)f.get();
 				if(b == null || b.equals(Boolean.FALSE))
 					return false;
@@ -534,6 +541,7 @@ public class WXSUtils
 		}
 		catch(InterruptedException e)
 		{
+			logger.log(Level.SEVERE, "Interrupted Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 		return true;

@@ -42,6 +42,11 @@ public class WXSMapImpl <K extends Serializable,V extends Serializable> extends 
 		super(utils, mapName);
 	}
 
+	public String getName()
+	{
+		return mapName;
+	}
+	
 	/**
 	 * Clear the Map
 	 */

@@ -27,7 +27,6 @@ import java.util.logging.Logger;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
-import com.devwebsphere.wxs.jdbcloader.Customer;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.ibm.websphere.objectgrid.BackingMap;
@@ -179,8 +178,8 @@ public class ReadJSONSnapshotAgent implements ReduceGridAgent
 					
 					boolean readKeyValueClassNames = false;
 		
-					Class keyClass = null;
-					Class valueClass = null;
+					Class<? extends Serializable> keyClass = null;
+					Class<? extends Serializable> valueClass = null;
 					String line = null;
 					int entryCounter = 0;
 					Map<Serializable, Serializable> batch = new HashMap<Serializable, Serializable>();
@@ -188,8 +187,8 @@ public class ReadJSONSnapshotAgent implements ReduceGridAgent
 					{
 						if(readKeyValueClassNames == false)
 						{
-							keyClass = Class.forName(line);
-							valueClass = Class.forName(rd.readLine());
+							keyClass = (Class<? extends Serializable>)Class.forName(line);
+							valueClass = (Class<? extends Serializable>)Class.forName(rd.readLine());
 							readKeyValueClassNames = true;
 							logger.log(Level.FINE, "Key Class is " + keyClass.getName() + ", ValueClass is " + valueClass.getName());
 							continue;
@@ -266,7 +265,7 @@ public class ReadJSONSnapshotAgent implements ReduceGridAgent
 			agent.gridName = utils.getObjectGrid().getName();
 			agent.mapName = mapName;
 	
-			WXSMap<String, Customer> map = utils.getCache(mapName);
+			WXSMap<?, ?> map = utils.getCache(mapName);
 	
 			ObjectGrid perContainerClient = WXSUtils.connectClient(cep, "PerContainerGrid", null);
 			

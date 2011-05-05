@@ -28,6 +28,11 @@ import com.devwebsphere.wxsutils.filter.set.GridFilteredIndex;
 public interface WXSMap<K extends Serializable,V extends Serializable> 
 {
 	/**
+	 * Returns the name of this map
+	 * @return
+	 */
+	abstract public String getName();
+	/**
 	 * Clear the Map
 	 */
 	abstract public void clear();

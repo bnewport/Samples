@@ -13,9 +13,7 @@ package com.devwebsphere.wxsutils.snapshot;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
-import java.sql.Date;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -24,7 +22,6 @@ import java.util.logging.Logger;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
-import com.devwebsphere.wxs.jdbcloader.Customer;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.filter.Filter;
@@ -149,21 +146,8 @@ public class CreateJSONSnapshotAgent implements ReduceGridAgent
 			CreateJSONSnapshotAgent agent = new CreateJSONSnapshotAgent();
 			agent.rootFolder = rootFolder;
 	
-			WXSMap<String, Customer> map = utils.getCache(mapName);
+			WXSMap<?, ?> map = utils.getCache(mapName);
 	
-			Calendar calendar = Calendar.getInstance();
-			
-			for(int i = 0; i < 1000; ++i)
-			{
-				Customer c = new Customer();
-				c.id = Integer.toString(i);
-				calendar.set(1945, 3 /* Month - 1 */, 3 /* day */); // April 3, 1945
-				c.dob = new Date(calendar.getTimeInMillis());
-				c.firstName = "Billy";
-				c.surname = "Newport";
-				map.put(c.id, c);
-			}
-			
 			AgentManager am = utils.getSessionForThread().getMap(mapName).getAgentManager();
 			Object rawRC = am.callReduceAgent(agent);
 			List<Integer> pids = (List<Integer>)rawRC; 
