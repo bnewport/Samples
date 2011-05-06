@@ -40,6 +40,7 @@ public class ThreadLocalSession extends ThreadLocal<ThreadStuff>
 		try
 		{
 			ThreadStuff v = new ThreadStuff();
+			v.grid = utils.getObjectGrid();
 			v.session = utils.getObjectGrid().getSession();
 			return v;
 		}
@@ -50,21 +51,41 @@ public class ThreadLocalSession extends ThreadLocal<ThreadStuff>
 		}
 	}
 	
+	/**
+	 * This will return the Session for this thread. If checks if the underlying utils
+	 * instance has reconnected or not. If it has then it gets a 'new' session.
+	 * @return
+	 */
 	public Session getSession()
 	{
-		return get().session;
+		ThreadStuff v = get();
+		if(utils.getObjectGrid() != v.grid)
+		{
+			try
+			{
+				v.grid = utils.getObjectGrid();
+				v.session = v.grid.getSession();
+			}
+			catch(Exception e)
+			{
+				v.grid = null; // force to get the ObjectGrid again from the utils next time
+				logger.log(Level.SEVERE, "Exception getting Session from grid", e);
+				throw new ObjectGridRuntimeException("Exception getting session from grid", e);
+			}
+		}
+		return v.session;
 	}
 
 	public ObjectGrid getObjectGrid()
 	{
-		return get().session.getObjectGrid();
+		return getSession().getObjectGrid();
 	}
 	
 	public ObjectMap getMap(String name)
 	{
 		try
 		{
-			return get().session.getMap(name);
+			return getSession().getMap(name);
 		}
 		catch(ObjectGridException e)
 		{

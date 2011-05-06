@@ -12,7 +12,6 @@ package com.devwebsphere.wxsutils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -24,7 +23,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -91,7 +89,7 @@ public class WXSUtils
 	/**
 	 * A client grid reference for this instance. All operations use this grid
 	 */
-	ObjectGrid grid;
+	volatile ObjectGrid grid;
 	
 	/**
 	 * A shared thread pool if the non thread pool constructor is used. All such instances
@@ -1084,17 +1082,6 @@ public class WXSUtils
 	
 	static WXSUtils globalDefaultUtils;
 	
-	static private InputStream findWXSPropertyFile(ClassLoader cl, boolean useRootSlash)
-	{
-		String prefix = useRootSlash ? "/" : "";
-		InputStream is = cl.getResourceAsStream(prefix + "wxsutils.properties");
-		if(is == null)
-		{
-			is = cl.getResourceAsStream(prefix + "META-INF/wxsutils.properties");
-		}
-		return is;
-	}
-	
 	/**
 	 * This is a helper method to return a configured grid connection. The configuration is specified in the
 	 * property file wxsutils.properties on the classpath. The grid name and path to objectgrid.xml file must
@@ -1119,78 +1106,15 @@ public class WXSUtils
 	{
 		if(globalDefaultUtils == null)
 		{
-			Properties props = new Properties();
-			// BN Modified to use getResourceAsStream instead of FileInputStream
-			// BN so it works with property files in jars
-			// now using context class loader for when its a shared lib
-			ClassLoader cl = Thread.currentThread().getContextClassLoader();
-			boolean usingTCCL = true;
-			if(cl == null)
-			{
-				cl = WXSUtils.class.getClassLoader();
-				usingTCCL = false;
-			}
-			InputStream is = findWXSPropertyFile(cl, false);
-			if(is == null)
-			{
-				is = findWXSPropertyFile(WXSUtils.class.getClassLoader(), false);
-				usingTCCL = false;
-			}
-			if(usingTCCL)
-			{
-				logger.log(Level.INFO, "Property file locate using Thread Context Loader " + cl.toString());
-			}
-			else
-			{
-				logger.log(Level.INFO, "Property file locate using class loader for WXSUtils " + cl.toString());
-			}
-			if(is == null)
-			{
-				logger.log(Level.SEVERE, "/[META-INF/]wxsutils.properties not found on classpath");
-				throw new FileNotFoundException("/[META-INF/]wxsutils.properties");
-			}
-			props.load(is);
-			is.close(); // BN added close
-			
-			String cep = props.getProperty("cep");
-			if(cep == null)
-			{
-				logger.log(Level.INFO, "No catalog endpoint specified, starting test server intra JVM");
-			}
-			String gridName = props.getProperty("grid");
-			String ogXMLPath = props.getProperty("og_xml_path");
-			String dpXMLPath = props.getProperty("dp_xml_path");
-			if(ogXMLPath == null)
-				ogXMLPath = "/objectgrid.xml";
-			if(dpXMLPath == null)
-				dpXMLPath = "/deployment.xml";
-			if(gridName == null)
-				gridName = "Grid";
-			
-			int numThreads = -1;
-			String intValue = props.getProperty("threads");
-			if(intValue != null)
-			{
-				numThreads = Integer.parseInt(intValue);
-			}
+			ConfigProperties cprops = new ConfigProperties();
 
 			try
 			{
-				ObjectGrid grid = null;
-				if(cep != null)
+				ObjectGrid grid = cprops.connect();
+				if(cprops.numThreads > 0)
 				{
-					logger.log(Level.INFO, "Default CEP = " + cep + "; Grid = " + gridName + "; ogXMLPath=" + ogXMLPath);
-					grid = WXSUtils.connectClient(cep, gridName, ogXMLPath);
-				}					
-				else
-				{
-					logger.log(Level.INFO, "Test Server; Grid = " + gridName + "; ogXMLPath = " + ogXMLPath + "; dpXMLPath = " + dpXMLPath);
-					grid = WXSUtils.startTestServer(gridName, ogXMLPath, dpXMLPath);
-				}
-				if(numThreads > 0)
-				{
-					ExecutorService p = Executors.newFixedThreadPool(numThreads);
-					logger.log(Level.INFO, "WXSUtils thread pool is " + numThreads + " threads");
+					ExecutorService p = Executors.newFixedThreadPool(cprops.numThreads);
+					logger.log(Level.INFO, "WXSUtils thread pool is " + cprops.numThreads + " threads");
 					globalDefaultUtils = new WXSUtils(grid, p);
 				}
 				else
@@ -1207,6 +1131,30 @@ public class WXSUtils
 		return globalDefaultUtils;
 	}
 
+	/**
+	 * This will reconnect to the grid. All threads will then try to use the new grid when obtaining sessions
+	 * @throws IOException
+	 * @throws FileNotFoundException
+	 */
+	public void reconnectToDefaultUtilsGrid()
+		throws IOException, FileNotFoundException
+	{
+		ConfigProperties cprops = new ConfigProperties();
+		reconnectUsingGrid(cprops.connect());
+	}
+
+	/**
+	 * This allows an application to reconnect manually to a WXS grid
+	 * and then repurpose this utils to use the new connection. All thread
+	 * locals etc will reset to this once this is done.
+	 * @param client The new client connection
+	 */
+	public void reconnectUsingGrid(ObjectGrid client)
+	{
+		logger.log(Level.WARNING, "Switching to new client connection for wxsutils instance", client);
+		grid = client;
+	}
+	
 	/**
 	 * This returns the WXS Session being used by this WXSUtils instance for
 	 * this thread. If you create multiple WXSUtils instances, each one has a different

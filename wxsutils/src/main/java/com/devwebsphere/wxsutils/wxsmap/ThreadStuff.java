@@ -10,6 +10,7 @@
 //
 package com.devwebsphere.wxsutils.wxsmap;
 
+import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.Session;
 
 /**
@@ -19,5 +20,9 @@ import com.ibm.websphere.objectgrid.Session;
  */
 public class ThreadStuff
 {
+	/**
+	 * The grid used to get this session.
+	 */
+	ObjectGrid grid;
 	Session session;
 }
