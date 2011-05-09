@@ -2,10 +2,8 @@ package com.devwebsphere.wxsutils;
 
 import java.sql.Date;
 import java.util.Calendar;
-import java.util.List;
 
 import junit.framework.Assert;
-import junit.framework.TestCase;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -16,8 +14,6 @@ import com.devwebsphere.wxsutils.snapshot.ReadJSONSnapshotAgent;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
-import com.ibm.websphere.objectgrid.datagrid.AgentManager;
-import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 
 
 public class TestJSONSnapshot

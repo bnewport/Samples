@@ -413,7 +413,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 				results.add(fv);
 			}
 	
-			WXSUtils.blockForAllFuturesToFinish(doneSignal);
+			utils.blockForAllFuturesToFinish(doneSignal);
 			if(!WXSUtils.areAllFuturesTRUE(results))
 			{
 				logger.log(Level.SEVERE, "pushAll failed because of a server side exception");

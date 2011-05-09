@@ -20,7 +20,8 @@ import java.util.logging.Logger;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 
 /**
- * This is a class to read the wxsutils.properties file
+ * This is a class to read the wxsutils.properties file. This class also has the strings used
+ * to name properties in wxsutils.properties
  * @author bnewport
  *
  */
@@ -28,11 +29,41 @@ class ConfigProperties
 {
 	static Logger logger = Logger.getLogger(ConfigProperties.class.getName());
 	
+	/**
+	 * This is the property name for catalog end point
+	 */
+	static final String CEP_PROP = "cep";
 	String cep;
+
+	/**
+	 * This is the property name for the grid name
+	 */
+	static final String GRIDNAME_PROP = "grid";
 	String gridName;
+	
+	/**
+	 * This is the property name for objectgrid.xml full path including file name
+	 */
+	static final String OGXML_PROP = "og_xml_path";
 	String ogXMLPath;
+
+	/**
+	 * This is the property name for the deployment.xml full path including file name
+	 */
+	static final String DPXML_PROP = "dp_xml_path";
 	String dpXMLPath;
+
+	/**
+	 * This is the property name for the wxsutils client side thread pool
+	 */
+	static final String THREADS_PROP = "threads";
 	int numThreads;
+
+	/**
+	 * This is the property name for the time wxsutils waits for agents to complete
+	 */
+	static final String AGENTWAITTIME_PROP = "agenttimeoutsecs";
+	int agentWaitTimeMaximumSecs = 120;
 	
 	static private InputStream findWXSPropertyFile(ClassLoader cl, boolean useRootSlash)
 	{
@@ -81,14 +112,14 @@ class ConfigProperties
 		props.load(is);
 		is.close(); // BN added close
 		
-		cep = props.getProperty("cep");
+		cep = props.getProperty(CEP_PROP);
 		if(cep == null)
 		{
 			logger.log(Level.INFO, "No catalog endpoint specified, starting test server intra JVM");
 		}
-		gridName = props.getProperty("grid");
-		ogXMLPath = props.getProperty("og_xml_path");
-		dpXMLPath = props.getProperty("dp_xml_path");
+		gridName = props.getProperty(GRIDNAME_PROP);
+		ogXMLPath = props.getProperty(OGXML_PROP);
+		dpXMLPath = props.getProperty(DPXML_PROP);
 		if(ogXMLPath == null)
 		{
 			ogXMLPath = "/objectgrid.xml";
@@ -103,12 +134,18 @@ class ConfigProperties
 		{
 			gridName = "Grid";
 			logger.log(Level.INFO, "gridName defaulted to " + gridName);
-		}		
+		}
 		numThreads = -1;
-		String intValue = props.getProperty("threads");
+		String intValue = props.getProperty(THREADS_PROP);
 		if(intValue != null)
 		{
 			numThreads = Integer.parseInt(intValue);
+		}
+		agentWaitTimeMaximumSecs = 120;
+		intValue = props.getProperty(AGENTWAITTIME_PROP);
+		if(intValue != null)
+		{
+			agentWaitTimeMaximumSecs = Integer.parseInt(intValue);
 		}
 	}
 	

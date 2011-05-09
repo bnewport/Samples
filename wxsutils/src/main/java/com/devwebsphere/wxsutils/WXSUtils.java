@@ -97,6 +97,11 @@ public class WXSUtils
 	 */
 	static AtomicReference<ExecutorService> globalThreadPool = new AtomicReference<ExecutorService>();
 	ExecutorService threadPool;
+
+	/**
+	 * The properties currently used to connect to the grid
+	 */
+	volatile ConfigProperties configProps;
 	
 	Map<String, WXSBaseMap> maps = new ConcurrentHashMap<String, WXSBaseMap>();
 
@@ -146,8 +151,12 @@ public class WXSUtils
 	/**
 	 * Make a new WXSUtils that can is independant of the original from a threading
 	 * point of view. This allows a thread using a WXSUtils to quickly make
-	 * another independant one.
+	 * another independant one. DO NOT USE THIS TO RECONNECT TO A GRID! Reuse the
+	 * existing utils instance and call reconnect
+	 * 
 	 * @param utils The original WXSUtils instance in use
+	 * @see WXSUtils#reconnectUsingGrid(ObjectGrid)
+	 * @see WXSUtils#reconnectToDefaultUtilsGrid()
 	 */
 	public WXSUtils(WXSUtils utils)
 	{
@@ -167,6 +176,13 @@ public class WXSUtils
 		tls = new ThreadLocalSession(this);
 	}
 
+	/**
+	 * This returns a named Map that can be used to hold lists for keys
+	 * @param <K>
+	 * @param <V>
+	 * @param listName
+	 * @return
+	 */
 	public <K extends Serializable,V extends Serializable> WXSMapOfLists<K,V> getMapOfLists(String listName)
 	{
 		WXSBaseMap bmap = maps.get(listName);
@@ -204,6 +220,13 @@ public class WXSUtils
 		return rc;
 	}
 	
+	/**
+	 * This returns a Map that can be used to store Sets for a particular key
+	 * @param <K>
+	 * @param <V>
+	 * @param mapName
+	 * @return
+	 */
 	public <K,V extends Serializable> WXSMapOfSets<K,V> getMapOfSets(String mapName)
 	{
 		WXSBaseMap bmap = maps.get(mapName);
@@ -877,6 +900,11 @@ public class WXSUtils
 		try
 		{
 			URL cog = (ogXMLpath != null) ? WXSUtils.class.getClassLoader().getResource(ogXMLpath) : null;
+			if(ogXMLpath != null && cog == null)
+			{
+				logger.log(Level.SEVERE, "Specified og xml path could not be found:" + ogXMLpath);
+				throw new ObjectGridRuntimeException("Specified og xml path could not be found:" + ogXMLpath);
+			}
 			
 			ClientClusterContext ccc = ObjectGridManagerFactory.getObjectGridManager().connect(cep, null, cog);
 			ObjectGrid grid = ObjectGridManagerFactory.getObjectGridManager().getObjectGrid(ccc, gridName);
@@ -938,9 +966,9 @@ public class WXSUtils
 	 * is limited to 120 seconds!
 	 * @param results The list of Futures to wait on.
 	 */
-	static public void blockForAllFuturesToFinish(CountDownLatch doneSignal)
+	public void blockForAllFuturesToFinish(CountDownLatch doneSignal)
 	{
-		int maxWait = 120;
+		int maxWait = configProps != null ? configProps.agentWaitTimeMaximumSecs : 120;
 		try 
 		{
 			doneSignal.await(maxWait, TimeUnit.SECONDS);
@@ -1121,6 +1149,7 @@ public class WXSUtils
 				{
 					globalDefaultUtils = new WXSUtils(grid);
 				}
+				globalDefaultUtils.configProps = cprops;
 			}
 			catch(Throwable e)
 			{
@@ -1132,7 +1161,8 @@ public class WXSUtils
 	}
 
 	/**
-	 * This will reconnect to the grid. All threads will then try to use the new grid when obtaining sessions
+	 * This will reconnect to the grid. All threads will then try to use the new grid when obtaining sessions.
+	 * This will re-open the property file to read the current properties.
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 */
@@ -1140,6 +1170,7 @@ public class WXSUtils
 		throws IOException, FileNotFoundException
 	{
 		ConfigProperties cprops = new ConfigProperties();
+		this.configProps = cprops;
 		reconnectUsingGrid(cprops.connect());
 	}
 

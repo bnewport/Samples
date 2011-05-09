@@ -188,7 +188,7 @@ public abstract class MBeanGroupManager <M>
 					try
 					{
 						MBeanServer server = getServer();
-						if(server != null && !keyValue.equals(UNKNOWN_MAP));
+						if(server != null && !keyValue.equals(UNKNOWN_MAP))
 						{
 							StandardMBean mbean = new StandardMBean(bean, mbeanInterface);
 							MBeanInfo info = mbean.getMBeanInfo();
