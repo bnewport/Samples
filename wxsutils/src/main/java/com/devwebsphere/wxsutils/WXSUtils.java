@@ -29,7 +29,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -87,6 +86,12 @@ import com.ibm.ws.objectgrid.cluster.ServiceUnavailableException;
  */
 public class WXSUtils
 {
+	/**
+	 * The number of threads by default WXSUtils uses for
+	 * agent calls (used in putAll *All type methods)
+	 */
+	public static final int THREADPOOL_SIZE = 32;
+	
 	static Logger logger = Logger.getLogger(WXSUtils.class.getName());
 	/**
 	 * A client grid reference for this instance. All operations use this grid
@@ -308,7 +313,7 @@ public class WXSUtils
 		this.grid = grid;
 		if(globalThreadPool.get() == null)
 		{
-			ExecutorService p = createClientThreadPool(32);
+			ExecutorService p = createClientThreadPool(THREADPOOL_SIZE);
 			if(!globalThreadPool.compareAndSet(null, p))
 			{
 				p.shutdown();
@@ -1123,7 +1128,13 @@ public class WXSUtils
 	 */
 	private static ExecutorService createClientThreadPool(int numThreads)
 	{
-		ExecutorService p = new ThreadPoolExecutor(numThreads, numThreads, 2L, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(), new ThreadPoolExecutor.CallerRunsPolicy());
+		// this means that once there are 3x numThreads jobs queued waiting for
+		// a thread then it will start running jobs on the submitting thread.
+		LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>(numThreads * 3);
+
+		// Once the queue reports that it is full, the CallerRunPolicy will run jobs
+		// on the submitter thread.
+		ExecutorService p = new ThreadPoolExecutor(numThreads, numThreads, 2L, TimeUnit.MINUTES, queue, new ThreadPoolExecutor.CallerRunsPolicy());
 		return p;
 		
 	}
