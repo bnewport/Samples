@@ -617,7 +617,6 @@ public class TestClientAPIs
                     String key = UUID.randomUUID().toString();
                     keys.add(key);
                     listMap.lpush(key, "HELLO"+i,dirtyKey);
-                   
             }
 
             set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);

@@ -31,6 +31,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -306,7 +308,7 @@ public class WXSUtils
 		this.grid = grid;
 		if(globalThreadPool.get() == null)
 		{
-			ExecutorService p = Executors.newFixedThreadPool(32);
+			ExecutorService p = createClientThreadPool(32);
 			if(!globalThreadPool.compareAndSet(null, p))
 			{
 				p.shutdown();
@@ -1111,6 +1113,21 @@ public class WXSUtils
 	static WXSUtils globalDefaultUtils;
 	
 	/**
+	 * This creates the client side thread pool for WXS. This uses a CallerRunsPolicy so that
+	 * when clients are preloading the grid, we don't end up queueing lots of preload
+	 * agent calls. This leads to an out of memory situation quickly because the client
+	 * keeps fetching from the backend, makings lots of objects for that state and sending it
+	 * to the threadpool where it just builds up.
+	 * @param numThreads The desired number of threads in the pool.
+	 * @return
+	 */
+	private static ExecutorService createClientThreadPool(int numThreads)
+	{
+		ExecutorService p = new ThreadPoolExecutor(numThreads, numThreads, 2L, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(), new ThreadPoolExecutor.CallerRunsPolicy());
+		return p;
+		
+	}
+	/**
 	 * This is a helper method to return a configured grid connection. The configuration is specified in the
 	 * property file wxsutils.properties on the classpath. The grid name and path to objectgrid.xml file must
 	 * always be specified. If a remote grid connection is required then a cep must be specified also. If
@@ -1141,7 +1158,7 @@ public class WXSUtils
 				ObjectGrid grid = cprops.connect();
 				if(cprops.numThreads > 0)
 				{
-					ExecutorService p = Executors.newFixedThreadPool(cprops.numThreads);
+					ExecutorService p = createClientThreadPool(cprops.numThreads);
 					logger.log(Level.INFO, "WXSUtils thread pool is " + cprops.numThreads + " threads");
 					globalDefaultUtils = new WXSUtils(grid, p);
 				}

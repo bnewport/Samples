@@ -18,9 +18,6 @@ import com.ibm.websphere.objectgrid.plugins.PartitionableKey;
 
 public class DeviceFeature_PK implements Serializable, PartitionableKey
 {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -6116383023304988282L;
 
 	@Column(name="MDM")
