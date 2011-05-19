@@ -904,6 +904,11 @@ public class WXSUtils
 			throw new ObjectGridRuntimeException("Cannot start OG container", e);
 		}
 	}
+
+	static public ObjectGrid connectClient(String cep, String gridName)
+	{
+		return connectClient(cep, gridName, (String)null);
+	}
 	
 	/**
 	 * This connects to a remote WXS grid.

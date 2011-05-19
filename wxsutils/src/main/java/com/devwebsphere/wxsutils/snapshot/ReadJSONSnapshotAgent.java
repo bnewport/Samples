@@ -267,7 +267,7 @@ public class ReadJSONSnapshotAgent implements ReduceGridAgent
 	
 			WXSMap<?, ?> map = utils.getCache(mapName);
 	
-			ObjectGrid perContainerClient = WXSUtils.connectClient(cep, "PerContainerGrid", null);
+			ObjectGrid perContainerClient = WXSUtils.connectClient(cep, "PerContainerGrid");
 			
 			AgentManager am = perContainerClient.getSession().getMap("M.MAIN").getAgentManager();
 			Object rawRC = am.callReduceAgent(agent);
