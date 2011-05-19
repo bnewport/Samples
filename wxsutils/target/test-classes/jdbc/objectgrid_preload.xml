@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+This sample program is provided AS IS and may be used, executed, copied and modified
+without royalty payment by customer
+(a) for its own instruction and study,
+(b) in order to develop applications designed to run with an IBM WebSphere product,
+either for customer's own internal use or for redistribution by customer, as part of such an
+application, in customer's own products.
+Licensed Materials - Property of IBM
+5724-J34 (C) COPYRIGHT International Business Machines Corp. 2009
+-->
+
+<objectGridConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://ibm.com/ws/objectgrid/config ../objectGrid.xsd"
+ xmlns="http://ibm.com/ws/objectgrid/config">
+
+    <objectGrids>
+    	<!--  always specify a transaction timeout, the default lock timeout is also 15 -->
+    	<!--  for debugging, do not set a tx timeout, txTimeout="15" -->
+        <objectGrid name="Grid" >
+	        <bean id="TransactionCallback" className="com.devwebsphere.jdbc.loader.JDBCTxCallback">
+<!--             	<property name="connecturi" type="java.lang.String" value="jdbc:db2://172.16.129.129:50000/SAMPLE"/>  -->
+				<property name="connecturi" type="java.lang.String" value="jdbc:mysql://localhost/chirp"/>
+            	<property name="username" type="java.lang.String" value="root"/>
+            	<property name="password" type="java.lang.String" value=""/>
+            </bean>
+                     
+            <backingMap name="Device" copyMode="COPY_TO_BYTES" lockStrategy="PESSIMISTIC" pluginCollectionRef="Device"/>
+            <backingMap name="DeviceData" copyMode="COPY_TO_BYTES" pluginCollectionRef="DeviceData"/>
+            <backingMap name="DeviceFeatures" copyMode="COPY_TO_BYTES" pluginCollectionRef="DeviceFeatures"/>
+            <backingMap name="FeatureData" copyMode="COPY_TO_BYTES" pluginCollectionRef="FeatureData"/>
+
+            <backingMap name="RouterKeyI32" lockStrategy="PESSIMISTIC"/>
+        </objectGrid>
+    </objectGrids>
+
+	<backingMapPluginCollections>
+    	<backingMapPluginCollection id="Device">
+        	<bean id="Loader" className="com.devwebsphere.jdbc.loader.GenericJDBCLoader">
+            	<property name="className" 
+                      type="java.lang.String" 
+                      value="com.devwebsphere.wxs.jdbcloader.telco.Device"/>
+        	</bean>
+    	</backingMapPluginCollection>
+    	<backingMapPluginCollection id="DeviceData">
+        	<bean id="Loader" className="com.devwebsphere.jdbc.loader.GenericJDBCLoader">
+            	<property name="className" 
+                      type="java.lang.String" 
+                      value="com.devwebsphere.wxs.jdbcloader.telco.DeviceData"/>
+        	</bean>
+    	</backingMapPluginCollection>
+    	<backingMapPluginCollection id="DeviceFeatures">
+        	<bean id="Loader" className="com.devwebsphere.jdbc.loader.GenericJDBCLoader">
+            	<property name="className" 
+                      type="java.lang.String" 
+                      value="com.devwebsphere.wxs.jdbcloader.telco.DeviceFeatures"/>
+        	</bean>
+    	</backingMapPluginCollection>
+    	<backingMapPluginCollection id="FeatureData">
+        	<bean id="Loader" className="com.devwebsphere.jdbc.loader.GenericJDBCLoader">
+            	<property name="className" 
+                      type="java.lang.String" 
+                      value="com.devwebsphere.wxs.jdbcloader.telco.FeatureData"/>
+        	</bean>
+    	</backingMapPluginCollection>
+	</backingMapPluginCollections>
+</objectGridConfig>
