@@ -11,16 +11,19 @@
 package com.devwebsphere.samplepreload.data;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 @Entity
 @Table(name="CUSTOMER")
 public class Customer implements Serializable, Cloneable
 {
+	static public String MAP_NAME = "Customer";
 	/**
 	 * 
 	 */
@@ -87,6 +90,16 @@ public class Customer implements Serializable, Cloneable
 	public Object clone()
 	{
 		Customer copy = new Customer(getId(), getFirstName(), getMiddleName(), getSurname());
+		copy.getAddressKeys().addAll(getAddressKeys());
 		return copy;
 	}
+	
+	@Transient
+	ArrayList<AddressKey> addressKeys = new ArrayList<AddressKey>();
+
+	public ArrayList<AddressKey> getAddressKeys()
+	{
+		return addressKeys;
+	}
+	
 }

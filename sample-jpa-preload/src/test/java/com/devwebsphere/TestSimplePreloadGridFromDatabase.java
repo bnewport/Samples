@@ -58,7 +58,7 @@ public class TestSimplePreloadGridFromDatabase
 		utils = new WXSUtils(clientOG);
 		
 		// create a map for the real records
-		customerMap = utils.getCache("Customer");
+		customerMap = utils.getCache(Customer.MAP_NAME);
 		// create a JPA EM on the client because we use it to read the database table on the client
 		// to fetch the records to preload in the grid.
 		Driver driver = new Driver();
@@ -88,44 +88,54 @@ public class TestSimplePreloadGridFromDatabase
         
         // make sure the grid map is empty, we're using insertAll later.
         customerMap.clear();
-        
-        // change this query to select the records you want to preload.
-        Query allQuery = em.createQuery("SELECT c FROM Customer c");
-        List<Customer> list = allQuery.getResultList();
-        
-        // we want at least a 1000 entries per partition when bulk loading. When insertAll is called then
-        // the bulk map is split in to a bucket per partition. This bucket per partition needs to be
-        // an optimal size. A 1000 entries per bucket is a good start
-        // so fetch the number of partitions and multiple by a 1000
-        int batchSize = utils.getObjectGrid().getMap("Customer").getPartitionManager().getNumOfPartitions() * 1000;
-        
-        // add each customer record in to a map with the key for it
-        for(Customer c : list)
+
+        int currentPosition = 0;
+        int maxChunk = 20000;
+        while(true)
         {
-            entries.put(c.getId(), c);
-            // flush to grid every batchSize entries
-            if (entries.size() > batchSize)
-            {
-            	// insert the real records using a Long key
-            	customerMap.insertAll(entries);
-            	// reset the batch otherwise, we'd insert the same entries multiple times
-            	entries.clear();
-            	System.out.println("Inserted " + count);
-            }
-            count++;
+	        // change this query to select the records you want to preload.
+	        Query allQuery = em.createQuery("SELECT c FROM Customer c");
+	        allQuery.setFirstResult(currentPosition);
+	        allQuery.setMaxResults(maxChunk);
+	        List<Customer> list = allQuery.getResultList();
+	        if(list.isEmpty())
+	        	break;
+	        currentPosition += list.size();
+	        
+	        // we want at least a 1000 entries per partition when bulk loading. When insertAll is called then
+	        // the bulk map is split in to a bucket per partition. This bucket per partition needs to be
+	        // an optimal size. A 1000 entries per bucket is a good start
+	        // so fetch the number of partitions and multiple by a 1000
+	        int batchSize = utils.getObjectGrid().getMap(Customer.MAP_NAME).getPartitionManager().getNumOfPartitions() * 1000;
+	        
+	        // add each customer record in to a map with the key for it
+	        for(Customer c : list)
+	        {
+	            entries.put(c.getId(), c);
+	            // flush to grid every batchSize entries
+	            if (entries.size() > batchSize)
+	            {
+	            	// insert the real records using a Long key
+	            	customerMap.putAll(entries);
+	            	// reset the batch otherwise, we'd insert the same entries multiple times
+	            	entries.clear();
+	            	System.out.println("Inserted " + count);
+	            }
+	            count++;
+	        }
+	        
+	        // flush any remaining entries, above loop just does every X
+	        // there will likely be some extra at the end, i.e. there wont
+	        // be a multiple of a X names, it's unlikely.
+	        if (entries.size() > 0)
+	        {
+	        	customerMap.insertAll(entries);
+	        	entries.clear();
+	        }
+	        
+	        // finish the database transaction
+	    	em.getTransaction().commit();
         }
-        
-        // flush any remaining entries, above loop just does every X
-        // there will likely be some extra at the end, i.e. there wont
-        // be a multiple of a X names, it's unlikely.
-        if (entries.size() > 0)
-        {
-        	customerMap.insertAll(entries);
-        	entries.clear();
-        }
-        
-        // finish the database transaction
-    	em.getTransaction().commit();
         long duration = (System.currentTimeMillis() - start) / 1000;
         System.out.println(Long.toString(count) + " names inserted and indexed in " + duration + " seconds");
 	}

@@ -13,9 +13,9 @@
   <classpathentry kind="var" path="M2_REPO/org/apache/geronimo/specs/geronimo-jta_1.1_spec/1.1/geronimo-jta_1.1_spec-1.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/junit/junit/4.7/junit-4.7.jar"/>
   <classpathentry kind="var" path="M2_REPO/mysql/mysql-connector-java/5.1.11/mysql-connector-java-5.1.11.jar"/>
-  <classpathentry kind="var" path="M2_REPO/com/ibm/websphere/objectgrid/objectgrid-server/7.0.0.2/objectgrid-server-7.0.0.2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/ibm/websphere/objectgrid/objectgrid-server/7.0.0.4/objectgrid-server-7.0.0.4.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/apache/openjpa/openjpa/1.2.2/openjpa-1.2.2.jar"/>
   <classpathentry kind="var" path="M2_REPO/net/sourceforge/serp/serp/1.13.1/serp-1.13.1.jar"/>
-  <classpathentry kind="var" path="M2_REPO/com/billynewport/wxsutils/wxsutils/1.1-SNAPSHOT/wxsutils-1.1-SNAPSHOT.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/billynewport/wxsutils/wxsutils/2.1.0-SNAPSHOT/wxsutils-2.1.0-SNAPSHOT.jar"/>
   <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 </classpath>
