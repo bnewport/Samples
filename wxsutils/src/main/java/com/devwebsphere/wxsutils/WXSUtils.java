@@ -868,17 +868,27 @@ public class WXSUtils
 	{
 		try
 		{
+			URL serverObjectgridXML =  WXSUtils.class.getResource(og_xml_path);
+			URL deployment =  WXSUtils.class.getResource(dep_xml_path);
+			
+			return startTestServer(gridName, serverObjectgridXML, deployment);
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.SEVERE, "Exception", e);
+			throw new ObjectGridRuntimeException("Cannot start OG container", e);
+		}
+	}
+	
+	public static ObjectGrid startTestServer(String gridName, URL serverObjectgridXML, URL deployment) 
+	{
+		try
+		{
 			startCatalogServer("cs1:localhost:6601:6602", "cs1");
 			
 			com.ibm.websphere.objectgrid.server.Server server = ServerFactory.getInstance();
 			
 			logger.log(Level.INFO, "Started catalog");
-			URL serverObjectgridXML =  WXSUtils.class.getResource(og_xml_path);
-			URL deployment =  WXSUtils.class.getResource(dep_xml_path);
-			if(serverObjectgridXML == null)
-				throw new ObjectGridRuntimeException("ObjectGrid xml file not found: " + og_xml_path);
-			if(deployment == null)
-				throw new ObjectGridRuntimeException("Deployment xml file not found: " + dep_xml_path);
 			logger.log(Level.INFO, "OG is " + serverObjectgridXML.toString() + " DP is " + deployment.toString());
 			DeploymentPolicy policy = DeploymentPolicyFactory.createDeploymentPolicy(deployment, serverObjectgridXML);
 			container = server.createContainer(policy);
@@ -906,14 +916,27 @@ public class WXSUtils
 	{
 		try
 		{
-			URL cog = (ogXMLpath != null) ? WXSUtils.class.getClassLoader().getResource(ogXMLpath) : null;
+			URL cog = (ogXMLpath != null) ? WXSUtils.class.getResource(ogXMLpath) : null;
 			if(ogXMLpath != null && cog == null)
 			{
 				logger.log(Level.SEVERE, "Specified og xml path could not be found:" + ogXMLpath);
 				throw new ObjectGridRuntimeException("Specified og xml path could not be found:" + ogXMLpath);
 			}
 			
-			ClientClusterContext ccc = ObjectGridManagerFactory.getObjectGridManager().connect(cep, null, cog);
+			return connectClient(cep, gridName, cog);
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.SEVERE, "Exception", e);
+			throw new ObjectGridRuntimeException("Cannot start OG client", e);
+		}
+	}
+	
+	static public ObjectGrid connectClient(String cep, String gridName, URL ogXMLURL)
+	{
+		try
+		{
+			ClientClusterContext ccc = ObjectGridManagerFactory.getObjectGridManager().connect(cep, null, ogXMLURL);
 			ObjectGrid grid = ObjectGridManagerFactory.getObjectGridManager().getObjectGrid(ccc, gridName);
 			return grid;
 		}
@@ -1136,7 +1159,6 @@ public class WXSUtils
 		// on the submitter thread.
 		ExecutorService p = new ThreadPoolExecutor(numThreads, numThreads, 2L, TimeUnit.MINUTES, queue, new ThreadPoolExecutor.CallerRunsPolicy());
 		return p;
-		
 	}
 	/**
 	 * This is a helper method to return a configured grid connection. The configuration is specified in the
