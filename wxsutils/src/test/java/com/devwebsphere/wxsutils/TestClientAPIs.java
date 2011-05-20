@@ -223,6 +223,30 @@ public class TestClientAPIs
 	}
 	
 	@Test
+	public void testLeftListOperations()
+	{
+		WXSMapOfLists<String, String> map = utils.getMapOfLists("BigList");
+		Assert.assertNotNull(map);
+		String key = "TESTLEFT";
+		int numItems = BigListPushAgent.BUCKET_SIZE * 5;
+		
+		for(int i = 0; i < numItems; ++i)
+		{
+			map.lpush(key, Integer.toString(i));
+			Assert.assertEquals(i + 1, map.llen(key));
+			
+			ArrayList<String> list = map.lrange(key, 0, i);
+			Assert.assertEquals(i+1, list.size());
+			int c = i;
+			for(String s : list)
+			{
+				Assert.assertEquals(Integer.toString(c), s);
+				c--;
+			}
+		}
+		
+	}
+	@Test
 	public void testBigListOperations()
 	{
 		WXSMapOfLists<String, String> map = utils.getMapOfLists("BigList");
