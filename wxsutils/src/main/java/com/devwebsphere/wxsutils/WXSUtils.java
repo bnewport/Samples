@@ -859,10 +859,13 @@ public class WXSUtils
 	/**
 	 * This is a boiler plate method to create a 'grid' within a single JVM. Both xml files must be loadable from the
 	 * class path. This will take about 20 seconds on a 2.4Ghz Core 2 Duo type processor. This makes it easy to do debugging of
-	 * the server and client side code for a WXS project as it's a single JVM.
+	 * the server and client side code for a WXS project as it's a single JVM. This tries to load the xml files
+	 * using the WXSUtils classloader. This may not work depending on the deployment environment. The URL version below
+	 * allows the application to provide a URL to avoid any class loader issues when required.
 	 * @param og_xml_path The name of the objectgrid.xml file
 	 * @param dep_xml_path The name of the deployment.xml file
 	 * @return A 'client' reference to the created grid.
+	 * @see WXSUtils#startTestServer(String, URL, URL)
 	 */
 	public static ObjectGrid startTestServer(String gridName, String og_xml_path, String dep_xml_path) 
 	{
@@ -879,7 +882,14 @@ public class WXSUtils
 			throw new ObjectGridRuntimeException("Cannot start OG container", e);
 		}
 	}
-	
+
+	/**
+	 * This is the same as startTestServer but takes a URL rather than a file name for the xml files.
+	 * @param gridName
+	 * @param serverObjectgridXML
+	 * @param deployment
+	 * @return
+	 */
 	public static ObjectGrid startTestServer(String gridName, URL serverObjectgridXML, URL deployment) 
 	{
 		try
@@ -905,6 +915,13 @@ public class WXSUtils
 		}
 	}
 
+	/**
+	 * This connects to a remote grid using the default objectgrid.xml
+	 * in use on the server side.
+	 * @param cep
+	 * @param gridName
+	 * @return
+	 */
 	static public ObjectGrid connectClient(String cep, String gridName)
 	{
 		return connectClient(cep, gridName, (String)null);
@@ -936,7 +953,16 @@ public class WXSUtils
 			throw new ObjectGridRuntimeException("Cannot start OG client", e);
 		}
 	}
-	
+
+	/**
+	 * This is the same as connectClient except the objectgrid.xml client file
+	 * is specified with a URL. This allows the file to be provided without any
+	 * class loader dependency issues.
+	 * @param cep
+	 * @param gridName
+	 * @param ogXMLURL
+	 * @return
+	 */
 	static public ObjectGrid connectClient(String cep, String gridName, URL ogXMLURL)
 	{
 		try
@@ -951,11 +977,17 @@ public class WXSUtils
 			throw new ObjectGridRuntimeException("Cannot start OG client", e);
 		}
 	}
-	
+
+	/**
+	 * This stops the test server if started.
+	 */
 	static public void stopContainer()
 	{
 		if(container != null)
+		{
 			container.teardown();
+			container = null;
+		}
 	}
 
 	static public class CallReduceAgentThread<K,X> implements Callable<X>

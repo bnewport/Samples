@@ -369,9 +369,8 @@ public class BigListHead <V extends Serializable> implements Serializable
 					high = size - 1;
 				ArrayList<V> rc = new ArrayList<V>(high - low + 1);
 				ArrayList<V> lList = (ArrayList<V>)bmap.get(getBucketKey(key, leftBucket));
-				
 	
-				int bucket = low / bucketSize + 1;
+				int bucket = low / bucketSize + 1 + leftBucket;
 				int offset = low % bucketSize;
 				
 				offset -= lList.size();
@@ -485,5 +484,10 @@ public class BigListHead <V extends Serializable> implements Serializable
 		sb.append(":");
 		sb.append(Integer.toString(c.get(Calendar.MINUTE)));
 		return sb.toString();
+	}
+	
+	public String toString()
+	{
+		return "BLH[left=" + leftBucket + ",right=" + rightBucket + "]";
 	}
 }

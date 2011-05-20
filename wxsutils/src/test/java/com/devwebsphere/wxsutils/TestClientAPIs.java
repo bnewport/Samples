@@ -28,6 +28,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.devwebsphere.wxsutils.WXSMapOfSets.Contains;
+import com.devwebsphere.wxsutils.filter.FalseFilter;
 import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.filter.FilterBuilder;
 import com.devwebsphere.wxsutils.filter.ValuePath;
@@ -341,6 +342,7 @@ public class TestClientAPIs
 		ValuePath surname = new PojoPropertyPath("Surname");
 		
 		FilterBuilder fb = new FilterBuilder();
+		Filter falseFilter = new FalseFilter();
 		Filter isBillyFilter = fb.and(fb.eq(firstName, "Billy"), fb.eq(surname, "Newport"));
 
 		Person billy = new Person();
@@ -363,8 +365,20 @@ public class TestClientAPIs
 		map.lcpush(key, billy, isBillyFilter);
 		Assert.assertEquals(2, map.llen(key));
 		
+		// just keep pushing some values and adding them
+		int numExtra = 50;
+		for(int i = 0; i < numExtra; ++i)
+		{
+			if(map.llen(key) == 21)
+			{
+				System.out.println("Len is " + map.llen(key));
+			}
+			map.lcpush(key, billy, falseFilter);
+			Assert.assertEquals(3+i, map.llen(key));
+		}
+		
 		map.lcpush(key, billy, isBillyFilter);
-		Assert.assertEquals(2, map.llen(key)); // no push this time
+		Assert.assertEquals(2 + numExtra, map.llen(key)); // no push this time
 	}
 	
 	@Test
