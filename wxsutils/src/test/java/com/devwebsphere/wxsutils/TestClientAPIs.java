@@ -712,6 +712,7 @@ public class TestClientAPIs
             List<String> set2 = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease is 10 seconds
             Assert.assertEquals(0, set2.size());
 
+            System.out.println("Waiting 20 seconds for lock to expire, don't panic...");
             // wait for lock to expire
             Thread.currentThread().sleep(20000L);
             
