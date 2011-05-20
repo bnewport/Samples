@@ -19,6 +19,9 @@ public class DirtyKey<V extends Serializable> implements Serializable, Comparabl
 	private static final long serialVersionUID = 5537792293319626344L;
 
 	V value;
+	/**
+	 * This is the time the record was marked as dirty
+	 */
 	long timeStamp;
 	
 	/**

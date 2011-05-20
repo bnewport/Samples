@@ -686,6 +686,41 @@ public class TestClientAPIs
     }
 	
 	@Test
+    public void testDirtySetSizeLease()
+		throws InterruptedException
+    {
+            String dirtyKey = "DIRTY3";
+            WXSMapOfLists<String, String> listMap = utils.getMapOfLists("BigList");
+           
+            List<String> set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
+            Assert.assertEquals(0, set.size());
+            
+            int numKeys = 10;
+            Set<String> keys = new HashSet<String>();
+            for(int i = 0; i < numKeys; i++)
+            {
+                    String key = UUID.randomUUID().toString();
+                    keys.add(key);
+                    listMap.lpush(key, "HELLO"+i,dirtyKey);
+            }
+
+            // get keys with lock for 10 seconds
+            set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease is 10 seconds
+            Assert.assertEquals(keys.size(), set.size());
+
+            // get them again during lock period, should get none
+            List<String> set2 = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease is 10 seconds
+            Assert.assertEquals(0, set2.size());
+
+            // wait for lock to expire
+            Thread.currentThread().sleep(20000L);
+            
+            // fetch again and they should be there
+            set2 = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease is 10 seconds
+            Assert.assertEquals(keys.size(), set2.size());
+    }
+	
+	@Test
 	public void testPingAllPartitions()
 	{
 		int partitionCount = PingAllPartitionsJob.visitAllPartitions(ogclient);
@@ -748,7 +783,7 @@ public class TestClientAPIs
 	public void testMultiThread()
 		throws InterruptedException
 	{
-		final String dirtyKey = "DIRTY3";
+		final String dirtyKey = "DIRTY_MULTI_THREAD";
 		final String key = "M";
         final WXSMapOfLists<String, String> listMap = utils.getMapOfLists("BigList");
         int numPushers = 200;

@@ -75,6 +75,13 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		return sb.toString();
 	}
 	
+	public static String getListLeaseMapName(String listName)
+	{
+		StringBuilder sb = new StringBuilder("LCKDIRTY.");
+		sb.append(listName);
+		return sb.toString();
+	}
+	
 	public WXSMapOfBigListsImpl(WXSUtils utils, String listName)
 	{
 		super(utils, getListHeadMapName(listName));

@@ -18,7 +18,7 @@ Licensed Materials - Property of IBM
         <mapSet name="mapSet" numberOfPartitions="13" minSyncReplicas="0" maxSyncReplicas="1" >
         	<!-- You need to define these templates for List/Sets, this is ALL you need -->
         	<!-- No matter how many List/Set maps you use -->
-            <map ref="LHEAD.*"/> <map ref="LBUCK.*"/> <map ref="LDIRTY.*"/> <map ref="SEVICT.*"/> <map ref="LEVICT.*"/>
+            <map ref="LHEAD.*"/> <map ref="LBUCK.*"/> <map ref="LDIRTY.*"/> <map ref="LCKDIRTY.*"/> <map ref="SEVICT.*"/> <map ref="LEVICT.*"/>
             <!-- End of templates for List/Sets -->
             
             <map ref="Map1"/>

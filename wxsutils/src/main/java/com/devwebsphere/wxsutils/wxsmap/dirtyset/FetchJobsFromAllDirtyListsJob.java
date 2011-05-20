@@ -43,6 +43,7 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	 * the last call. The next iteration starts at this plus one.
 	 */
 	int lastVisitedBucket;
+	long leaseTimeMS = 0;
 
 	/**
 	 * The is called to extract the current partition result from the
@@ -60,7 +61,20 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	JobExecutor<PartitionResult<V>, ArrayList<DirtyKey<V>>> je;
 	K setKey;
 	String listMapName;
+	
 	int desiredMaxKeysPerTrip = Integer.MAX_VALUE;
+
+	/**
+	 * Setting this to a non zero value will 'lock' dirty keys
+	 * from being returned to other clients for this amount of
+	 * time. If the dirty key is emptied before then the lock
+	 * is removed automatically
+	 * @param x
+	 */
+	public void setLeaseTimeMS(long x)
+	{
+		leaseTimeMS = x;
+	}
 	
 	public FetchJobsFromAllDirtyListsJob(ObjectGrid ogclient, String listMapName, K setKey)
 	{
@@ -81,6 +95,8 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 			t.setMapName = BigListPushAgent.getDirtySetMapNameForListMap(listMapName);
 			t.nextBucket = 0;
 			t.desiredMaxKeys = desiredMaxKeysPerTrip;
+			t.leaseMapName = BigListPushAgent.getDirtySetLockMapNameForListMap(listMapName);
+			t.leasePeriodMS = leaseTimeMS;
 			return t;
 		}
 		else
@@ -93,6 +109,8 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 				t.setMapName = BigListPushAgent.getDirtySetMapNameForListMap(listMapName);
 				t.nextBucket = lastVisitedBucket + 1;
 				t.desiredMaxKeys = desiredMaxKeysPerTrip;
+				t.leaseMapName = BigListPushAgent.getDirtySetLockMapNameForListMap(listMapName);
+				t.leasePeriodMS = leaseTimeMS;
 				return t;
 			}
 			else
@@ -141,7 +159,7 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	 * @param ogClient The grid to visit
 	 * @return # of partitions visited
 	 */
-	static public <K extends Serializable,V extends Serializable> int visitAllPartitions(ObjectGrid ogClient, String listMapName, K dirtyKey)
+	static public <K extends Serializable,V extends Serializable> int visitAllPartitions(ObjectGrid ogClient, String listMapName, String leaseMapName, K dirtyKey)
 	{
 		FetchJobsFromAllDirtyListsJob<K,V> job = new FetchJobsFromAllDirtyListsJob<K,V>(ogClient, listMapName, dirtyKey);
 		int count = 0;
@@ -154,6 +172,11 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 			// jobs retrieved in list, can be empty 
 		}
 		return count;
+	}
+	
+	public static <K extends Serializable, V extends Serializable> List<V> getAllDirtyKeysInGrid(ObjectGrid ogClient, String listName, K dirtyKey)
+	{
+		return getAllDirtyKeysInGrid(ogClient, listName, dirtyKey, 0L);
 	}
 	
 	/**
@@ -175,14 +198,16 @@ public class FetchJobsFromAllDirtyListsJob <K extends Serializable, V extends Se
 	 * @param ogClient
 	 * @param listMapName
 	 * @param dirtyKey
+	 * @param leaseTimeMS This is the time a dirty key will be 'locked' for this client before being provided to other clients
 	 * @return
 	 */
-	public static <K extends Serializable, V extends Serializable> List<V> getAllDirtyKeysInGrid(ObjectGrid ogClient, String listName, K dirtyKey)
+	public static <K extends Serializable, V extends Serializable> List<V> getAllDirtyKeysInGrid(ObjectGrid ogClient, String listName, K dirtyKey, long leaseTimeMS)
 	{
 		// You need a new one of these for each whole grid iteration. Once it getNextResult returns
 		// null then make a new one
 		String listHeadMapName = WXSMapOfBigListsImpl.getListHeadMapName(listName);
 		FetchJobsFromAllDirtyListsJob<K, V> job = new FetchJobsFromAllDirtyListsJob<K, V>(ogClient, listHeadMapName, dirtyKey);
+		job.setLeaseTimeMS(leaseTimeMS);
 
 		// we'll add all the dirty list keys to this set
 		TreeSet<DirtyKey<V>> result = new TreeSet<DirtyKey<V>>();

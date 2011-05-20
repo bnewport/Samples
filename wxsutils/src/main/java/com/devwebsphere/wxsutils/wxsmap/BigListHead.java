@@ -306,6 +306,9 @@ public class BigListHead <V extends Serializable> implements Serializable
 			}
 			ObjectMap dirtyMap = sess.getMap(BigListPushAgent.getDirtySetMapNameForListMap(map.getName()));
 			SetAddRemoveAgent.doOperation(sess, dirtyMap, dirtyKey, Operation.REMOVE, (Serializable)key);
+			ObjectMap leaseMap = sess.getMap(BigListPushAgent.getDirtySetLockMapNameForListMap(map.getName()));
+			// remove the lock on this key if present
+			leaseMap.remove(key);
 		}
 	}
 	

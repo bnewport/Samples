@@ -27,8 +27,11 @@ public class FetchDirtyJobsInPartitionTask <K extends Serializable, V extends Se
 {
 	K setKey;
 	String setMapName;
+	String leaseMapName;
 	int nextBucket;
 	int desiredMaxKeys = Integer.MAX_VALUE;
+	
+	long leasePeriodMS;
 	
 	static Logger logger = Logger.getLogger(FetchDirtyJobsInPartitionTask.class.getName());
 	/**
@@ -57,6 +60,7 @@ public class FetchDirtyJobsInPartitionTask <K extends Serializable, V extends Se
 		try
 		{
 			ObjectMap setMap = sess.getMap(setMapName);
+			ObjectMap leaseMap = sess.getMap(leaseMapName);
 			// serialize access to set
 			setMap.getForUpdate(setKey);
 			TreeSet<DirtyKey<V>> set = new TreeSet<DirtyKey<V>>();
@@ -68,10 +72,27 @@ public class FetchDirtyJobsInPartitionTask <K extends Serializable, V extends Se
 				{
 					for(SetElement<V> se : bucketSet)
 					{
+						Long leaseTime = (Long)leaseMap.getForUpdate(se.getValue());
+						// if lease has not expired then skip to next element
+						if(leaseTime != null)
+						{
+							if(leaseTime.longValue() > System.currentTimeMillis())
+								continue;
+						}
 						DirtyKey<V> dk = new DirtyKey<V>();
 						dk.setValue(se.getValue());
 						dk.setTimeStamp(se.getTimeStamp());
 						set.add(dk);
+						
+						// update lease time
+						if(leasePeriodMS != 0)
+						{
+							Long now = new Long(System.currentTimeMillis() + leasePeriodMS);
+							if(leaseTime == null)
+								leaseMap.insert(se.getValue(), now);
+							else
+								leaseMap.update(se.getValue(), now);
+						}
 					}
 					// keep adding buckets until max size exceeded
 					// if preserveOrder is true then only return a bucket at a time

@@ -52,6 +52,13 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 		return sb.toString();
 	}
 	
+	static public String getDirtySetLockMapNameForListMap(String mapName)
+	{
+		StringBuilder sb = new StringBuilder("LCKDIRTY.");
+		sb.append(BigListHead.getListNameFromHeadMapName(mapName));
+		return sb.toString();
+	}
+	
 	static <K extends Serializable, V extends Serializable> void push(Session sess, ObjectMap map, LR isLeft, Map<K, List<V>> values, K dirtyKey, Filter cfilter)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListPushAgent.class.getName());

@@ -20,6 +20,7 @@ Licensed Materials - Property of IBM
             <backingMap name="LHEAD.*" template="true" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES" lockTimeout="20"/>
             <backingMap name="LBUCK.*" template="true" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES" lockTimeout="20"/>
             <backingMap name="LDIRTY.*" template="true" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES" lockTimeout="20"/>
+            <backingMap name="LCKDIRTY.*" template="true" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES" lockTimeout="20"/>
             <backingMap name="SEVICT.*" template="true" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES" lockTimeout="20"/>
             <backingMap name="LEVICT.*" template="true" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES" lockTimeout="20"/>
             <!-- End of List/Set templates -->
