@@ -12,7 +12,6 @@ package com.devwebsphere.wxsutils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -170,6 +169,7 @@ public class WXSUtils
 	{
 		this.grid = utils.getObjectGrid();
 		threadPool = utils.threadPool;
+		this.configProps = utils.configProps;
 		tls = new ThreadLocalSession(this);
 	}
 	/**
@@ -1289,5 +1289,20 @@ public class WXSUtils
 	public Session getSessionForThread()
 	{
 		return tls.getSession();
+	}
+
+	@Beta
+	public static final Logger getLogger() {
+		return logger;
+	}
+
+	@Beta
+	public final Map<String, WXSBaseMap> getMaps() {
+		return maps;
+	}
+
+	@Beta
+	public final ThreadLocalSession getTls() {
+		return tls;
 	}
 }
