@@ -45,7 +45,7 @@ import com.ibm.websphere.projector.annotations.Id;
  * @see Id
  *
  */
-public class GenericJDBCLoader<KEY,T> extends BaseJDBCLoader<KEY> implements Loader
+public class GenericJDBCLoader extends BaseJDBCLoader implements Loader
 {
 	static public class ValueHolder
 	{
@@ -62,7 +62,7 @@ public class GenericJDBCLoader<KEY,T> extends BaseJDBCLoader<KEY> implements Loa
 	{
 		try
 		{
-			theClass = (Class<T>)Class.forName(className);
+			theClass = Class.forName(className);
 			createSQLStrings();
 		}
 		catch(ClassNotFoundException e)
@@ -75,7 +75,7 @@ public class GenericJDBCLoader<KEY,T> extends BaseJDBCLoader<KEY> implements Loa
 	/**
 	 * The POJO class to persist. Need this to reflect the annotations
 	 */
-	private Class<T> theClass;
+	private Class theClass;
 	
 	/**
 	 * Created from annotation on class
@@ -115,7 +115,7 @@ public class GenericJDBCLoader<KEY,T> extends BaseJDBCLoader<KEY> implements Loa
 		if(insertSQL != null)
 			return;
 
-		Table t = theClass.getAnnotation(Table.class);
+		Table t = (Table)theClass.getAnnotation(Table.class);
 		if(t != null)
 		{
 			tableName = t.name();
@@ -137,8 +137,8 @@ public class GenericJDBCLoader<KEY,T> extends BaseJDBCLoader<KEY> implements Loa
 		allFieldNames = new ArrayList<String>();
 		allFields = new ArrayList<Field>();
 		
-		CompositeKey ckey = theClass.getAnnotation(CompositeKey.class);
-		SimpleKey skey = theClass.getAnnotation(SimpleKey.class);
+		CompositeKey ckey = (CompositeKey)theClass.getAnnotation(CompositeKey.class);
+		SimpleKey skey = (SimpleKey)theClass.getAnnotation(SimpleKey.class);
 		if(ckey == null && skey == null)
 		{
 			String s = "Pojo " + theClass.getName() + " needs either SimpleKey or CompositeKey annotations";
@@ -153,7 +153,7 @@ public class GenericJDBCLoader<KEY,T> extends BaseJDBCLoader<KEY> implements Loa
 		}
 		if(ckey != null)
 		{
-			keyClass = (Class<KEY>)ckey.clazz();
+			keyClass = ckey.clazz();
 			Field[] fields = keyClass.getDeclaredFields();
 			for(Field f : fields)
 			{
