@@ -12,6 +12,7 @@ package com.devwebsphere.wxsutils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -410,7 +411,8 @@ public class WXSUtils
 	 */
 	public <K,V> void putAll_noLoader(Map<K,V> batch, BackingMap bmap)
 	{
-		internalPutAll(batch, bmap, true, false);
+		// no doGet and no writethrough
+		internalPutAll(batch, bmap, false, false);
 	}
 	
 	/**
@@ -1038,11 +1040,16 @@ public class WXSUtils
 		int maxWait = configProps != null ? configProps.agentWaitTimeMaximumSecs : 120;
 		try 
 		{
-			doneSignal.await(maxWait, TimeUnit.SECONDS);
-		} catch (Throwable e) 
+			// BN V2.3.1 if this returns false then it timed out
+			if(doneSignal.await(maxWait, TimeUnit.SECONDS) == false)
+			{
+				logger.log(Level.SEVERE, "wxsutils.properties#agenttimeoutsecs may be too small, default is 120 seconds");
+				throw new ObjectGridRuntimeException("Timeout waiting for agents (" + maxWait + " seconds)");
+			}
+		} catch (InterruptedException e) 
 		{
-			logger.log(Level.SEVERE, "Time out detected waiting for agent", e);
-			throw new ObjectGridRuntimeException("Timeout waiting for agents (" + maxWait + " seconds)", e);
+			logger.log(Level.SEVERE, "Interrupted while waiting for agent", e);
+			throw new ObjectGridRuntimeException("Interrupting waiting for agents (" + maxWait + " seconds)", e);
 		}		
 	}
 

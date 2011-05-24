@@ -69,7 +69,8 @@ public class InsertAgent<K,V> implements ReduceGridAgent
 			else
 				s.begin();
 			ArrayList keys = new ArrayList(batch.keySet());
-			if(doGet)
+			// BN V2.3.1 If write through is disabled DONT DO A GET
+			if(doGet && isWriteThrough)
 			{
 				// do a get first
 				m.getAll(keys);

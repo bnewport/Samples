@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
@@ -37,6 +38,7 @@ import com.devwebsphere.wxsutils.multijob.Person;
 import com.devwebsphere.wxsutils.multijob.pingall.PingAllPartitionsJob;
 import com.devwebsphere.wxsutils.wxsmap.BigListPushAgent;
 import com.devwebsphere.wxsutils.wxsmap.WXSMapOfBigListsImpl;
+import com.devwebsphere.wxsutils.wxsmap.dirtyset.DirtyKey;
 import com.devwebsphere.wxsutils.wxsmap.dirtyset.FetchJobsFromAllDirtyListsJob;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
@@ -786,7 +788,9 @@ public class TestClientAPIs
 	{
 		final String dirtyKey = "DIRTY_MULTI_THREAD";
 		final String key = "M";
-        final WXSMapOfLists<String, String> listMap = utils.getMapOfLists("BigList");
+		final String listName = "BigList";
+        final WXSMapOfLists<String, String> listMap = utils.getMapOfLists(listName);
+		final String listHeadMapName = WXSMapOfBigListsImpl.getListHeadMapName(listName);
         int numPushers = 200;
         final int numKeys = 1000;
         final int numPushesPerPusher = 500;
@@ -803,37 +807,36 @@ public class TestClientAPIs
 			{
 				try
 				{
-					long start = System.currentTimeMillis();
 					while(counter.getCount() > 0)
 					{
-						List<String> allKeys = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey) ;
-						for(String aKey : allKeys)
+						// make a FetchJob to scan grid for dirty keys
+						FetchJobsFromAllDirtyListsJob<String, String> job = new FetchJobsFromAllDirtyListsJob<String, String>(ogclient, listHeadMapName, dirtyKey);
+
+						ArrayList<DirtyKey<String>> r = null;
+						// get the next block of dirty list keys
+						// this array r is sorted in first dirtied order
+						// when r is null then the whole grid has been checked
+						while((r = job.getNextResult()) != null)
 						{
-							ArrayList<String> pList = listMap.popAll(aKey, dirtyKey);
-							if(pList != null && pList.size() > 0)
+							for(DirtyKey<String> dk : r)
 							{
-								System.out.println("Pulled " + pList.size() + " from " + aKey + ": Remaining = " + counter.getCount());
-								// count down for each job retrieved
-								for(String s : pList)
+								String aKey = dk.getValue();
+								ArrayList<String> pList = listMap.popAll(aKey, dirtyKey);
+								if(pList != null && pList.size() > 0)
 								{
-									// value MUST be same as key
-									Assert.assertEquals(aKey, s);
-									// one less value for this list and sanity check
-									Assert.assertTrue(keyPushCounters.get(aKey).decrementAndGet() >= 0);
-									counter.countDown();
+									System.out.println("Pulled " + pList.size() + " from " + aKey + ": Remaining = " + counter.getCount());
+									// count down for each job retrieved
+									for(String s : pList)
+									{
+										// value MUST be same as key
+										Assert.assertEquals(aKey, s);
+										// one less value for this list and sanity check
+										Assert.assertTrue(keyPushCounters.get(aKey).decrementAndGet() >= 0);
+										counter.countDown();
+									}
 								}
 							}
 						}
-						try
-						{
-							Thread.currentThread().sleep(50);
-						}
-						catch(Exception e) 
-						{
-							logger.log(Level.SEVERE, "Exception",e);
-							Assert.fail();
-						}
-						
 					}
 				}
 				catch(Exception e)
@@ -917,11 +920,13 @@ public class TestClientAPIs
 	{
 		final String dirtyKey = "DIRTY4";
 		final String key = "N";
-        final WXSMapOfLists<String, String> listMap = utils.getMapOfLists("BigList");
+		final String listName = "BigList";
+        final WXSMapOfLists<String, String> listMap = utils.getMapOfLists(listName);
         int numPushers = 50;
         final int numKeys = 20;
         final int numPushesPerPusher = 100;
         final CountDownLatch counter = new CountDownLatch(numPushers * numPushesPerPusher);
+		final String listHeadMapName = WXSMapOfBigListsImpl.getListHeadMapName(listName);
         
         final Map<String, AtomicLong> keyPushCounters = new HashMap<String, AtomicLong>();
         for(int i = 0; i < numKeys; ++i)
@@ -934,21 +939,32 @@ public class TestClientAPIs
 			{
 				try
 				{
-					long start = System.currentTimeMillis();
+					// while there are list elements remaining
 					while(counter.getCount() > 0)
 					{
-						List<String> allKeys = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey) ;
-						for(String aKey : allKeys)
+						// make a FetchJob to scan grid for dirty keys
+						FetchJobsFromAllDirtyListsJob<String, String> job = new FetchJobsFromAllDirtyListsJob<String, String>(ogclient, listHeadMapName, dirtyKey);
+						job.setLeaseTimeMS(100L /* ms*/);
+
+						ArrayList<DirtyKey<String>> r = null;
+						// get the next block of dirty list keys
+						// this array r is sorted in first dirtied order
+						// when r is null then the whole grid has been checked
+						while((r = job.getNextResult()) != null)
 						{
-							String aValue = listMap.rpop(aKey, dirtyKey);
-							if(aValue != null)
+							for(DirtyKey<String> dk : r)
 							{
-								System.out.println("Pulled from " + aKey + ": Remaining = " + counter.getCount());
-								// value MUST be same as key
-								Assert.assertEquals(aKey, aValue);
-								// one less value for this list and sanity check
-								Assert.assertTrue(keyPushCounters.get(aKey).decrementAndGet() >= 0);
-								counter.countDown();
+								String aKey = dk.getValue();
+								String aValue = listMap.rpop(aKey, dirtyKey);
+								if(aValue != null)
+								{
+									System.out.println("Pulled from " + aKey + ": Remaining = " + counter.getCount());
+									// value MUST be same as key
+									Assert.assertEquals(aKey, aValue);
+									// one less value for this list and sanity check
+									Assert.assertTrue(keyPushCounters.get(aKey).decrementAndGet() >= 0);
+									counter.countDown();
+								}
 							}
 						}
 					}

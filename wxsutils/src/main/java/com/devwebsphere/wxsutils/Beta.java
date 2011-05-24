@@ -10,24 +10,16 @@
 //
 package com.devwebsphere.wxsutils;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 /**
- * This is the type of eviction required for a data structure.
+ * Any interfaces/annotations or classes marked with this annotation are
+ * liable to change without notice.
  * @author bnewport
  *
  */
-@Beta
-public enum EvictionType 
-{ 
-	/**
-	 * This is an interval since the item was marked for eviction
-	 */
-	FIXED, 
-	/**
-	 * This is an interval since the item was last accessed
-	 */
-	LAST_ACCESS_TIME, 
-	/**
-	 * This is no eviction
-	 */
-	NONE 
+@Retention(value=RetentionPolicy.CLASS)
+public @interface Beta {
+
 }

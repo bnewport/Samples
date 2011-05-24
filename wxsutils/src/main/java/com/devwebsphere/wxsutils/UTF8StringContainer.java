@@ -10,24 +10,37 @@
 //
 package com.devwebsphere.wxsutils;
 
+import java.nio.charset.Charset;
+
 /**
- * This is the type of eviction required for a data structure.
+ * This is a helper class to work with UTF8 strings to save
+ * space when there are lots of strings in memory
  * @author bnewport
  *
  */
-@Beta
-public enum EvictionType 
-{ 
+public class UTF8StringContainer
+{
+	static Charset utf8 = Charset.forName("UTF-8");
+
 	/**
-	 * This is an interval since the item was marked for eviction
+	 * This converts a String to its UTF8 byte form.
+	 * @param s
+	 * @return
 	 */
-	FIXED, 
+	public static byte[] fromString(String s)
+	{
+		byte[] value = s.getBytes(utf8);
+		return value;
+	}
+
 	/**
-	 * This is an interval since the item was last accessed
+	 * This converts a UTF8 byte to a String
+	 * @param b
+	 * @return
 	 */
-	LAST_ACCESS_TIME, 
-	/**
-	 * This is no eviction
-	 */
-	NONE 
+	public static String toString(byte[] b)
+	{
+		String s = new String(b, utf8);
+		return s;
+	}
 }

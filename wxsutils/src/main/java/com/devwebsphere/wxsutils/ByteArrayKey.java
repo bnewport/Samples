@@ -8,7 +8,7 @@
 //5724-J34 (C) COPYRIGHT International Business Machines Corp. 2005
 //All Rights Reserved * Licensed Materials - Property of IBM
 //
-package com.devwebsphere.wxssearch;
+package com.devwebsphere.wxsutils;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -20,8 +20,9 @@ import java.util.Arrays;
  * byte[] isn't usable as a key in hash maps as the equals method
  * doesn't work. This wraps one to make it usable as a key.
  *
+ * This class is useful for saving memory when using String keys. This
+ * saves about 30 bytes per String with a 10 character String (64 bit JVM).
  */
-@Deprecated
 public class ByteArrayKey implements Externalizable 
 {
 	public ByteArrayKey()
@@ -33,12 +34,26 @@ public class ByteArrayKey implements Externalizable
 	{
 		this.b = b;
 	}
+
+	/**
+	 * Wraps a String in a ByteArray.
+	 * @param s
+	 */
+	public ByteArrayKey(String s)
+	{
+		this.b = UTF8StringContainer.fromString(s);
+	}
 	
 	@Override
 	public boolean equals(Object obj) 
 	{
-		ByteArrayKey other = (ByteArrayKey)obj;
-		return Arrays.equals(b, other.b);
+		if(obj instanceof ByteArrayKey)
+		{
+			ByteArrayKey other = (ByteArrayKey)obj;
+			return Arrays.equals(b, other.b);
+		}
+		else
+			return false;
 	}
 
 	byte[] b;
@@ -66,5 +81,14 @@ public class ByteArrayKey implements Externalizable
 	public byte[] getBytes()
 	{
 		return b;
+	}
+
+	/**
+	 * This tries to convert the byte[] to a String
+	 * @return
+	 */
+	public String getAsString()
+	{
+		return UTF8StringContainer.toString(b);
 	}
 }

@@ -176,7 +176,7 @@ public class WXSMapImpl <K extends Serializable,V extends Serializable> extends 
 	{
 		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
-		utils.putAll(batch, bmap);
+		utils.putAll_noLoader(batch, bmap);
 		mbean.getPutMetrics().logTime(System.nanoTime() - start);
 	}
 	

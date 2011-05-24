@@ -295,5 +295,6 @@ public interface WXSMapOfLists<K,V> {
 	 * @param type Last Creation time or last access time
 	 * @param intervalSeconds The time in seconds after which to evict
 	 */
+	@Beta
 	public void evict(K key, EvictionType type, int intervalSeconds);
 }
