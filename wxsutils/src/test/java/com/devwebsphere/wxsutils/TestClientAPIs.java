@@ -764,6 +764,7 @@ public class TestClientAPIs
                     String key = UUID.randomUUID().toString();
                     keys.add(key);
                     listMap.lpush(key, "HELLO"+i,dirtyKey);
+                    listMap.lpush(key, "HELLO"+i,dirtyKey); // push twice for rremove test below
             }
 
             // get keys with lock for 10 seconds
@@ -781,6 +782,16 @@ public class TestClientAPIs
             // fetch again and they should be there
             set2 = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease is 10 seconds
             Assert.assertEquals(keys.size(), set2.size());
+            // unlock first key
+            String firstKey = set2.get(0);
+            int numItems = listMap.lremove(firstKey, 1, dirtyKey, true);
+            // cannot be zero as this removes lease breaking what we're testing for.
+            Assert.assertFalse(listMap.isEmpty(firstKey));
+            Assert.assertEquals(1, numItems);
+            // fetch again and only that key should be there
+            set2 = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease is 10 seconds
+            Assert.assertEquals(1, set2.size());
+            Assert.assertEquals(firstKey, set2.get(0));
     }
 	
 	@Test

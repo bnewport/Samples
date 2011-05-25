@@ -43,9 +43,10 @@ public class BigListRemoveNItemsAgent<K extends Serializable, V extends Serializ
 	public K dirtyKey;
 	public LR isLeft;
 	public int numItems;
+	public boolean releaseLease;
 	
 	
-	static public <K extends Serializable, V extends Serializable> int removeNItems(Session sess, ObjectMap map, Object key, LR isLeft, int numItems, K dirtyKey)
+	static public <K extends Serializable, V extends Serializable> int removeNItems(Session sess, ObjectMap map, Object key, LR isLeft, int numItems, K dirtyKey, boolean releaseLease)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListRemoveNItemsAgent.class.getName());
 		long startNS = System.nanoTime();
@@ -61,7 +62,7 @@ public class BigListRemoveNItemsAgent<K extends Serializable, V extends Serializ
 			int numRemoved = 0;
 			BigListHead<V> head = (BigListHead<V>)map.getForUpdate(key);
 			if(head != null)
-				numRemoved = head.removeNItems(sess, map, key, isLeft, numItems, dirtyKey);
+				numRemoved = head.removeNItems(sess, map, key, isLeft, numItems, dirtyKey, releaseLease);
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 			return numRemoved;
 		}
@@ -77,7 +78,7 @@ public class BigListRemoveNItemsAgent<K extends Serializable, V extends Serializ
 	 */
 	public Object process(Session sess, ObjectMap map, Object key) 
 	{
-		return new Integer(removeNItems(sess, map, key, isLeft, numItems, dirtyKey));
+		return new Integer(removeNItems(sess, map, key, isLeft, numItems, dirtyKey, releaseLease));
 	}
 
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {

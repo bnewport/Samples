@@ -318,22 +318,22 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 	
 	public int rremove(K key, int numItems)
 	{
-		return rremove(key, numItems, null);
+		return rremove(key, numItems, null, false);
 	}
 	
 	public int lremove(K key, int numItems)
 	{
-		return lremove(key, numItems, null);
+		return lremove(key, numItems, null, false);
 	}
 	
-	public int rremove(K key, int numItems, K dirtyKey)
+	public int rremove(K key, int numItems, K dirtyKey, boolean releaseLease)
 	{
-		return removeNItems(LR.RIGHT, key, numItems, dirtyKey);
+		return removeNItems(LR.RIGHT, key, numItems, dirtyKey, releaseLease);
 	}
 	
-	public int lremove(K key, int numItems, K dirtyKey)
+	public int lremove(K key, int numItems, K dirtyKey, boolean releaseLease)
 	{
-		return removeNItems(LR.LEFT, key, numItems, dirtyKey);
+		return removeNItems(LR.LEFT, key, numItems, dirtyKey, releaseLease);
 	}
 	
 	private ArrayList<V> popNItems(LR isLeft, K key, int numItems, K dirtyKey) {
@@ -363,7 +363,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		}
 	}
 	
-	private int removeNItems(LR isLeft, K key, int numItems, K dirtyKey) {
+	private int removeNItems(LR isLeft, K key, int numItems, K dirtyKey, boolean releaseLease) {
 		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try
@@ -372,6 +372,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 			a.dirtyKey = dirtyKey;
 			a.isLeft = isLeft;
 			a.numItems = numItems;
+			a.releaseLease = releaseLease;
 			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if(rcV != null && rcV instanceof EntryErrorValue)

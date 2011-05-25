@@ -88,6 +88,8 @@ public class FetchDirtyJobsInPartitionTask <K extends Serializable, V extends Se
 						if(leasePeriodMS != 0)
 						{
 							Long now = new Long(System.currentTimeMillis() + leasePeriodMS);
+							if(logger.isLoggable(Level.FINE))
+								logger.log(Level.FINE, "Updating lease for " + se.getValue() + " to " + now + " in grid " + sess.getObjectGrid().toString());
 							if(leaseTime == null)
 								leaseMap.insert(se.getValue(), now);
 							else

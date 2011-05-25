@@ -246,7 +246,7 @@ public class BigListHead <V extends Serializable> implements Serializable
 	}
 
 	public <K extends Serializable> List<V> popNItems(Session sess, ObjectMap map, Object key, LR isLeft, int n, K dirtyKey)
-	throws ObjectGridException
+		throws ObjectGridException
 	{
 		ArrayList<V> list = new ArrayList<V>(n);
 		for(int i = 0; i < n; ++i)
@@ -260,8 +260,8 @@ public class BigListHead <V extends Serializable> implements Serializable
 		return list;
 	}
 	
-	public <K extends Serializable> int removeNItems(Session sess, ObjectMap map, Object key, LR isLeft, int n, K dirtyKey)
-	throws ObjectGridException
+	public <K extends Serializable> int removeNItems(Session sess, ObjectMap map, Object key, LR isLeft, int n, K dirtyKey, boolean releaseLease)
+		throws ObjectGridException
 	{
 		int counter = 0;
 		for(int i = 0; i < n; ++i)
@@ -271,6 +271,8 @@ public class BigListHead <V extends Serializable> implements Serializable
 				break;
 			counter++;
 		}
+		if(dirtyKey != null && releaseLease)
+			releaseLease(sess, map, key);
 		return counter;
 	}
 	
@@ -337,7 +339,28 @@ public class BigListHead <V extends Serializable> implements Serializable
 			SetAddRemoveAgent.doOperation(sess, dirtyMap, dirtyKey, Operation.REMOVE, (Serializable)key);
 			ObjectMap leaseMap = sess.getMap(BigListPushAgent.getDirtySetLockMapNameForListMap(map.getName()));
 			// remove the lock on this key if present
+			if(leaseMap.containsKey(key))
+			{
+				System.out.println("List empty, cleaning up lease for " + key);
+				leaseMap.remove(key);
+			}
+		}
+	}
+	
+	void releaseLease(Session sess, ObjectMap map, Object key)
+		throws UndefinedMapException, ObjectGridException
+	{
+		ObjectMap leaseMap = sess.getMap(BigListPushAgent.getDirtySetLockMapNameForListMap(map.getName()));
+		if(leaseMap.containsKey(key))
+		{
+			if(logger.isLoggable(Level.FINE))
+				logger.log(Level.FINE, "Removing lease for " + key + " in grid " + sess.getObjectGrid().toString());
 			leaseMap.remove(key);
+		}
+		else
+		{
+			if(logger.isLoggable(Level.FINE))
+				logger.log(Level.FINE, "No lease found for " + key + " in grid " + sess.getObjectGrid().toString());
 		}
 	}
 	

@@ -268,9 +268,10 @@ public interface WXSMapOfLists<K,V> {
 	 * @param key
 	 * @param numItems
 	 * @param dirtyKey
+	 * @param releaseLease
 	 * @return
 	 */
-	public int rremove(K key, int numItems, K dirtyKey);
+	public int rremove(K key, int numItems, K dirtyKey, boolean releaseLease);
 	
 	/**
 	 * This removes N items from the left and returns the number of items
@@ -287,9 +288,10 @@ public interface WXSMapOfLists<K,V> {
 	 * @param key
 	 * @param numItems
 	 * @param dirtyKey
+	 * @param releaseLease
 	 * @return
 	 */
-	public int lremove(K key, int numItems, K dirtyKey);
+	public int lremove(K key, int numItems, K dirtyKey, boolean releaseLease);
 	
 	/**
 	 * This pushes the value on the righthand side of the list
