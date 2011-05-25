@@ -248,6 +248,7 @@ public class TestClientAPIs
 		}
 		
 	}
+	
 	@Test
 	public void testBigListOperations()
 	{
@@ -352,6 +353,65 @@ public class TestClientAPIs
 		
 		Assert.assertTrue(map.popAll(key).isEmpty());
 		
+		{
+			for(int i = 0; i < 10; ++i)
+			{
+				map.rpush(key, Integer.toString(i));
+			}
+			Assert.assertEquals(10, map.llen(key));
+			List<String> partial = map.lpop(key, 5);
+			Assert.assertEquals(5, partial.size());
+			int counter = 0;
+			for(String s : partial)
+			{
+				Assert.assertEquals(Integer.toString(counter++), s);
+			}
+			partial = map.lpop(key, 10);
+			Assert.assertEquals(0, map.llen(key));
+			Assert.assertEquals(5, partial.size());
+			for(String s : partial)
+			{
+				Assert.assertEquals(Integer.toString(counter++), s);
+			}
+		}
+
+		{
+			for(int i = 0; i < 10; ++i)
+			{
+				map.rpush(key, Integer.toString(i));
+			}
+			Assert.assertEquals(10, map.llen(key));
+			int numRemoved = map.lremove(key, 5);
+			List<String> leftMost = map.lrange(key, 0, 0);
+			Assert.assertEquals(1, leftMost.size());
+			Assert.assertEquals("5", leftMost.get(0));
+			Assert.assertEquals(5, numRemoved);
+			numRemoved = map.lremove(key, 10);
+			Assert.assertEquals(0, map.llen(key));
+			Assert.assertEquals(5, numRemoved);
+		}
+		
+		{
+			for(int i = 0; i < 10; ++i)
+			{
+				map.lpush(key, Integer.toString(i));
+			}
+			Assert.assertEquals(10, map.llen(key));
+			List<String> partial = map.rpop(key, 5);
+			Assert.assertEquals(5, partial.size());
+			int counter = 0;
+			for(String s : partial)
+			{
+				Assert.assertEquals(Integer.toString(counter++), s);
+			}
+			partial = map.rpop(key, 10);
+			Assert.assertEquals(0, map.llen(key));
+			Assert.assertEquals(5, partial.size());
+			for(String s : partial)
+			{
+				Assert.assertEquals(Integer.toString(counter++), s);
+			}
+		}
 		long endTime = System.nanoTime();
 		double duration = (endTime - startTime) / 1000000.0;
 		logger.log(Level.INFO, "Took " + duration);

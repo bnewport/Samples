@@ -296,6 +296,100 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		}
 	}
 
+	public List<V> lpop(K key, int numItems)
+	{
+		return popNItems(LR.LEFT, key, numItems, null);
+	}
+	
+	public List<V> lpop(K key, int numItems, K dirtyKey)
+	{
+		return popNItems(LR.LEFT, key, numItems, dirtyKey);
+	}
+	
+	public List<V> rpop(K key, int numItems)
+	{
+		return popNItems(LR.RIGHT, key, numItems, null);
+	}
+	
+	public List<V> rpop(K key, int numItems, K dirtyKey)
+	{
+		return popNItems(LR.RIGHT, key, numItems, dirtyKey);
+	}
+	
+	public int rremove(K key, int numItems)
+	{
+		return rremove(key, numItems, null);
+	}
+	
+	public int lremove(K key, int numItems)
+	{
+		return lremove(key, numItems, null);
+	}
+	
+	public int rremove(K key, int numItems, K dirtyKey)
+	{
+		return removeNItems(LR.RIGHT, key, numItems, dirtyKey);
+	}
+	
+	public int lremove(K key, int numItems, K dirtyKey)
+	{
+		return removeNItems(LR.LEFT, key, numItems, dirtyKey);
+	}
+	
+	private ArrayList<V> popNItems(LR isLeft, K key, int numItems, K dirtyKey) {
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
+		long start = System.nanoTime();
+		try
+		{
+			BigListPopNItemsAgent<K, V> a = new BigListPopNItemsAgent<K, V>();
+			a.dirtyKey = dirtyKey;
+			a.isLeft = isLeft;
+			a.numItems = numItems;
+			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
+			Object rcV = rc.get(key);
+			if(rcV != null && rcV instanceof EntryErrorValue)
+			{
+				logger.log(Level.SEVERE, "popNItems failed");
+				throw new ObjectGridRuntimeException(rcV.toString());
+			}
+			mbean.getRangeMetrics().logTime(System.nanoTime() - start);
+			return (ArrayList<V>)rcV;
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.SEVERE, "Exception", e);
+			mbean.getRangeMetrics().logException(e);
+			throw new ObjectGridRuntimeException(e);
+		}
+	}
+	
+	private int removeNItems(LR isLeft, K key, int numItems, K dirtyKey) {
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
+		long start = System.nanoTime();
+		try
+		{
+			BigListRemoveNItemsAgent<K, V> a = new BigListRemoveNItemsAgent<K, V>();
+			a.dirtyKey = dirtyKey;
+			a.isLeft = isLeft;
+			a.numItems = numItems;
+			Map<K,Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
+			Object rcV = rc.get(key);
+			if(rcV != null && rcV instanceof EntryErrorValue)
+			{
+				logger.log(Level.SEVERE, "popNItems failed");
+				throw new ObjectGridRuntimeException(rcV.toString());
+			}
+			mbean.getRangeMetrics().logTime(System.nanoTime() - start);
+			return ((Integer)rcV).intValue();
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.SEVERE, "Exception", e);
+			mbean.getRangeMetrics().logException(e);
+			throw new ObjectGridRuntimeException(e);
+		}
+	}
+	
 	public void rtrim(K key, int size) {
 		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();

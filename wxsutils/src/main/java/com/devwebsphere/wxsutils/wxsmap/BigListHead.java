@@ -244,6 +244,35 @@ public class BigListHead <V extends Serializable> implements Serializable
 		// update list head
 		map.update(key, this);
 	}
+
+	public <K extends Serializable> List<V> popNItems(Session sess, ObjectMap map, Object key, LR isLeft, int n, K dirtyKey)
+	throws ObjectGridException
+	{
+		ArrayList<V> list = new ArrayList<V>(n);
+		for(int i = 0; i < n; ++i)
+		{
+			V rc = pop(sess, map, key, isLeft, dirtyKey);
+			if(rc != null)
+				list.add(rc);
+			else
+				break;
+		}
+		return list;
+	}
+	
+	public <K extends Serializable> int removeNItems(Session sess, ObjectMap map, Object key, LR isLeft, int n, K dirtyKey)
+	throws ObjectGridException
+	{
+		int counter = 0;
+		for(int i = 0; i < n; ++i)
+		{
+			V rc = pop(sess, map, key, isLeft, dirtyKey);
+			if(rc == null)
+				break;
+			counter++;
+		}
+		return counter;
+	}
 	
 	public <K extends Serializable> V pop(Session sess, ObjectMap map, Object key, LR isLeft, K dirtyKey)
 		throws ObjectGridException

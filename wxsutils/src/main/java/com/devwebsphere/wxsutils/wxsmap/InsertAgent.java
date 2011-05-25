@@ -17,8 +17,10 @@ import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
+import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
+import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 
 /**
@@ -86,7 +88,7 @@ public class InsertAgent<K,V> implements ReduceGridAgent
 		{
 			logger.log(Level.SEVERE, "Exception", e);
 			agent.getKeysMetric().logException(e);
-			return Boolean.FALSE;
+			throw new ObjectGridRuntimeException(e);
 		}
 	}
 
@@ -99,14 +101,15 @@ public class InsertAgent<K,V> implements ReduceGridAgent
 		boolean rc = true;
 		for(Object o : arg0)
 		{
+			if(o instanceof EntryErrorValue)
+			{
+				EntryErrorValue ev = (EntryErrorValue)o;
+				return o;
+			}
 			if(o instanceof Boolean)
 			{
 				Boolean b = (Boolean)o;
 				rc = rc && b;
-			}
-			else
-			{
-				rc = false;
 			}
 			if(!rc) break;
 		}

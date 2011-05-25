@@ -218,6 +218,80 @@ public interface WXSMapOfLists<K,V> {
 	public V rpop(K key, K dirtyKey);
 
 	/**
+	 * This pops up to N items from the left of the list. If the List had [1,2,3,4] and you
+	 * do a lpop(2) then it returns [1,2]
+	 * @param key
+	 * @param numItems
+	 * @param dirtyKey
+	 * @return The first items popped if the first element of the returned list and so on.
+	 */
+	public List<V> lpop(K key, int numItems, K dirtyKey);
+	/**
+	 * This pops up to N items from the left of the list. If the List had [1,2,3,4] and you
+	 * do a lpop(2) then it returns [1,2]
+	 * @param key
+	 * @param numItems
+	 * @return The first items popped if the first element of the returned list and so on.
+	 */
+	public List<V> lpop(K key, int numItems);
+	/**
+	 * This pops up to N items from the left of the list. If the List had [1,2,3,4] and you
+	 * do a rpop(2) then it returns [4,3]
+	 * @param key
+	 * @param numItems
+	 * @param dirtyKey
+	 * @return The first items popped if the first element of the returned list and so on.
+	 */
+	public List<V> rpop(K key, int numItems, K dirtyKey);
+	/**
+	 * This pops up to N items from the left of the list. If the List had [1,2,3,4] and you
+	 * do a rpop(2) then it returns [4,3]
+	 * @param key
+	 * @param numItems
+	 * @param dirtyKey
+	 * @return The first items popped if the first element of the returned list and so on.
+	 */
+	public List<V> rpop(K key, int numItems);
+
+	/**
+	 * This removes N items from the right and returns the number of items
+	 * actually removed
+	 * @param key
+	 * @param numItems
+	 * @return
+	 */
+	public int rremove(K key, int numItems);
+	/**
+	 * This removes N items from the right and returns the number of items
+	 * actually removed
+	 * 
+	 * @param key
+	 * @param numItems
+	 * @param dirtyKey
+	 * @return
+	 */
+	public int rremove(K key, int numItems, K dirtyKey);
+	
+	/**
+	 * This removes N items from the left and returns the number of items
+	 * actually removed
+	 * @param key
+	 * @param numItems
+	 * @return
+	 */
+	public int lremove(K key, int numItems);
+	/**
+	 * This removes N items from the left and returns the number of items
+	 * actually removed
+	 * 
+	 * @param key
+	 * @param numItems
+	 * @param dirtyKey
+	 * @return
+	 */
+	public int lremove(K key, int numItems, K dirtyKey);
+	
+	/**
 	 * This pushes the value on the righthand side of the list
 	 * @param key The key for the list
 	 * @param value The value to add on the right side of the list
