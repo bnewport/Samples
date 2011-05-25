@@ -13,6 +13,7 @@ package com.devwebsphere.wxsutils.snapshot;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -22,14 +23,19 @@ import java.util.logging.Logger;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
+import com.devwebsphere.wxsutils.Beta;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.filter.Filter;
+import com.ibm.websphere.objectgrid.IndexNotReadyException;
+import com.ibm.websphere.objectgrid.IndexUndefinedException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
+import com.ibm.websphere.objectgrid.TxID;
 import com.ibm.websphere.objectgrid.UndefinedMapException;
 import com.ibm.websphere.objectgrid.datagrid.AgentManager;
+import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 import com.ibm.ws.objectgrid.index.MapKeyIndex;
 
@@ -54,16 +60,48 @@ public class CreateJSONSnapshotAgent implements ReduceGridAgent
 	public static String MAGIC = "(:JSONSNAPSHOT:)";
 	public static String EXTENSION = ".txt";
 	
+	/**
+	 * This calls the method findAllKeys with either no arguments
+	 * or one argument depending on whats present.
+	 * @param mki
+	 * @return
+	 */
+	@Beta
+	public Iterator<Object> getAllKeys(ObjectMap map)
+	{
+		try
+		{
+			// ****************
+			// internal call, this isn't supported publicly
+			// this should be replaced with a supported version
+			// ****************
+			MapKeyIndex mki = (MapKeyIndex) map.getIndex(com.ibm.ws.objectgrid.Constants.BUILTIN_MAP_KEY_INDEX_NAME);
+			try
+			{
+				// V6.1.x/V7.0 version of method findAllKeys()
+				Method m = MapKeyIndex.class.getMethod("findAllKeys");
+				return (Iterator<Object>)m.invoke(mki);
+			}
+			catch(NoSuchMethodException e)
+			{
+				// V7.1 version of method findAllKeys(TxID)
+				Method m = MapKeyIndex.class.getMethod("findAllKeys", TxID.class);
+				Object[] args = {null};
+				return (Iterator<Object>)m.invoke(mki, args);
+			}
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.SEVERE, "Cannot call findAllKeys", e);
+			throw new ObjectGridRuntimeException("Cannot find MKI.findAllKeys", e);
+		}
+	}
+	
 	public Object reduce(Session sess, ObjectMap map) 
 	{
 		try
 		{
 			int pid = sess.getObjectGrid().getMap(map.getName()).getPartitionId();
-			// ****************
-			// internal call, this isn't supported publicly
-			// this will be replaced with a supported version
-			MapKeyIndex mki = (MapKeyIndex) map.getIndex(com.ibm.ws.objectgrid.Constants.BUILTIN_MAP_KEY_INDEX_NAME);
-			// ****************
 			String fileName = CreateJSONSnapshotAgent.getFileName(rootFolder, pid, map.getName());
 			logger.log(Level.INFO, "Creating snapshot in file " + fileName);
 			File file = new File(fileName);
@@ -78,7 +116,7 @@ public class CreateJSONSnapshotAgent implements ReduceGridAgent
 			
 			ObjectMapper mapper = new ObjectMapper();
 			
-			Iterator<Object> keyIter = mki.findAllKeys(sess.getTxID());
+			Iterator<Object> keyIter = getAllKeys(map);
 			boolean writtenKeyValueClassNames = false;
 			pw.println(MAGIC);
 			pw.println(Integer.toString(pid));
@@ -124,6 +162,8 @@ public class CreateJSONSnapshotAgent implements ReduceGridAgent
 		ArrayList<Integer> list = new ArrayList<Integer>();
 		for(Object c : arg0)
 		{
+			if(c instanceof EntryErrorValue)
+				return c;
 			Integer i = (Integer)c;
 			list.add(i);
 		}
@@ -150,6 +190,11 @@ public class CreateJSONSnapshotAgent implements ReduceGridAgent
 	
 			AgentManager am = utils.getSessionForThread().getMap(mapName).getAgentManager();
 			Object rawRC = am.callReduceAgent(agent);
+			if(rawRC instanceof EntryErrorValue)
+			{
+				logger.log(Level.SEVERE, "Remote exception writing snapshot", rawRC.toString());
+				throw new ObjectGridRuntimeException("Remote exception writing snapshot" + rawRC.toString());
+			}
 			List<Integer> pids = (List<Integer>)rawRC; 
 			if(utils.getObjectGrid().getMap(mapName).getPartitionManager().getNumOfPartitions() != pids.size())
 			{
