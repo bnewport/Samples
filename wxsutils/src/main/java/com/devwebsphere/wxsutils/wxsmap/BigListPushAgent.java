@@ -11,14 +11,16 @@
 package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxsutils.WXSMapOfLists.BulkPushItem;
 import com.devwebsphere.wxsutils.WXSUtils;
-import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.wxsmap.BigListHead.LR;
 import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent.Operation;
@@ -36,10 +38,20 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 	public static int BUCKET_SIZE = 20;
 	
 	public LR isLeft;
-	public Map<K,List<V>> values;
+	// keys MUST be sorted on client
+	public List<K> keys;
+	// corresponding lists for each key
+	public List<List<BulkPushItem<V>>> values;
 	public K dirtyKey;
-	public Filter cfilter;
-	
+
+	public void setKeyValues(Map<K, List<BulkPushItem<V>>> batch)
+	{
+		TreeSet<K> sortedKeys = new TreeSet<K>(batch.keySet());
+		keys = new ArrayList<K>(sortedKeys);
+		values = new ArrayList<List<BulkPushItem<V>>>(keys.size());
+		for(K k : keys)
+			values.add(batch.get(k));
+	}
 	/**
 	 * 
 	 */
@@ -59,7 +71,7 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 		return sb.toString();
 	}
 	
-	static <K extends Serializable, V extends Serializable> void push(Session sess, ObjectMap map, LR isLeft, Map<K, List<V>> values, K dirtyKey, Filter cfilter)
+	static <K extends Serializable, V extends Serializable> void push(Session sess, ObjectMap map, LR isLeft, List<K> keys, List<List<BulkPushItem<V>>> values, K dirtyKey)
 	{
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListPushAgent.class.getName());
 		long startNS = System.nanoTime();
@@ -73,21 +85,22 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 				dirtyMap.getForUpdate(dirtyKey);
 			}
 			
-			for(Map.Entry<K, List<V>> e : values.entrySet())
+			for(int index = 0; index < keys.size(); ++index)
 			{
-				K key = e.getKey();
+				K key = keys.get(index);
 				BigListHead<V> head = (BigListHead<V>)map.getForUpdate(key);
-				for(V v : e.getValue())
+				List<BulkPushItem<V>> vl = values.get(index);
+				for(BulkPushItem<V> v : vl)
 				{
 					if(head == null)
 					{
 						// this inserts the head in the map also.
-						head = new BigListHead<V>(sess, map, key, v, BUCKET_SIZE);
+						head = new BigListHead<V>(sess, map, key, v.getValue(), BUCKET_SIZE);
 					}
 					else
 					{
 						// this updates the head in the map also
-						head.push(sess, map, key, isLeft, v, cfilter);
+						head.push(sess, map, key, isLeft, v.getValue(), v.getFilter());
 					}
 				}
 				if(dirtyKey != null)
@@ -118,7 +131,7 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 
 	public Object reduce(Session sess, ObjectMap map, Collection arg2)
 	{
-		push(sess, map, isLeft, values, dirtyKey, cfilter);
+		push(sess, map, isLeft, keys, values, dirtyKey);
 		return Boolean.TRUE;
 	}
 

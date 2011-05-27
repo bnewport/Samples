@@ -13,7 +13,6 @@ package com.devwebsphere.wxsutils.wxsmap;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -187,32 +186,41 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 	
 	public void lpush(K key, V value, K dirtySet)
 	{
-		List<V> list = new ArrayList<V>(1);
-		list.add(value);
-		push(key, list, LR.LEFT, dirtySet, null);
+		List<BulkPushItem<V>> list = new ArrayList<BulkPushItem<V>>(1);
+		list.add(new BulkPushItem<V>(value, null));
+		push(key, list, LR.LEFT, dirtySet);
 	}
 	
 	public void lpush(K key, List<V> values)
 	{
-		lpush(key, values, null);
+		push(key, convertToBulkList(values), LR.LEFT, null);
+	}
+
+	List<BulkPushItem<V>> convertToBulkList(List<V> values)
+	{
+		ArrayList<BulkPushItem<V>> list = new ArrayList<WXSMapOfLists.BulkPushItem<V>>(values.size());
+		for(V v : values)
+		{
+			list.add(new BulkPushItem<V>(v, null));
+		}
+		return list;
 	}
 	
 	public void lpush(K key, List<V> values, K dirtySet)
 	{
-		push(key, values, LR.LEFT, dirtySet, null);
+		push(key, convertToBulkList(values), LR.LEFT, dirtySet);
 	}
 	
-	void push(K key, List<V> values, LR isLeft, K dirtyKey, Filter cfilter) {
+	void push(K key, List<BulkPushItem<V>> values, LR isLeft, K dirtyKey) {
 		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try
 		{
 			BigListPushAgent<K, V> pushAgent = new BigListPushAgent<K, V>();
 			pushAgent.isLeft = isLeft;
-			pushAgent.values = new HashMap<K, List<V>>();
-			pushAgent.values.put(key, values);
+			pushAgent.keys = Collections.singletonList(key);
+			pushAgent.values = Collections.singletonList(values);
 			pushAgent.dirtyKey = dirtyKey;
-			pushAgent.cfilter = cfilter;
 			Object rc = tls.getMap(mapName).getAgentManager().callReduceAgent(pushAgent, Collections.singletonList(key));
 			if(rc != null && !(rc instanceof Boolean))
 			{
@@ -433,25 +441,25 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 	{
 		List<V> list = new ArrayList<V>(1);
 		list.add(value);
-		push(key, list, LR.RIGHT, dirtyKey, null);
+		push(key, convertToBulkList(list), LR.RIGHT, dirtyKey);
 	}
 
-	public void rpush(Map<K, List<V>> items)
+	public void rpush(Map<K, List<BulkPushItem<V>>> items)
 	{
 		rpush(items, null);
 	}
 	
-	public void rpush(Map<K, List<V>> items, K dirtyKey)
+	public void rpush(Map<K, List<BulkPushItem<V>>> items, K dirtyKey)
 	{
 		bulkPushAll(bmap, items, LR.RIGHT, dirtyKey);
 	}
 	
-	public void lpush(Map<K, List<V>> items)
+	public void lpush(Map<K, List<BulkPushItem<V>>> items)
 	{
 		lpush(items, null);
 	}
 	
-	public void lpush(Map<K, List<V>> items, K dirtySet)
+	public void lpush(Map<K, List<BulkPushItem<V>>> items, K dirtySet)
 	{
 		bulkPushAll(bmap, items, LR.LEFT, dirtySet);
 	}
@@ -463,7 +471,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 	
 	public void rpush(K key, List<V> values, K dirtySet) 
 	{
-		push(key, values, LR.RIGHT, dirtySet, null);
+		push(key, convertToBulkList(values), LR.RIGHT, dirtySet);
 	}
 	
 	public void remove(K key)
@@ -490,17 +498,17 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		}
 	}
 
-	void bulkPushAll(BackingMap bmap, Map<K,List<V>> batch, LR side, K dirtyKey)
+	void bulkPushAll(BackingMap bmap, Map<K,List<BulkPushItem<V>>> batch, LR side, K dirtyKey)
 	{
 		if(batch.size() > 0)
 		{
-			Map<Integer, Map<K,List<V>>> pmap = WXSUtils.convertToPartitionEntryMap(bmap, batch);
-			Iterator<Map<K,List<V>>> items = pmap.values().iterator();
+			Map<Integer, Map<K,List<BulkPushItem<V>>>> pmap = WXSUtils.convertToPartitionEntryMap(bmap, batch);
+			Iterator<Map<K,List<BulkPushItem<V>>>> items = pmap.values().iterator();
 			ArrayList<Future<?>> results = new ArrayList<Future<?>>();
 			CountDownLatch doneSignal = new CountDownLatch(pmap.size());
 			while(items.hasNext())
 			{
-				Map<K,List<V>> perPartitionEntries = items.next();
+				Map<K,List<BulkPushItem<V>>> perPartitionEntries = items.next();
 				// we need one key for partition routing
 				// so get the first one
 				K key = perPartitionEntries.keySet().iterator().next();
@@ -509,7 +517,10 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 				BigListPushAgent<K, V> agent = new BigListPushAgent<K, V>();
 				agent.dirtyKey = dirtyKey;
 				agent.isLeft = side;
-				agent.values = perPartitionEntries;
+				
+				// have to presort keys on client
+				// we sort keys to avoid deadlock type ordering issues
+				agent.setKeyValues(perPartitionEntries);
 				// Push all keys/lists for one partition using the first key as a routing key
 				Future<?> fv = utils.getExecutorService().submit(new WXSUtils.CallReduceAgentThread(utils.getObjectGrid(), bmap.getName(), key, agent, doneSignal));
 				results.add(fv);
@@ -535,9 +546,9 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 	}
 
 	public void lcpush(K key, V value, Filter condition, K dirtyKey) {
-		List<V> list = new ArrayList<V>(1);
-		list.add(value);
-		push(key, list, LR.LEFT, dirtyKey, condition);
+		List<BulkPushItem<V>> list = new ArrayList<BulkPushItem<V>>(1);
+		list.add(new BulkPushItem<V>(value, condition));
+		push(key, list, LR.LEFT, dirtyKey);
 	}
 
 	public void rcpush(K key, V value, Filter condition) {
@@ -545,9 +556,9 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 	}
 
 	public void rcpush(K key, V value, Filter condition, K dirtyKey) {
-		List<V> list = new ArrayList<V>(1);
-		list.add(value);
-		push(key, list, LR.RIGHT, dirtyKey, condition);
+		List<BulkPushItem<V>> list = new ArrayList<BulkPushItem<V>>(1);
+		list.add(new BulkPushItem<V>(value, condition));
+		push(key, list, LR.RIGHT, dirtyKey);
 	}
 
 	public void evict(K key, EvictionType type, int intervalSeconds) 

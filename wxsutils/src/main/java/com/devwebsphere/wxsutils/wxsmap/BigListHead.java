@@ -20,6 +20,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.EvictionType;
+import com.devwebsphere.wxsutils.WXSMapOfLists.BulkPushItem;
 import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent.Operation;
 import com.ibm.websphere.objectgrid.ObjectGridException;
@@ -27,6 +28,7 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.UndefinedMapException;
+import com.ibm.ws.xs.jdk5.java.util.Collections;
 
 /**
  * BigLists are split in buckets of at most BUCKET_SIZE items. Items can be added to the
@@ -111,10 +113,10 @@ public class BigListHead <V extends Serializable> implements Serializable
 			// if new eviction time then add to list in time order
 			if(SetIsEmptyAgent.isEmpty(sess, eSetMap, evictSetKey))
 			{
-				Map<String, List<Long>> batch = new HashMap<String, List<Long>>();
-				batch.put(listName, java.util.Collections.singletonList(evictSetKey));
+				List<String> keyList = Collections.singletonList(listName);
+				List<BulkPushItem<Long>> value = Collections.singletonList(new BulkPushItem(java.util.Collections.singletonList(evictSetKey), null));
 				// most recent eviction set on left, oldest or next to expire on right
-				BigListPushAgent.push(sess, eList, LR.LEFT, batch, null, null);
+				BigListPushAgent.push(sess, eList, LR.LEFT, keyList, Collections.singletonList(value), null);
 			}
 			// add list to set for this time
 			SetAddRemoveAgent.doOperation(sess, eSetMap, evictSetKey, Operation.ADD, (K)key);

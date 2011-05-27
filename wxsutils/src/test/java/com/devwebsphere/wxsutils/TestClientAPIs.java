@@ -28,6 +28,7 @@ import junit.framework.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.devwebsphere.wxsutils.WXSMapOfLists.BulkPushItem;
 import com.devwebsphere.wxsutils.WXSMapOfSets.Contains;
 import com.devwebsphere.wxsutils.filter.FalseFilter;
 import com.devwebsphere.wxsutils.filter.Filter;
@@ -566,15 +567,15 @@ public class TestClientAPIs
 		Assert.assertEquals("4", items.get(0));
 
 		{
-			Map<String, List<String>> bulkItems = new HashMap<String, List<String>>();
+			Map<String, List<BulkPushItem<String>>> bulkItems = new HashMap<String, List<BulkPushItem<String>>>();
 			
 			int numItemsToPush = 3;
 			int numListsToTest = 10;
 			for(int i = 0; i < numListsToTest; ++i)
 			{
-				ArrayList<String> itemsToPush = new ArrayList<String>();
+				ArrayList<BulkPushItem<String>> itemsToPush = new ArrayList<BulkPushItem<String>>();
 				for(int j = 0; j < numItemsToPush; ++j)
-					itemsToPush.add("ITEM #" + j + " for " + i);
+					itemsToPush.add(new BulkPushItem<String>("ITEM #" + j + " for " + i, null));
 				bulkItems.put(Integer.toString(i), itemsToPush);
 			}
 			map.rpush(bulkItems, "BULK_DIRTY");

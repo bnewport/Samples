@@ -10,6 +10,7 @@
 //
 package com.devwebsphere.wxsutils;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +42,57 @@ import com.devwebsphere.wxsutils.wxsmap.BigListPushAgent;
  * @param <K>
  * @param <V>
  */
-public interface WXSMapOfLists<K,V> {
+public interface WXSMapOfLists<K,V> 
+{
+	
+	/**
+	 * This is used when bulk pushing values in to lists. It
+	 * allows the values to be pushed as well as a Filter
+	 * so it behaves like a bulk lcpush
+	 * @author bnewport
+	 *
+	 * @param <V>
+	 * @see WXSMapOfLists#lpush(Map)
+	 * @see WXSMapOfLists#rpush(Map)
+	 */
+	public class BulkPushItem<V> implements Serializable
+	{
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -6589018995986915360L;
+		/**
+		 * The values to push on the list
+		 */
+		V value;
+		/**
+		 * If specified, each value is pushed using a cpush command with this filter
+		 */
+		Filter filter;
+		
+		public BulkPushItem() {};
+
+		/**
+		 * This creates an object to store the values to
+		 * push and the filter to test them with
+		 * @param v A list of values to push
+		 * @param f The Filter, can be null
+		 */
+		public BulkPushItem(V v, Filter f)
+		{
+			value = v;
+			filter = f;
+		}
+
+		public final V getValue() {
+			return value;
+		}
+
+		public final Filter getFilter() {
+			return filter;
+		}
+		
+	}
 
 	/**
 	 * This trims the list at key K to at most size elements. Entries
@@ -129,7 +180,7 @@ public interface WXSMapOfLists<K,V> {
 	 * the WXSUtils thread pool.
 	 * @param items
 	 */
-	public void lpush(Map<K, List<V>> items);
+	public void lpush(Map<K, List<BulkPushItem<V>>> items);
 	
 	/**
 	 * This takes a Map of list keys and the entries to push and does a push
@@ -140,7 +191,7 @@ public interface WXSMapOfLists<K,V> {
 	 * @param items
 	 * @param dirtySet
 	 */
-	public void lpush(Map<K, List<V>> items, K dirtySet);
+	public void lpush(Map<K, List<BulkPushItem<V>>> items, K dirtySet);
 	
 	/**
 	 * This takes a Map of list keys and the entries to push and does a push
@@ -150,7 +201,7 @@ public interface WXSMapOfLists<K,V> {
 	 * the WXSUtils thread pool.
 	 * @param items
 	 */
-	public void rpush(Map<K, List<V>> items);
+	public void rpush(Map<K, List<BulkPushItem<V>>> items);
 	
 	/**
 	 * This takes a Map of list keys and the entries to push and does a push
@@ -161,7 +212,7 @@ public interface WXSMapOfLists<K,V> {
 	 * @param items
 	 * @param dirtySet
 	 */
-	public void rpush(Map<K, List<V>> items, K dirtySet);
+	public void rpush(Map<K, List<BulkPushItem<V>>> items, K dirtySet);
 
 	/**
 	 * This removes and returns the left most element in the list
