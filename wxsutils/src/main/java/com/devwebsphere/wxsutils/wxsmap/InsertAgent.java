@@ -12,6 +12,7 @@ package com.devwebsphere.wxsutils.wxsmap;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -71,11 +72,18 @@ public class InsertAgent<K,V> implements ReduceGridAgent
 			else
 				s.begin();
 			ArrayList keys = new ArrayList(batch.keySet());
+			
 			// BN V2.3.1 If write through is disabled DONT DO A GET
 			if(doGet && isWriteThrough)
 			{
-				// do a get first
-				m.getAll(keys);
+				// sort keys to get U locks in the same order each time
+				// to avoid deadlock.
+				// would be nice if WXS had a getAllForUpdate method 
+				// when a Loader is plugged in.
+				
+				TreeSet sortedKeys = new TreeSet(keys);
+				for(Object k : sortedKeys)
+					m.getForUpdate(k);
 			}
 			// then do a put. Just a put won't work as it will treat
 			// all entries as inserts.
