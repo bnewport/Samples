@@ -10,6 +10,10 @@
 //
 package com.devwebsphere.wxsutils.filter;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * This is a base class for Filters comparing an attribute with a scalar
  * @author bnewport
@@ -20,6 +24,8 @@ public abstract class CompareFilter extends Filter
 	ValuePath v;
 	Object o;
 	
+	public CompareFilter() {}
+	
 	public CompareFilter(ValuePath v, Object o)
 	{
 		this.v = v;
@@ -29,5 +35,19 @@ public abstract class CompareFilter extends Filter
 	protected String createString(String op)
 	{
 		return v.toString() + " " + op + " " + o.toString();
+	}
+	public void readExternal(ObjectInput in) throws IOException,
+	ClassNotFoundException 
+	{
+		super.readExternal(in);
+		v = readValuePath(in);
+		o = in.readObject();
+	}
+	
+	public void writeExternal(ObjectOutput out) throws IOException 
+	{
+		super.writeExternal(out);
+		writeValuePath(out, v);
+		out.writeObject(o);
 	}
 }

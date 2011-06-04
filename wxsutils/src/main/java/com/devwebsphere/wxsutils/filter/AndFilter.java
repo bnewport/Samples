@@ -22,6 +22,8 @@ public class AndFilter extends BinaryLogicalFilter
 	 */
 	private static final long serialVersionUID = -2814315378888140544L;
 
+	public AndFilter() {};
+	
 	public AndFilter(Filter... list)
 	{
 		super(list);

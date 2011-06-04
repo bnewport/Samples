@@ -23,6 +23,8 @@ public class NotFilter extends Filter
 	private static final long serialVersionUID = -4277619313098301369L;
 	Filter f;
 	
+	public NotFilter() {}
+	
 	public NotFilter(Filter f)
 	{
 		this.f = f;

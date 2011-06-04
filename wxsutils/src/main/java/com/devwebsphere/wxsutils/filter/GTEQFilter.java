@@ -22,6 +22,8 @@ public class GTEQFilter extends CompareFilter
 	 */
 	private static final long serialVersionUID = 7551520149112117597L;
 
+	public GTEQFilter() {}
+	
 	public GTEQFilter(ValuePath v, Object o)
 	{
 		super(v, o);

@@ -22,6 +22,8 @@ public class LTFilter extends CompareFilter
 	 */
 	private static final long serialVersionUID = 5224402950812915172L;
 
+	public LTFilter() {}
+	
 	public LTFilter(ValuePath v, Object o)
 	{
 		super(v, o);

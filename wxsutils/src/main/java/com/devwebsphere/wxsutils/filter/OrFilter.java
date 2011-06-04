@@ -22,6 +22,8 @@ public class OrFilter extends BinaryLogicalFilter
 	 */
 	private static final long serialVersionUID = -6535676992614300637L;
 
+	public OrFilter() {}
+	
 	public OrFilter(Filter... list)
 	{
 		super(list);

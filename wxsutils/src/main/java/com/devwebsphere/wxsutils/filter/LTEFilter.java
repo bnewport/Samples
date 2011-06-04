@@ -22,6 +22,8 @@ public class LTEFilter extends CompareFilter
 	 */
 	private static final long serialVersionUID = -8423213734901175387L;
 
+	public LTEFilter() {}
+	
 	public LTEFilter(ValuePath v, Object o)
 	{
 		super(v, o);

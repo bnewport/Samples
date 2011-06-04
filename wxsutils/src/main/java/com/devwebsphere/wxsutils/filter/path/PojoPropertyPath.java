@@ -10,6 +10,10 @@
 //
 package com.devwebsphere.wxsutils.filter.path;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,7 +29,7 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
  * @author bnewport
  *
  */
-public class PojoPropertyPath implements ValuePath 
+public class PojoPropertyPath implements ValuePath, Externalizable
 {
 	static Logger logger = Logger.getLogger(PojoPropertyPath.class.getName());
 	
@@ -34,6 +38,9 @@ public class PojoPropertyPath implements ValuePath
 	 */
 	private static final long serialVersionUID = 5874273314940302023L;
 	String propertyName;
+	
+	public PojoPropertyPath()
+	{}
 	
 	public PojoPropertyPath(String propertyName)
 	{
@@ -67,5 +74,14 @@ public class PojoPropertyPath implements ValuePath
 	public String toString()
 	{
 		return ".get" + propertyName + "()";
+	}
+
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException {
+		propertyName = in.readUTF();
+	}
+
+	public void writeExternal(ObjectOutput out) throws IOException {
+		out.writeUTF(propertyName);
 	}
 }

@@ -21,6 +21,9 @@ public class EQFilter extends CompareFilter
 	 * 
 	 */
 	private static final long serialVersionUID = -6919078613266693470L;
+	
+	public EQFilter() {};
+	
 	public EQFilter(ValuePath value, Object o)
 	{
 		super(value, o);

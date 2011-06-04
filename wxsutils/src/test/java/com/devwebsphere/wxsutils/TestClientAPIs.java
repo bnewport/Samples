@@ -45,6 +45,7 @@ import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
+import com.ibm.websphere.objectgrid.Session;
 
 /**
  * This test connects to a grid running on the same box. Use the gettingstarted example
@@ -595,6 +596,12 @@ public class TestClientAPIs
 					Assert.assertTrue(vset.contains("ITEM #" + j + " for " + dirtyKey));
 				}
 			}
+		}
+		
+		{
+			// test big pushes
+			int numItems = 25000;
+			
 		}
 	}
 	

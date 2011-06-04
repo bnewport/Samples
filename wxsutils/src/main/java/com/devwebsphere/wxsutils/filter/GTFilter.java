@@ -22,6 +22,8 @@ public class GTFilter extends CompareFilter
 	 */
 	private static final long serialVersionUID = -5312743413589377677L;
 
+	public GTFilter() {}
+	
 	public GTFilter(ValuePath v, Object o)
 	{
 		super(v, o);

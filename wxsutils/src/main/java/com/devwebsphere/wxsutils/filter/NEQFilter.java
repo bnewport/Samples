@@ -21,6 +21,9 @@ public class NEQFilter extends CompareFilter
 	 * 
 	 */
 	private static final long serialVersionUID = -5761937956905184157L;
+	
+	public NEQFilter() {}
+	
 	public NEQFilter(ValuePath value, Object o)
 	{
 		super(value, o);

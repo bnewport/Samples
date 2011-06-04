@@ -67,7 +67,7 @@ public class CreateJSONSnapshotAgent implements ReduceGridAgent
 	 * @return
 	 */
 	@Beta
-	public Iterator<Object> getAllKeys(ObjectMap map)
+	static public Iterator<Object> getAllKeys(ObjectMap map)
 	{
 		try
 		{
@@ -116,7 +116,7 @@ public class CreateJSONSnapshotAgent implements ReduceGridAgent
 			
 			ObjectMapper mapper = new ObjectMapper();
 			
-			Iterator<Object> keyIter = getAllKeys(map);
+			Iterator<Object> keyIter = CreateJSONSnapshotAgent.getAllKeys(map);
 			boolean writtenKeyValueClassNames = false;
 			pw.println(MAGIC);
 			pw.println(Integer.toString(pid));

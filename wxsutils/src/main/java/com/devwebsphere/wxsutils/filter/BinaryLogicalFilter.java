@@ -10,6 +10,10 @@
 //
 package com.devwebsphere.wxsutils.filter;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * This is a base class used for binary operators
  * @author bnewport
@@ -19,6 +23,8 @@ public abstract class BinaryLogicalFilter extends Filter
 {
 	Filter[] flist;
 
+	public BinaryLogicalFilter() {}
+	
 	public BinaryLogicalFilter(Filter... l)
 	{
 		flist = l;
@@ -34,5 +40,22 @@ public abstract class BinaryLogicalFilter extends Filter
 				sb.append(" " + op + " ");
 		}
 		return sb.toString();
+	}
+	public void readExternal(ObjectInput in) 
+		throws IOException,
+		ClassNotFoundException 
+	{
+		super.readExternal(in);
+		flist = new Filter[in.readInt()];
+		for(int i = 0; i < flist.length; ++i)
+			flist[i] = readFilter(in);
+	}
+	
+	public void writeExternal(ObjectOutput out) throws IOException 
+	{
+		super.writeExternal(out);
+		out.writeInt(flist.length);
+		for(int i = 0; i < flist.length; ++i)
+			writeFilter(out, flist[i]);
 	}
 }
