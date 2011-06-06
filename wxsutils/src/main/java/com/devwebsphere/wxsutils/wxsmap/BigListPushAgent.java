@@ -10,6 +10,10 @@
 //
 package com.devwebsphere.wxsutils.wxsmap;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,6 +26,7 @@ import java.util.logging.Logger;
 import com.devwebsphere.wxsutils.WXSMapOfLists.BulkPushItem;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
+import com.devwebsphere.wxsutils.utils.ClassSerializer;
 import com.devwebsphere.wxsutils.wxsmap.BigListHead.LR;
 import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent.Operation;
 import com.ibm.websphere.objectgrid.ObjectGridException;
@@ -31,7 +36,7 @@ import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.UndefinedMapException;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 
-public class BigListPushAgent <K extends Serializable, V extends Serializable> implements ReduceGridAgent 
+public class BigListPushAgent <K extends Serializable, V extends Serializable> implements ReduceGridAgent, Externalizable 
 {
 	static Logger logger = Logger.getLogger(BigListPushAgent.class.getName());
 
@@ -163,4 +168,22 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 		return null;
 	}
 
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException 
+	{
+		ClassSerializer serializer = WXSUtils.getSerializer();
+		dirtyKey = (K)serializer.readNullableObject(in);
+		isLeft = (in.readBoolean()) ? LR.LEFT : LR.RIGHT;
+		keys = serializer.readList(in);
+		values = serializer.readList(in);
+	}
+
+	public void writeExternal(ObjectOutput out) throws IOException 
+	{
+		ClassSerializer serializer = WXSUtils.getSerializer();
+		serializer.writeNullableObject(out, dirtyKey);
+		out.writeBoolean(isLeft == LR.LEFT ? true : false);
+		serializer.writeList(out, keys);
+		serializer.writeList(out, values);
+	}
 }

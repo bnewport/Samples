@@ -41,6 +41,7 @@ import com.devwebsphere.wxssearch.jmx.TextIndexMBeanManager;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
 import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanManager;
 import com.devwebsphere.wxsutils.jmx.wxsmap.WXSMapMBeanManager;
+import com.devwebsphere.wxsutils.utils.ClassSerializer;
 import com.devwebsphere.wxsutils.wxsmap.ConditionalPutAgent;
 import com.devwebsphere.wxsutils.wxsmap.ContainsAllAgent;
 import com.devwebsphere.wxsutils.wxsmap.GetAllAgent;
@@ -118,6 +119,13 @@ public class WXSUtils
 	static LazyMBeanManagerAtomicReference<TextIndexMBeanManager> indexMBeanManager = new LazyMBeanManagerAtomicReference<TextIndexMBeanManager>(TextIndexMBeanManager.class);
 
 	ThreadLocalSession tls;
+	
+	static ClassSerializer serializer = new ClassSerializer();
+	
+	public static ClassSerializer getSerializer()
+	{
+		return serializer;
+	}
 	
 	/**
 	 * Returns a static MBean Manager. Hack until I get DI using Aries

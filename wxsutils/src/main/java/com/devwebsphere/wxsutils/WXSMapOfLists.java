@@ -10,12 +10,17 @@
 //
 package com.devwebsphere.wxsutils;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import com.devwebsphere.wxsutils.filter.Filter;
+import com.devwebsphere.wxsutils.utils.ClassSerializer;
 import com.devwebsphere.wxsutils.wxsmap.BigListHead;
 import com.devwebsphere.wxsutils.wxsmap.BigListPushAgent;
 
@@ -55,7 +60,7 @@ public interface WXSMapOfLists<K,V>
 	 * @see WXSMapOfLists#lpush(Map)
 	 * @see WXSMapOfLists#rpush(Map)
 	 */
-	public class BulkPushItem<V> implements Serializable
+	public class BulkPushItem<V> implements Externalizable
 	{
 		/**
 		 * 
@@ -90,6 +95,21 @@ public interface WXSMapOfLists<K,V>
 
 		public final Filter getFilter() {
 			return filter;
+		}
+
+		public void readExternal(ObjectInput in) throws IOException,
+				ClassNotFoundException 
+		{
+			ClassSerializer serializer = WXSUtils.getSerializer();
+			value = (V)serializer.readObject(in);
+			filter = (Filter)serializer.readNullableObject(in);
+		}
+
+		public void writeExternal(ObjectOutput out) throws IOException 
+		{
+			ClassSerializer serializer = WXSUtils.getSerializer();
+			serializer.writeObject(out, value);
+			serializer.writeNullableObject(out, filter);
 		}
 		
 	}
