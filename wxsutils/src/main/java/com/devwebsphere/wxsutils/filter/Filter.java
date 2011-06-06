@@ -104,13 +104,7 @@ public abstract class Filter implements Externalizable
 		idToFilterMap.put(b, f);
 	}
 	
-	static ClassSerializer serializer = new ClassSerializer();
-	{
-		serializer.storeClass(AndFilter.class, OrFilter.class, EQFilter.class);
-		serializer.storeClass(GTEQFilter.class, GTFilter.class, LTEFilter.class);
-		serializer.storeClass(LTFilter.class, NEQFilter.class, FalseFilter.class, TrueFilter.class);
-		serializer.storeClass(IsNullFilter.class, NotFilter.class);
-	}
+	static ClassSerializer serializer = new FilterClassSerializer();
 	
 	static public void writeFilter(ObjectOutput out, Filter f)
 		throws IOException

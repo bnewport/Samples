@@ -22,6 +22,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSMapOfLists.BulkPushItem;
+import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
 /**
  * This is a helper class to track a set of classes and serialize/deserialize
@@ -61,9 +62,19 @@ public class ClassSerializer
 	{
 		for(Class<? extends Externalizable> c : list)
 		{
+			if(class2IdMap.containsKey(c))
+			{
+				throw new ObjectGridRuntimeException("Duplicate class registered: " + c.toString());
+			}
 			class2IdMap.put(c, nextCode);
 			id2ClassMap.put(nextCode, c);
+			System.out.println("Registering " + c.toString() + " as " + nextCode);
 			nextCode++;
+			// watch for if too many are registered
+			if(nextCode == Byte.MAX_VALUE)
+			{
+				throw new ObjectGridRuntimeException("Too many classes registered with " + this.getClass().getSimpleName());
+			}
 		}
 	}
 
@@ -229,6 +240,20 @@ public class ClassSerializer
 		return rc;
 	}
 	
+	public <K,V> Map<K,V> readMapWithNullableValues(ObjectInput in)
+		throws IOException
+	{
+		int size = in.readInt();
+		Map<K,V> rc = new HashMap<K, V>();
+		for(int i = 0; i < size; ++i)
+		{
+			K k = (K)readObject(in);
+			V v = (V)readNullableObject(in);
+			rc.put(k, v);
+		}
+		return rc;
+	}
+
 	public <K,V> void writeMap(ObjectOutput out, Map<K,V> map)
 		throws IOException
 	{
@@ -238,6 +263,18 @@ public class ClassSerializer
 		{
 			writeObject(out, e.getKey());
 			writeObject(out, e.getValue());
+		}
+	}
+	
+	public <K,V> void writeMapWithNullableValues(ObjectOutput out, Map<K,V> map)
+		throws IOException
+	{
+		int size = map.size();
+		out.writeInt(size);
+		for(Map.Entry<K,V> e : map.entrySet())
+		{
+			writeObject(out, e.getKey());
+			writeNullableObject(out, e.getValue());
 		}
 	}
 }
