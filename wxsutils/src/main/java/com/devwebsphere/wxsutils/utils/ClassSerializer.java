@@ -64,15 +64,16 @@ public class ClassSerializer
 		{
 			if(class2IdMap.containsKey(c))
 			{
+				logger.log(Level.SEVERE, "duplicate class registered " + c.toString() + " in Serializer " + this.getClass().getSimpleName());
 				throw new ObjectGridRuntimeException("Duplicate class registered: " + c.toString());
 			}
 			class2IdMap.put(c, nextCode);
 			id2ClassMap.put(nextCode, c);
-			System.out.println("Registering " + c.toString() + " as " + nextCode);
 			nextCode++;
 			// watch for if too many are registered
 			if(nextCode == Byte.MAX_VALUE)
 			{
+				logger.log(Level.SEVERE, "Too many classes registered with " + this.getClass().getSimpleName());
 				throw new ObjectGridRuntimeException("Too many classes registered with " + this.getClass().getSimpleName());
 			}
 		}
@@ -100,7 +101,9 @@ public class ClassSerializer
 	}
 	
 	/**
-	 * This writes the non-null object to the stream
+	 * This writes the non-null object to the stream. If the object is an optimized one
+	 * then a byte is written identifying the object, followed by the externalize form of 
+	 * the object.
 	 * @param out
 	 * @param f
 	 * @throws IOException
@@ -215,6 +218,14 @@ public class ClassSerializer
 		return rc;
 	}
 	
+	/**
+	 * This writes a list of non nullable values to
+	 * a stream
+	 * @param <V>
+	 * @param out
+	 * @param list
+	 * @throws IOException
+	 */
 	public <V> void writeList(ObjectOutput out, List<V> list)
 		throws IOException
 	{
@@ -254,6 +265,15 @@ public class ClassSerializer
 		return rc;
 	}
 
+	/**
+	 * This writes a Map of non null key and non null value pairs
+	 * to the stream.
+	 * @param <K>
+	 * @param <V>
+	 * @param out
+	 * @param map
+	 * @throws IOException
+	 */
 	public <K,V> void writeMap(ObjectOutput out, Map<K,V> map)
 		throws IOException
 	{
@@ -265,7 +285,16 @@ public class ClassSerializer
 			writeObject(out, e.getValue());
 		}
 	}
-	
+
+	/**
+	 * This writes a Map with non nullable keys and nullable Values
+	 * to the stream.
+	 * @param <K>
+	 * @param <V>
+	 * @param out
+	 * @param map
+	 * @throws IOException
+	 */
 	public <K,V> void writeMapWithNullableValues(ObjectOutput out, Map<K,V> map)
 		throws IOException
 	{

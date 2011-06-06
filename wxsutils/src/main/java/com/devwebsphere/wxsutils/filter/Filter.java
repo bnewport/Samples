@@ -14,8 +14,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,69 +39,17 @@ public abstract class Filter implements Externalizable
 	public abstract boolean filter(Object o);
 
 	public void readExternal(ObjectInput arg0) throws IOException,
-			ClassNotFoundException {
-		// TODO Auto-generated method stub
-		
+			ClassNotFoundException 
+	{
 	}
 
-	public void writeExternal(ObjectOutput arg0) throws IOException {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	static public void writeValuePath(ObjectOutput out, ValuePath v)
-		throws IOException
+	public void writeExternal(ObjectOutput arg0) throws IOException 
 	{
-		byte b = 0;
-		if(v instanceof PojoFieldPath)
-			b = 1;
-		if(v instanceof PojoPropertyPath)
-			b = 2;
-		out.writeByte(b);
-		if(b == 0)
-			out.writeObject(v);
-		else
-		{
-			Externalizable e = (Externalizable)v;
-			e.writeExternal(out);
-		}
 	}
 	
-	static public ValuePath readValuePath(ObjectInput in)
-		throws IOException, ClassNotFoundException
-	{
-		byte b = in.readByte();
-		switch(b)
-		{
-		case 0:
-			return (ValuePath)in.readObject();
-		case 1:
-		{
-			PojoFieldPath p = new PojoFieldPath();
-			p.readExternal(in);
-			return p;
-		}
-		case 2:
-		{
-			PojoPropertyPath p = new PojoPropertyPath();
-			p.readExternal(in);
-			return p;
-		}
-		default:
-			logger.log(Level.SEVERE, "Unknown value path type: " + b);
-			throw new ObjectGridRuntimeException("Unknown value path type");
-		}
-	}
-	
-	static Map<Class<? extends Filter>, Byte> filterList = new HashMap<Class<? extends Filter>, Byte>();
-	static Map<Byte, Class<? extends Filter>> idToFilterMap = new HashMap<Byte, Class<? extends Filter>>();
-	
-	static void storeFilterIdPair(Class<? extends Filter> f, Byte b)
-	{
-		filterList.put(f, b);
-		idToFilterMap.put(b, f);
-	}
-	
+	/**
+	 * Register all the Filter classes on the serializer in the custom serializer.
+	 */
 	static ClassSerializer serializer = new FilterClassSerializer();
 	
 	static public void writeFilter(ObjectOutput out, Filter f)

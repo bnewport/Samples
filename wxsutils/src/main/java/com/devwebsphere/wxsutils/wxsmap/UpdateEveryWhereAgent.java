@@ -10,6 +10,10 @@
 //
 package com.devwebsphere.wxsutils.wxsmap;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,6 +23,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxsutils.WXSUtils;
+import com.devwebsphere.wxsutils.utils.ClassSerializer;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
@@ -37,7 +43,7 @@ import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
  * @param <K>
  * @param <V>
  */
-public class UpdateEveryWhereAgent <K extends Serializable, V extends Serializable> implements ReduceGridAgent 
+public class UpdateEveryWhereAgent <K extends Serializable, V extends Serializable> implements ReduceGridAgent, Externalizable 
 {
 	private static final long serialVersionUID = -8306827952007113258L;
 
@@ -140,5 +146,19 @@ public class UpdateEveryWhereAgent <K extends Serializable, V extends Serializab
 			if(rcs.length() > 0)
 				throw new ObjectGridRuntimeException(rcs);
 		}
+	}
+
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException 
+	{
+		ClassSerializer serializer = WXSUtils.getSerializer();
+		entries = serializer.readMap(in);
+		entriesToRemove = serializer.readList(in);
+	}
+
+	public void writeExternal(ObjectOutput out) throws IOException {
+		ClassSerializer serializer = WXSUtils.getSerializer();
+		serializer.writeMap(out, entries);
+		serializer.writeList(out, entriesToRemove);
 	}
 }

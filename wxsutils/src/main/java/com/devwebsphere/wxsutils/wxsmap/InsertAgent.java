@@ -10,6 +10,10 @@
 //
 package com.devwebsphere.wxsutils.wxsmap;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.TreeSet;
@@ -18,6 +22,7 @@ import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
+import com.devwebsphere.wxsutils.utils.ClassSerializer;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
@@ -39,7 +44,7 @@ import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
  * @see WXSUtils#insertAll(java.util.Map, com.ibm.websphere.objectgrid.BackingMap)
  * @see WXSUtils#putAll(java.util.Map, com.ibm.websphere.objectgrid.BackingMap)
  */
-public class InsertAgent<K,V> implements ReduceGridAgent 
+public class InsertAgent<K,V> implements ReduceGridAgent, Externalizable 
 {
 	static Logger logger = Logger.getLogger(InsertAgent.class.getName());
 	/**
@@ -127,4 +132,21 @@ public class InsertAgent<K,V> implements ReduceGridAgent
 	public InsertAgent()
 	{
  	}
+
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException 
+	{
+		ClassSerializer serializer = WXSUtils.getSerializer();
+		doGet = in.readBoolean();
+		isWriteThrough = in.readBoolean();
+		batch = serializer.readMap(in);
+	}
+
+	public void writeExternal(ObjectOutput out) throws IOException 
+	{
+		ClassSerializer serializer = WXSUtils.getSerializer();
+		out.writeBoolean(doGet);
+		out.writeBoolean(isWriteThrough);
+		serializer.writeMap(out, batch);
+	}
 }

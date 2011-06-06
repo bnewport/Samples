@@ -10,9 +10,17 @@
 //
 package com.devwebsphere.wxsutils.filter;
 
+import com.devwebsphere.wxsutils.filter.path.PojoFieldPath;
+import com.devwebsphere.wxsutils.filter.path.PojoPropertyPath;
 import com.devwebsphere.wxsutils.utils.ClassSerializer;
-
-public class FilterClassSerializer extends ClassSerializer 
+/**
+ * This is a ClassSerializer used for serializing Filters and it simply
+ * registers all the Externalizable Filters with the serializer to improve
+ * performance here. It's not intended for application use.
+ * @author bnewport
+ *
+ */
+class FilterClassSerializer extends ClassSerializer 
 {
 	FilterClassSerializer()
 	{
@@ -20,6 +28,7 @@ public class FilterClassSerializer extends ClassSerializer
 		storeClass(GTEQFilter.class, GTFilter.class, LTEFilter.class);
 		storeClass(LTFilter.class, NEQFilter.class, FalseFilter.class, TrueFilter.class);
 		storeClass(IsNullFilter.class, NotFilter.class);
+		storeClass(PojoFieldPath.class, PojoPropertyPath.class);
 	}
 
 }

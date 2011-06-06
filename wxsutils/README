@@ -5,6 +5,10 @@ This command will start a catalog server on the box. It's bound to localhost so 
 for local container JVMs. You can change localhost to the real hostname in the pom.xml for a 'proper'
 hostname
 
+*********
+*** Read the INSTALL file to get everything installed and compiling
+*********
+
 mvn test -PstartSingleCatalog -e
 
 Note in application server environments
