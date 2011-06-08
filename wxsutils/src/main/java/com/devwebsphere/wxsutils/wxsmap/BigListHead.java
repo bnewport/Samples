@@ -13,6 +13,7 @@ package com.devwebsphere.wxsutils.wxsmap;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,6 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.UndefinedMapException;
-import com.ibm.ws.xs.jdk5.java.util.Collections;
 
 /**
  * BigLists are split in buckets of at most BUCKET_SIZE items. Items can be added to the
@@ -114,7 +114,10 @@ public class BigListHead <V extends Serializable> implements Serializable
 			if(SetIsEmptyAgent.isEmpty(sess, eSetMap, evictSetKey))
 			{
 				List<String> keyList = Collections.singletonList(listName);
-				List<BulkPushItem<Long>> value = Collections.singletonList(new BulkPushItem(java.util.Collections.singletonList(evictSetKey), null));
+				ArrayList<Long> l = new ArrayList<Long>();
+				l.add(evictSetKey);
+				BulkPushItem<Long> bpa = new BulkPushItem<Long>(evictSetKey, (Filter)null);
+				List<BulkPushItem<Long>> value = (List<BulkPushItem<Long>>)Collections.singletonList(bpa);
 				// most recent eviction set on left, oldest or next to expire on right
 				BigListPushAgent.push(sess, eList, LR.LEFT, keyList, Collections.singletonList(value), null);
 			}
