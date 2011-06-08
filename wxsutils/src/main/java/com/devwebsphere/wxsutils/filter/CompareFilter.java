@@ -40,14 +40,14 @@ public abstract class CompareFilter extends Filter
 	ClassNotFoundException 
 	{
 		super.readExternal(in);
-		v = (ValuePath)serializer.readObject(in);
+		v = (ValuePath)serializer.readNullableObject(in);
 		o = in.readObject();
 	}
 	
 	public void writeExternal(ObjectOutput out) throws IOException 
 	{
 		super.writeExternal(out);
-		serializer.writeObject(out, v);
+		serializer.writeNullableObject(out, v);
 		out.writeObject(o);
 	}
 }

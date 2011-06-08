@@ -66,6 +66,7 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.TransactionException;
+import com.ibm.websphere.objectgrid.UndefinedMapException;
 import com.ibm.websphere.objectgrid.datagrid.AgentManager;
 import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
@@ -517,8 +518,37 @@ public class WXSUtils
 	
 	<K,V> void internalPutAll(Map<K,V> batch, BackingMap bmap, boolean doGet, boolean isWriteThrough)
 	{
-		if(batch.size() > 0)
+		int sz = batch.size();
+		InsertAgent<K,V> ia = null;
+		switch(sz)
 		{
+		case 0:
+			return;
+		case 1: // optimized version, generates a little less garbage.
+			// invoke the agent to add the batch of records to the grid
+			ia = new InsertAgent<K,V>();
+			ia.doGet = doGet;
+			ia.batch = batch;
+			ia.isWriteThrough = isWriteThrough;
+			// Insert all keys for one partition using the first key as a routing key
+			AgentManager am = null;
+			try
+			{
+				am = getSessionForThread().getMap(bmap.getName()).getAgentManager();
+			}
+			catch(UndefinedMapException e)
+			{
+				throw new ObjectGridRuntimeException(e);
+			}
+			Object rc = am.callReduceAgent(ia, Collections.singleton(batch.keySet().iterator().next()));
+			boolean result = checkAgentReturnValue(rc);
+			if(!result)
+			{
+				logger.log(Level.SEVERE, "putAll failed because of a server side exception");
+				throw new ObjectGridRuntimeException("putAll failed");
+			}
+			break;
+		default:
 			Map<Integer, Map<K,V>> pmap = convertToPartitionEntryMap(bmap, batch);
 			Iterator<Map<K,V>> items = pmap.values().iterator();
 			ArrayList<Future<?>> results = new ArrayList<Future<?>>();
@@ -531,7 +561,7 @@ public class WXSUtils
 				K key = perPartitionEntries.keySet().iterator().next();
 				
 				// invoke the agent to add the batch of records to the grid
-				InsertAgent<K,V> ia = new InsertAgent<K,V>();
+				ia = new InsertAgent<K,V>();
 				ia.doGet = doGet;
 				ia.batch = perPartitionEntries;
 				ia.isWriteThrough = isWriteThrough;
@@ -561,14 +591,7 @@ public class WXSUtils
 		{
 			for(Future<?> f : results)
 			{
-				if(f.get() != null && f.get() instanceof EntryErrorValue)
-				{
-					EntryErrorValue ev = (EntryErrorValue)f.get();
-					logger.log(Level.SEVERE, "Remote exception: " + ev.toString());
-					throw new ObjectGridRuntimeException(ev.toString());
-				}
-				Boolean b = (Boolean)f.get();
-				if(b == null || b.equals(Boolean.FALSE))
+				if(!checkAgentReturnValue(f.get()))
 					return false;
 			}
 		}
@@ -585,6 +608,19 @@ public class WXSUtils
 		return true;
 	}
 
+	static public boolean checkAgentReturnValue(Object rc)
+	{
+		if(rc != null && rc instanceof EntryErrorValue)
+		{
+			EntryErrorValue ev = (EntryErrorValue)rc;
+			logger.log(Level.SEVERE, "Remote exception: " + ev.toString());
+			throw new ObjectGridRuntimeException(ev.toString());
+		}
+		Boolean b = (Boolean)rc;
+		if(b == null || b.equals(Boolean.FALSE))
+			return false;
+		return true;
+	}
 	/**
 	 * This removes the Keys from the grid in parallel as efficiently as possible. The entries will
 	 * also be <b>removed</b> from any backend if a Loader is used. This isn't an invalidate, it's

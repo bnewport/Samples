@@ -51,6 +51,11 @@ public abstract class Filter implements Externalizable
 	 * Register all the Filter classes on the serializer in the custom serializer.
 	 */
 	static ClassSerializer serializer = new FilterClassSerializer();
+
+	static public ClassSerializer getSerializer()
+	{
+		return serializer;
+	}
 	
 	static public void writeFilter(ObjectOutput out, Filter f)
 		throws IOException

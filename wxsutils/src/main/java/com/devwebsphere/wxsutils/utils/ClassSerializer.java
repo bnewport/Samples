@@ -14,7 +14,9 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +40,15 @@ public class ClassSerializer
 	final static byte LIST = 2;
 	final static byte MAP = 3;
 	final static byte BULKLISTITEM = 4;
-	byte nextCode = 10;
+	final static byte BYTE = 5;
+	final static byte INTEGER = 6;
+	final static byte LONG = 7;
+	final static byte DATE = 8;
+	final static byte TIMESTAMP = 9;
+	final static byte FLOAT = 10;
+	final static byte DOUBLE = 11;
+	
+	byte nextCode = 20;
 	
 	/**
 	 * Goes from Class to byte
@@ -131,6 +141,36 @@ public class ClassSerializer
 			out.writeByte(BULKLISTITEM);
 			BulkPushItem b = (BulkPushItem)f;
 			b.writeExternal(out);
+		} else if(f instanceof Byte)
+		{
+			out.writeByte(BYTE);
+			out.writeByte(((Byte)f).byteValue());
+		} else if(f instanceof Integer)
+		{
+			out.writeByte(INTEGER);
+			out.writeInt(((Integer)f).intValue());
+		} else if(f instanceof Long)
+		{
+			out.writeByte(LONG);
+			out.writeLong(((Long)f).longValue());
+		} else if(f instanceof Float)
+		{
+			out.writeByte(FLOAT);
+			out.writeFloat(((Float)f).floatValue());
+		} else if(f instanceof Double)
+		{
+			out.writeByte(DOUBLE);
+			out.writeDouble(((Double)f).doubleValue());
+		} else if(f instanceof Timestamp)
+		{
+			out.writeByte(TIMESTAMP);
+			Timestamp ts = (Timestamp)f;
+			out.writeLong(ts.getTime());
+			out.writeInt(ts.getNanos());
+		} else if(f instanceof Date)
+		{
+			out.writeByte(DATE);
+			out.writeLong(((Date)f).getTime());
 		} else
 		{
 			Byte id = class2IdMap.get(f.getClass());
@@ -177,6 +217,22 @@ public class ClassSerializer
 				case MAP:
 					Map map = readMap(in);
 					return map;
+				case BYTE:
+					return in.readByte();
+				case INTEGER:
+					return new Integer(in.readInt());
+				case LONG:
+					return new Long(in.readLong());
+				case FLOAT:
+					return new Float(in.readFloat());
+				case DOUBLE:
+					return new Double(in.readDouble());
+				case TIMESTAMP:
+					Timestamp ts = new Timestamp(in.readLong());
+					ts.setNanos(in.readInt());
+					return ts;
+				case DATE:
+					return new Date(in.readLong());
 				case BULKLISTITEM:
 					BulkPushItem bulk = new BulkPushItem();
 					bulk.readExternal(in);
