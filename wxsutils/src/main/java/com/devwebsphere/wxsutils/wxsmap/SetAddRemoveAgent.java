@@ -39,7 +39,7 @@ public class SetAddRemoveAgent<V extends Serializable> implements MapGridAgent
 	 * WXSUtils Set logic.
 	 * The buckey keys are ALWAYS strings.
 	 */
-	static public int NUM_BUCKETS = 211;
+	static public int NUM_BUCKETS = 2003;
 	
 	/**
 	 * Add or remove specifier

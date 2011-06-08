@@ -40,7 +40,7 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 {
 	static Logger logger = Logger.getLogger(BigListPushAgent.class.getName());
 
-	public static int BUCKET_SIZE = 20;
+	public static int BUCKET_SIZE = 5;
 	
 	public LR isLeft;
 	// keys MUST be sorted on client
