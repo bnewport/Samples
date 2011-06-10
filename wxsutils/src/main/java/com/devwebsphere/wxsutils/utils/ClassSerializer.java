@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxsutils.ByteArrayKey;
 import com.devwebsphere.wxsutils.WXSMapOfLists.BulkPushItem;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
@@ -47,6 +48,8 @@ public class ClassSerializer
 	final static byte TIMESTAMP = 9;
 	final static byte FLOAT = 10;
 	final static byte DOUBLE = 11;
+	final static byte BYTEL = 12;
+	final static byte NULL = 13;
 	
 	byte nextCode = 20;
 	
@@ -61,6 +64,9 @@ public class ClassSerializer
 
 	public ClassSerializer()
 	{
+		// add some common classes to speed them up.
+		storeClass(ByteArrayKey.class);
+		storeClass(BulkPushItem.class);
 	}
 	
 	/**
@@ -89,31 +95,10 @@ public class ClassSerializer
 		}
 	}
 
-	public void writeNullableObject(ObjectOutput out, Object f)
-		throws IOException
-	{
-		if(f != null)
-		{
-			out.writeBoolean(true);
-			writeObject(out, f);
-		}
-		else
-			out.writeBoolean(false);
-	}
-
-	public Object readNullableObject(ObjectInput in)
-		throws IOException
-	{
-		if(in.readBoolean())
-			return readObject(in);
-		else
-			return null;
-	}
-	
 	/**
 	 * This writes the non-null object to the stream. If the object is an optimized one
 	 * then a byte is written identifying the object, followed by the externalize form of 
-	 * the object.
+	 * the object. Null is handled correctly.
 	 * @param out
 	 * @param f
 	 * @throws IOException
@@ -121,6 +106,10 @@ public class ClassSerializer
 	public void writeObject(ObjectOutput out, Object f)
 	throws IOException
 	{
+		if(f == null)
+		{
+			out.writeByte(NULL);
+		} else
 		if(f instanceof String)
 		{
 			out.writeByte(STRING);
@@ -171,6 +160,12 @@ public class ClassSerializer
 		{
 			out.writeByte(DATE);
 			out.writeLong(((Date)f).getTime());
+		} else if(f instanceof byte[])
+		{
+			byte[] b = (byte[])f;
+			out.writeByte(BYTEL);
+			out.writeInt(b.length);
+			out.write(b);
 		} else
 		{
 			Byte id = class2IdMap.get(f.getClass());
@@ -208,6 +203,8 @@ public class ClassSerializer
 			{
 				switch(b)
 				{
+				case NULL:
+					return null;
 				case STRING:
 					String s = in.readUTF();
 					return s;
@@ -237,6 +234,11 @@ public class ClassSerializer
 					BulkPushItem bulk = new BulkPushItem();
 					bulk.readExternal(in);
 					return bulk;
+				case BYTEL:
+					int size = in.readInt();
+					byte[] bl = new byte[size];
+					in.readFully(bl);
+					return bl;
 				default:
 					Class<? extends Externalizable> c = id2ClassMap.get(new Byte(b));
 					Externalizable f = c.newInstance();
@@ -275,7 +277,7 @@ public class ClassSerializer
 	}
 	
 	/**
-	 * This writes a list of non nullable values to
+	 * This writes a list of nullable values to
 	 * a stream
 	 * @param <V>
 	 * @param out
@@ -307,22 +309,8 @@ public class ClassSerializer
 		return rc;
 	}
 	
-	public <K,V> Map<K,V> readMapWithNullableValues(ObjectInput in)
-		throws IOException
-	{
-		int size = in.readInt();
-		Map<K,V> rc = new HashMap<K, V>();
-		for(int i = 0; i < size; ++i)
-		{
-			K k = (K)readObject(in);
-			V v = (V)readNullableObject(in);
-			rc.put(k, v);
-		}
-		return rc;
-	}
-
 	/**
-	 * This writes a Map of non null key and non null value pairs
+	 * This writes a Map of non null key and nullable value pairs
 	 * to the stream.
 	 * @param <K>
 	 * @param <V>
@@ -339,27 +327,6 @@ public class ClassSerializer
 		{
 			writeObject(out, e.getKey());
 			writeObject(out, e.getValue());
-		}
-	}
-
-	/**
-	 * This writes a Map with non nullable keys and nullable Values
-	 * to the stream.
-	 * @param <K>
-	 * @param <V>
-	 * @param out
-	 * @param map
-	 * @throws IOException
-	 */
-	public <K,V> void writeMapWithNullableValues(ObjectOutput out, Map<K,V> map)
-		throws IOException
-	{
-		int size = map.size();
-		out.writeInt(size);
-		for(Map.Entry<K,V> e : map.entrySet())
-		{
-			writeObject(out, e.getKey());
-			writeNullableObject(out, e.getValue());
 		}
 	}
 }

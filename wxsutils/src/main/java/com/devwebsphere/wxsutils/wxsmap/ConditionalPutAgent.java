@@ -126,14 +126,14 @@ public class ConditionalPutAgent<K,V> implements ReduceGridAgent, Externalizable
 			ClassNotFoundException 
 	{
 		ClassSerializer serializer = WXSUtils.getSerializer();
-		batchBefore = serializer.readMapWithNullableValues(in);
+		batchBefore = serializer.readMap(in);
 		newValues = serializer.readMap(in);
 	}
 
 	public void writeExternal(ObjectOutput out) throws IOException 
 	{
 		ClassSerializer serializer = WXSUtils.getSerializer();
-		serializer.writeMapWithNullableValues(out, batchBefore);
+		serializer.writeMap(out, batchBefore);
 		serializer.writeMap(out, newValues);
 	}
 }

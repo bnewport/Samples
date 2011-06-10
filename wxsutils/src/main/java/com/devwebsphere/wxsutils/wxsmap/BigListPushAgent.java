@@ -172,7 +172,7 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 			ClassNotFoundException 
 	{
 		ClassSerializer serializer = WXSUtils.getSerializer();
-		dirtyKey = (K)serializer.readNullableObject(in);
+		dirtyKey = (K)serializer.readObject(in);
 		isLeft = (in.readBoolean()) ? LR.LEFT : LR.RIGHT;
 		keys = serializer.readList(in);
 		values = serializer.readList(in);
@@ -181,7 +181,7 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 	public void writeExternal(ObjectOutput out) throws IOException 
 	{
 		ClassSerializer serializer = WXSUtils.getSerializer();
-		serializer.writeNullableObject(out, dirtyKey);
+		serializer.writeObject(out, dirtyKey);
 		out.writeBoolean(isLeft == LR.LEFT ? true : false);
 		serializer.writeList(out, keys);
 		serializer.writeList(out, values);

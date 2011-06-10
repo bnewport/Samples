@@ -102,14 +102,14 @@ public interface WXSMapOfLists<K,V>
 		{
 			ClassSerializer serializer = WXSUtils.getSerializer();
 			value = (V)serializer.readObject(in);
-			filter = (Filter)serializer.readNullableObject(in);
+			filter = (Filter)serializer.readObject(in);
 		}
 
 		public void writeExternal(ObjectOutput out) throws IOException 
 		{
 			ClassSerializer serializer = WXSUtils.getSerializer();
 			serializer.writeObject(out, value);
-			serializer.writeNullableObject(out, filter);
+			serializer.writeObject(out, filter);
 		}
 		
 	}

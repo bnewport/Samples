@@ -10,6 +10,18 @@
 //
 package com.devwebsphere.wxsutils.filter;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 import junit.framework.Assert;
 
 import org.junit.BeforeClass;
@@ -18,6 +30,7 @@ import org.junit.Test;
 import com.devwebsphere.wxs.jdbcloader.Customer;
 import com.devwebsphere.wxsutils.filter.path.PojoFieldPath;
 import com.devwebsphere.wxsutils.filter.path.PojoPropertyPath;
+import com.devwebsphere.wxsutils.utils.ClassSerializer;
 
 
 public class TestFilter 
@@ -63,5 +76,27 @@ public class TestFilter
 		Filter f = fb.and(fb.eq(fn, "Billy"), fb.eq(sn, "Newport"));
 		
 		Assert.assertEquals(f.filter(c), true);
+	}
+	@Test
+	public void testSerializer()
+		throws IOException
+	{
+		ValuePath fn = new PojoPropertyPath("FirstName");
+		ValuePath sn = new PojoFieldPath("surname");
+		
+		FilterBuilder fb = new FilterBuilder();
+		Filter f = fb.and(fb.eq(fn, "Billy"), fb.eq(sn, "Newport"));
+		
+		ClassSerializer serializer = new ClassSerializer();
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ObjectOutputStream dos = new ObjectOutputStream(bos);
+		serializer.writeObject(dos, f);
+		dos.close();
+		bos.close();
+		byte[] rawBytes = bos.toByteArray();
+		ByteArrayInputStream bis = new ByteArrayInputStream(rawBytes);
+		ObjectInputStream ois = new ObjectInputStream(bis);
+		Object o = serializer.readObject(ois);
+		Filter copyf = (Filter)f;
 	}
 }

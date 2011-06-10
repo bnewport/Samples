@@ -7,6 +7,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,6 +36,7 @@ public class TestClassSerializer
 		test.put("7", new Date(System.currentTimeMillis()));
 		test.put("8", new ArrayList());
 		test.put("9", new HashMap());
+		test.put("10", new byte[2]);
 
 		ClassSerializer serializer = new ClassSerializer();
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -52,7 +54,12 @@ public class TestClassSerializer
 			String key = Integer.toString(i);
 			Object v = test.get(key);
 			Object v2 = copy.get(key);
-			Assert.assertEquals(v, v2);
+			if(v instanceof byte[])
+			{
+				Assert.assertTrue(Arrays.equals((byte[])v, (byte[])v2));
+			}
+			else
+				Assert.assertEquals(v, v2);
 		}
 	}
 
