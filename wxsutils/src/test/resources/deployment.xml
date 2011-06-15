@@ -23,6 +23,7 @@ Licensed Materials - Property of IBM
             
             <map ref="Map1"/>
             <map ref="Map2"/>
+            <map ref="Person"/>
             <map ref="FarMap3"/>
             <map ref="List"/>
             

@@ -27,6 +27,7 @@ Licensed Materials - Property of IBM
             
             <backingMap name="Map1"  copyMode="COPY_TO_BYTES"/>
             <backingMap name="Map2"  copyMode="COPY_TO_BYTES"/>
+            <backingMap name="Person"  copyMode="COPY_TO_BYTES"/>
             <backingMap name="FarMap3" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES"/>
             <backingMap name="List" lockStrategy="PESSIMISTIC"  copyMode="COPY_TO_BYTES"/>
 

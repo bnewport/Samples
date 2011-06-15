@@ -18,8 +18,10 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,7 +31,10 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
 /**
  * This is a helper class to track a set of classes and serialize/deserialize
- * them in a more efficient form than with write object.
+ * them in a more efficient form than with write object. You can see the types
+ * that are optimized in the list below. Additional Externalize classes
+ * can also be optimized using the storeClass method to register them HOWEVER
+ * storeClass should only be used in the constructor of a subclass of this class.
  * @author bnewport
  *
  */
@@ -38,8 +43,8 @@ public class ClassSerializer
 	static Logger logger = Logger.getLogger(ClassSerializer.class.getName());
 
 	final static byte STRING = 1;
-	final static byte LIST = 2;
-	final static byte MAP = 3;
+	final static byte LIST = 2; // ArrayList
+	final static byte MAP = 3; // HashMap
 	final static byte BULKLISTITEM = 4;
 	final static byte BYTE = 5;
 	final static byte INTEGER = 6;
@@ -50,6 +55,7 @@ public class ClassSerializer
 	final static byte DOUBLE = 11;
 	final static byte BYTEL = 12;
 	final static byte NULL = 13;
+	final static byte SET = 14; // HashSet
 	
 	byte nextCode = 20;
 	
@@ -66,7 +72,6 @@ public class ClassSerializer
 	{
 		// add some common classes to speed them up.
 		storeClass(ByteArrayKey.class);
-		storeClass(BulkPushItem.class);
 	}
 	
 	/**
@@ -115,15 +120,20 @@ public class ClassSerializer
 			out.writeByte(STRING);
 			out.writeUTF((String)f);
 		} else
-		if(f instanceof List)
+		if(f instanceof ArrayList)
 		{
 			out.writeByte(LIST);
 			writeList(out, (List)f);
 		} else
-		if(f instanceof Map)
+		if(f instanceof HashMap)
 		{
 			out.writeByte(MAP);
 			writeMap(out, (Map)f);
+		} else
+		if(f instanceof HashSet)
+		{
+			out.writeByte(SET);
+			writeSet(out, (Set)f);
 		} else
 		if(f instanceof BulkPushItem)
 		{
@@ -211,6 +221,9 @@ public class ClassSerializer
 				case LIST:
 					List list = readList(in);
 					return list;
+				case SET:
+					Set set = readSet(in);
+					return set;
 				case MAP:
 					Map map = readMap(in);
 					return map;
@@ -241,6 +254,11 @@ public class ClassSerializer
 					return bl;
 				default:
 					Class<? extends Externalizable> c = id2ClassMap.get(new Byte(b));
+					if(c == null)
+					{
+						logger.log(Level.SEVERE, "Unknown byte found: " + Byte.toString(b));
+						throw new ObjectGridRuntimeException("Unknown byte found: " + Byte.toString(b));
+					}
 					Externalizable f = c.newInstance();
 					f.readExternal(in);
 					return f;
@@ -309,6 +327,19 @@ public class ClassSerializer
 		return rc;
 	}
 	
+	public <V> Set<V> readSet(ObjectInput in)
+		throws IOException
+	{
+		int size = in.readInt();
+		Set<V> rc = new HashSet<V>();
+		for(int i = 0; i < size; ++i)
+		{
+			V v = (V)readObject(in);
+			rc.add(v);
+		}
+		return rc;
+	}
+
 	/**
 	 * This writes a Map of non null key and nullable value pairs
 	 * to the stream.
@@ -327,6 +358,17 @@ public class ClassSerializer
 		{
 			writeObject(out, e.getKey());
 			writeObject(out, e.getValue());
+		}
+	}
+
+	public <V> void writeSet(ObjectOutput out, Set<V> set)
+		throws IOException
+	{
+		int size = set.size();
+		out.writeInt(size);
+		for(V v : set)
+		{
+			writeObject(out, v);
 		}
 	}
 }

@@ -1285,6 +1285,11 @@ public class WXSUtils
 				}
 				else
 				{
+					String aMapName = (String)grid.getListOfMapNames().get(0);
+					BackingMap aMap = grid.getMap(aMapName);
+					int numPartitions = aMap.getPartitionManager().getNumOfPartitions();
+					ExecutorService p = createClientThreadPool(numPartitions);
+					logger.log(Level.INFO, "WXSUtils thread pool is " + numPartitions + " threads");
 					globalDefaultUtils = new WXSUtils(grid);
 				}
 				globalDefaultUtils.configProps = cprops;

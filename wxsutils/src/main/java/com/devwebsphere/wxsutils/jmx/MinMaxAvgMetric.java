@@ -19,6 +19,10 @@ import java.util.concurrent.atomic.AtomicLong;
  * time. It's designed to be thread safe but I attempted to try
  * to avoid any synchronization to avoid it being a bottleneck. It also tracks the response times using
  * a graph to see how many timings were of x ms and so on.
+ * 
+ * This can also be used to put times in buckets. For example, if we want to measure response
+ * times up to 10 seconds but want them in 1 second buckets then the parameterized constructor can
+ * be used to do this with the parameters (10000, 1000).
  *
  */
 public final class MinMaxAvgMetric 
@@ -35,10 +39,31 @@ public final class MinMaxAvgMetric
 	
 	AtomicLong totalTimeNS = new AtomicLong();
 	AtomicIntegerArray responseTimeArray;
+	int bucketSizeMS;
+	
 
+	/**
+	 * Tracks response times < 1 second normally
+	 */
 	public MinMaxAvgMetric()
 	{
 		responseTimeArray = new AtomicIntegerArray(1000);
+		reset();
+		bucketSizeMS = 1;
+	}
+
+	/**
+	 * Tracks times < maxTimeMS normally
+	 * @param maxTimeMS
+	 * @param bucketSizeMS For example, puts all times together with this many milliseconds
+	 */
+	public MinMaxAvgMetric(int maxTimeMS, int bucketSizeMS)
+	{
+		if(bucketSizeMS <= 0)
+			throw new IllegalArgumentException("Bucket Size must be > 1");
+		this.bucketSizeMS = bucketSizeMS;
+		maxTimeMS = (maxTimeMS / bucketSizeMS);
+		responseTimeArray = new AtomicIntegerArray(maxTimeMS);
 		reset();
 	}
 
@@ -72,8 +97,11 @@ public final class MinMaxAvgMetric
 		int c = count.incrementAndGet();
 		totalTimeNS.addAndGet(durationNS);
 		int durationMS = (int)(durationNS / 1000000L);
+		// round to bucket interval
+		int bucket = durationMS / bucketSizeMS;
 		
-		responseTimeArray.incrementAndGet((durationMS >= 0 && durationMS < 1000) ? durationMS : 999);
+		int maxTime = responseTimeArray.length() - 1;
+		responseTimeArray.incrementAndGet((bucket >= 0 && bucket < maxTime) ? bucket : maxTime);
 		if(c == 1)
 		{
 			// make sure in the window between fetch count
@@ -205,7 +233,7 @@ public final class MinMaxAvgMetric
 				int numChars = bar.length() * count / maxCount;
 				int percentageMax = (count * 100 / total);
 				if(numChars >= 1)
-					System.out.println("R " + i + "ms : " + bar.substring(0, numChars) + " (" + percentageMax + "%)");
+					System.out.println("R " + (i * bucketSizeMS) + "ms : " + bar.substring(0, numChars) + " (" + percentageMax + "%)");
 			}
 		}
 	}
