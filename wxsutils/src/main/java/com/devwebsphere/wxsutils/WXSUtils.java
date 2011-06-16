@@ -41,6 +41,7 @@ import com.devwebsphere.wxssearch.jmx.TextIndexMBeanManager;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanManager;
 import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanManager;
 import com.devwebsphere.wxsutils.jmx.wxsmap.WXSMapMBeanManager;
+import com.devwebsphere.wxsutils.multijob.JobExecutor;
 import com.devwebsphere.wxsutils.utils.ClassSerializer;
 import com.devwebsphere.wxsutils.wxsmap.ConditionalPutAgent;
 import com.devwebsphere.wxsutils.wxsmap.ContainsAllAgent;
@@ -49,6 +50,7 @@ import com.devwebsphere.wxsutils.wxsmap.InsertAgent;
 import com.devwebsphere.wxsutils.wxsmap.InvalidateAgent;
 import com.devwebsphere.wxsutils.wxsmap.LazyMBeanManagerAtomicReference;
 import com.devwebsphere.wxsutils.wxsmap.MapAgentExecutor;
+import com.devwebsphere.wxsutils.wxsmap.MapAgentNoKeysExecutor;
 import com.devwebsphere.wxsutils.wxsmap.ReduceAgentExecutor;
 import com.devwebsphere.wxsutils.wxsmap.RemoveAgent;
 import com.devwebsphere.wxsutils.wxsmap.ThreadLocalSession;
@@ -754,6 +756,39 @@ public class WXSUtils
 			return Collections.EMPTY_MAP;
 	}
 	
+	@Beta
+	public <K, A extends MapGridAgent, X> Map<K,Object> callMapAgentHack(A mapAgent, BackingMap bmap)
+	{
+		try
+		{
+			int numPartitions = bmap.getPartitionManager().getNumOfPartitions();
+			ArrayList<Future<Map<K,X>>> results = new ArrayList<Future<Map<K,X>>>();
+			CountDownLatch doneSignal = new CountDownLatch(numPartitions);
+			for(int i = 0; i < numPartitions; ++i)
+			{
+				Integer key = new Integer(i);
+				MapAgentNoKeysExecutor<K,A,X> ia = new MapAgentNoKeysExecutor<K,A,X>();
+				ia.agent = mapAgent;
+				ia.agentTargetMapName = bmap.getName();
+				Future<Map<K,X>> fv = threadPool.submit(new CallReduceAgentThread<Integer,Map<K,X>>(grid, JobExecutor.routingMapName, key, ia, doneSignal));
+				results.add(fv);
+			}
+			Map<K,Object> result = new HashMap<K, Object>();
+			Iterator<Future<Map<K,X>>> iter = results.iterator();
+			while(iter.hasNext())
+			{
+				Future<Map<K,X>> fv = iter.next();
+				result.putAll(fv.get());
+			}
+			return result;
+		}
+		catch(Exception e)
+		{
+			logger.log(Level.SEVERE, "Exception", e);
+			throw new ObjectGridRuntimeException(e);
+		}
+	}
+	
 	/**
 	 * This invokes the ReduceAgent for each key as efficiently as possible and reduces the results.
 	 * @param <K> The key type
@@ -1061,6 +1096,10 @@ public class WXSUtils
 				AgentManager agentMgr = sess.getMap(mapName).getAgentManager();
 				X x = (X) agentMgr.callReduceAgent(agent, Collections.singleton(key));
 				return x;
+			}
+			catch(UndefinedMapException e)
+			{
+				logger.log(Level.SEVERE, "Undefined Map using in Agent call " + mapName);
 			}
 			catch(Throwable e)
 			{

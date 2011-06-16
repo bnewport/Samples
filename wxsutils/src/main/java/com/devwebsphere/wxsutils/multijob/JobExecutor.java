@@ -41,7 +41,7 @@ public class JobExecutor <V extends Serializable,R>
 	BackingMap bmap;
 	int currentPartitionID;
 	SinglePartTask<V, R> currTask;
-	String routingMapName = "RouterKeyI32";
+	public static String routingMapName = "RouterKeyI32";
 
 	/**
 	 * This constructs an instance that will use the specified client grid
