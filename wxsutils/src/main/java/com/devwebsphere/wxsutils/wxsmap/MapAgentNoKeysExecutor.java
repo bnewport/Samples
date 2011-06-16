@@ -49,7 +49,7 @@ public class MapAgentNoKeysExecutor<K, A extends MapGridAgent, X> implements Red
 		try
 		{
 			ObjectMap targetMap = sess.getMap(agentTargetMapName);
-			X x = (X) agent.processAllEntries(sess, map);
+			X x = (X) agent.processAllEntries(sess, targetMap);
 			return x;
 		}
 		catch(Exception e)

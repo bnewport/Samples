@@ -115,6 +115,34 @@ public class TestClientAPIs
 		
 	}
 	
+	@Test
+	public void testCallMapAgentHack()
+	{
+		clearMap();
+		WXSMap<String, String> map = utils.getCache(bmFarMap3.getName());
+		
+		int numKeys = 1000;
+		for(int i = 0; i < numKeys; ++i)
+		{
+			map.put(Integer.toString(i), Integer.toString(i));
+		}
+		
+		TestMapGridAgent agent = new TestMapGridAgent();
+		
+		Map<String, Object> rc = utils.callMapAgentHack(agent, bmFarMap3);
+		Assert.assertEquals(numKeys, rc.size());
+		HashSet<String> keysFound = new HashSet<String>(); 
+		for(Map.Entry<String, Object> e : rc.entrySet())
+		{
+			String value = (String)e.getValue();
+			Assert.assertEquals(e.getKey(), value);
+			keysFound.add(e.getKey());
+		}
+		Assert.assertEquals(numKeys, keysFound.size());
+
+		System.out.println(rc.toString());
+	}
+	
 	/**
 	 * This tests the basic putAll/getAll/removeAll capabilities
 	 */
