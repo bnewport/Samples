@@ -69,6 +69,8 @@ public class LazyMBeanManagerAtomicReference<T> extends AtomicReference<T>
 					logger.log(Level.SEVERE, "Unexpected exception creating MBeanManager", e);
 					throw new RuntimeException(e);
 				}
+				else
+					break;
 			}
 		}
 		T rc = get();

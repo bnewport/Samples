@@ -325,7 +325,7 @@ public class WXSUtils
 		this.grid = grid;
 		if(globalThreadPool.get() == null)
 		{
-			ExecutorService p = createClientThreadPool(THREADPOOL_SIZE);
+			ExecutorService p = createClientThreadPool(THREADPOOL_SIZE, 1);
 			if(!globalThreadPool.compareAndSet(null, p))
 			{
 				p.shutdown();
@@ -1276,11 +1276,11 @@ public class WXSUtils
 	 * @param numThreads The desired number of threads in the pool.
 	 * @return
 	 */
-	private static ExecutorService createClientThreadPool(int numThreads)
+	private static ExecutorService createClientThreadPool(int numThreads, int queueSize)
 	{
 		// this means that once there are 3x numThreads jobs queued waiting for
 		// a thread then it will start running jobs on the submitting thread.
-		LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>(numThreads * 3);
+		LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>(queueSize);
 
 		// Once the queue reports that it is full, the CallerRunPolicy will run jobs
 		// on the submitter thread.
@@ -1318,7 +1318,7 @@ public class WXSUtils
 				ObjectGrid grid = cprops.connect();
 				if(cprops.numThreads > 0)
 				{
-					ExecutorService p = createClientThreadPool(cprops.numThreads);
+					ExecutorService p = createClientThreadPool(cprops.numThreads, cprops.queueLength);
 					logger.log(Level.INFO, "WXSUtils thread pool is " + cprops.numThreads + " threads");
 					globalDefaultUtils = new WXSUtils(grid, p);
 				}
@@ -1327,7 +1327,7 @@ public class WXSUtils
 					String aMapName = (String)grid.getListOfMapNames().get(0);
 					BackingMap aMap = grid.getMap(aMapName);
 					int numPartitions = aMap.getPartitionManager().getNumOfPartitions();
-					ExecutorService p = createClientThreadPool(numPartitions);
+					ExecutorService p = createClientThreadPool(numPartitions, cprops.queueLength);
 					logger.log(Level.INFO, "WXSUtils thread pool is " + numPartitions + " threads");
 					globalDefaultUtils = new WXSUtils(grid);
 				}

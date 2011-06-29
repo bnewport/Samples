@@ -60,6 +60,12 @@ class ConfigProperties
 	int numThreads;
 
 	/**
+	 * This specifies how big to make the thread pool queue
+	 */
+	static final String QUEUE_PROP = "queue";
+	int queueLength;
+
+	/**
 	 * This is the property name for the time wxsutils waits for agents to complete
 	 */
 	static final String AGENTWAITTIME_PROP = "agenttimeoutsecs";
@@ -140,6 +146,12 @@ class ConfigProperties
 		if(intValue != null)
 		{
 			numThreads = Integer.parseInt(intValue);
+		}
+		queueLength = 1;
+		intValue = props.getProperty(QUEUE_PROP);
+		if(intValue != null)
+		{
+			queueLength = Integer.parseInt(intValue);
 		}
 		agentWaitTimeMaximumSecs = 120;
 		intValue = props.getProperty(AGENTWAITTIME_PROP);
