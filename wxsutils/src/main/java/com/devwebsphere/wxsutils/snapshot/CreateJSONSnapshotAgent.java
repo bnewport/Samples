@@ -13,6 +13,7 @@ package com.devwebsphere.wxsutils.snapshot;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,6 +30,7 @@ import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.filter.Filter;
 import com.ibm.websphere.objectgrid.IndexNotReadyException;
 import com.ibm.websphere.objectgrid.IndexUndefinedException;
+import com.ibm.websphere.objectgrid.ObjectGridManagerFactory;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
@@ -37,6 +39,8 @@ import com.ibm.websphere.objectgrid.UndefinedMapException;
 import com.ibm.websphere.objectgrid.datagrid.AgentManager;
 import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
+import com.ibm.websphere.objectgrid.plugins.index.MapIndex;
+import com.ibm.websphere.objectgrid.plugins.index.MapIndexPlugin;
 import com.ibm.ws.objectgrid.index.MapKeyIndex;
 
 public class CreateJSONSnapshotAgent implements ReduceGridAgent 
@@ -68,6 +72,22 @@ public class CreateJSONSnapshotAgent implements ReduceGridAgent
 	 */
 	@Beta
 	static public Iterator<Object> getAllKeys(ObjectMap map)
+	{
+		try
+		{
+			// use the supported form on V7.1.0.3 or later
+			Field indexName = MapIndexPlugin.class.getField("SYSTEM_KEY_INDEX_NAME");
+			String name = (String)indexName.get(null);
+			MapIndex index =  (MapIndex)map.getIndex(name);
+			return index.findAll();
+		}
+		catch(Exception e)
+		{
+			return getAllKeysUnsupported(map);
+		}
+	}
+
+	static Iterator getAllKeysUnsupported(ObjectMap map)
 	{
 		try
 		{
