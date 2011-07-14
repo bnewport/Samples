@@ -196,7 +196,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 		push(key, convertToBulkList(values), LR.LEFT, null);
 	}
 
-	List<BulkPushItem<V>> convertToBulkList(List<V> values)
+	static public <V extends Serializable> List<BulkPushItem<V>> convertToBulkList(List<V> values)
 	{
 		ArrayList<BulkPushItem<V>> list = new ArrayList<WXSMapOfLists.BulkPushItem<V>>(values.size());
 		for(V v : values)
