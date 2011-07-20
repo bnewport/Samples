@@ -14,6 +14,7 @@ import junit.framework.Assert;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.Ignore;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.EvaluatorException;
@@ -81,6 +82,7 @@ public class TestJSONAgent
 	}
 
 	@Test
+	@Ignore
 	public void testJSShell()
 		throws Exception
 	{

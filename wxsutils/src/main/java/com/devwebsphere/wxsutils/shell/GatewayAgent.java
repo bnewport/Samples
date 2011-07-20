@@ -39,7 +39,7 @@ import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 public abstract class GatewayAgent implements MapGridAgent 
 {
 
-	ObjectMapper mapper = new ObjectMapper();
+	transient ObjectMapper mapper = new ObjectMapper();
 	
 	/**
 	 * 
