@@ -522,7 +522,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable,V extends Serializable>
 				// we sort keys to avoid deadlock type ordering issues
 				agent.setKeyValues(perPartitionEntries);
 				// Push all keys/lists for one partition using the first key as a routing key
-				Future<?> fv = utils.getExecutorService().submit(new WXSUtils.CallReduceAgentThread(utils.getObjectGrid(), bmap.getName(), key, agent, doneSignal));
+				Future<?> fv = utils.getExecutorService().submit(new WXSUtils.CallReduceAgentThread(utils, bmap.getName(), key, agent, doneSignal));
 				results.add(fv);
 			}
 	

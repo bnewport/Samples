@@ -18,7 +18,7 @@ public abstract class WXSBaseMap
 		this.utils = utils;
 		grid = utils.getObjectGrid();
 		bmap = utils.getObjectGrid().getMap(mapName);
-		tls = new ThreadLocalSession(utils);
+		tls = utils.getTls();
 	}
 	
 	public WXSUtils getWXSUtils()
