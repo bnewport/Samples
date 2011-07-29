@@ -43,7 +43,7 @@ public class RemoveAgent<K> implements ReduceGridAgent {
 		long startNS = System.nanoTime();
 		Session s = null;
 		try {
-			s = sess.getObjectGrid().getSession();
+			s = SessionPool.getSessionForThread(sess.getObjectGrid());
 			ObjectMap m = s.getMap(map.getName());
 			s.begin();
 			m.removeAll(batch);
@@ -62,6 +62,7 @@ public class RemoveAgent<K> implements ReduceGridAgent {
 					logger.log(Level.SEVERE, "Exception", e);
 				}
 			}
+			SessionPool.returnSession(s);
 		}
 
 	}

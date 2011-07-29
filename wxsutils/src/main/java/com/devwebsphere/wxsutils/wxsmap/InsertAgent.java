@@ -67,7 +67,7 @@ public class InsertAgent<K, V> implements ReduceGridAgent, Externalizable {
 		long startNS = System.nanoTime();
 		Session s = null;
 		try {
-			s = sess.getObjectGrid().getSession();
+			s = SessionPool.getSessionForThread(sess.getObjectGrid());
 			ObjectMap m = s.getMap(map.getName());
 			if (!isWriteThrough) {
 				s.beginNoWriteThrough();
@@ -105,6 +105,7 @@ public class InsertAgent<K, V> implements ReduceGridAgent, Externalizable {
 					logger.log(Level.SEVERE, "Exception", e);
 				}
 			}
+			SessionPool.returnSession(s);
 		}
 
 	}

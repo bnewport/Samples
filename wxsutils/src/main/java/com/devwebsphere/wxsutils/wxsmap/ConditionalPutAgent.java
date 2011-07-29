@@ -55,7 +55,7 @@ public class ConditionalPutAgent<K, V> implements ReduceGridAgent, Externalizabl
 		long startNS = System.nanoTime();
 		Session s = null;
 		try {
-			s = sess.getObjectGrid().getSession();
+			s = SessionPool.getSessionForThread(sess.getObjectGrid());
 			ObjectMap m = s.getMap(map.getName());
 			s.beginNoWriteThrough();
 			ArrayList<K> keys = new ArrayList<K>(batchBefore.keySet());
@@ -92,6 +92,7 @@ public class ConditionalPutAgent<K, V> implements ReduceGridAgent, Externalizabl
 					logger.log(Level.SEVERE, "Exception", e);
 				}
 			}
+			SessionPool.returnSession(s);
 		}
 	}
 
