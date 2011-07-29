@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
+import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
@@ -24,66 +25,64 @@ import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
  * This is used to remove a set of records for a given partition using a single hop.
  */
 
-public class InvalidateAgent<K> implements ReduceGridAgent 
-{
+public class InvalidateAgent<K> implements ReduceGridAgent {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6568906743945108310L;
 	static Logger logger = Logger.getLogger(InvalidateAgent.class.getName());
-	
+
 	public java.util.List<K> batch;
 
-	public Object reduce(Session sess, ObjectMap map) 
-	{
+	public Object reduce(Session sess, ObjectMap map) {
 		return null;
 	}
 
 	public Object reduce(Session sess, ObjectMap map, Collection arg2) {
 		AgentMBeanImpl agent = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
 		long startNS = System.nanoTime();
-		try
-		{
-			Session s = sess.getObjectGrid().getSession();
+		Session s = null;
+		try {
+			s = sess.getObjectGrid().getSession();
 			ObjectMap m = s.getMap(map.getName());
 			s.begin();
 			m.invalidateAll(batch, true);
 			s.commit();
 			agent.getKeysMetric().logTime(System.nanoTime() - startNS);
 			return Boolean.TRUE;
-		}
-		catch(Exception e)
-		{
+		} catch (Exception e) {
 			logger.log(Level.SEVERE, "Exception", e);
 			agent.getKeysMetric().logException(e);
 			return Boolean.FALSE;
+		} finally {
+			if (s != null && s.isTransactionActive()) {
+				try {
+					s.rollback();
+				} catch (ObjectGridException e) {
+					logger.log(Level.SEVERE, "Exception", e);
+				}
+			}
 		}
 	}
 
 	/**
-	 * Combine the Boolean results of the process calls using
-	 * AND
+	 * Combine the Boolean results of the process calls using AND
 	 */
-	public Object reduceResults(Collection arg0) 
-	{
+	public Object reduceResults(Collection arg0) {
 		boolean rc = true;
-		for(Object o : arg0)
-		{
-			if(o instanceof Boolean)
-			{
-				Boolean b = (Boolean)o;
+		for (Object o : arg0) {
+			if (o instanceof Boolean) {
+				Boolean b = (Boolean) o;
 				rc = rc && b;
-			}
-			else
-			{
+			} else {
 				rc = false;
 			}
-			if(!rc) break;
+			if (!rc)
+				break;
 		}
 		return rc;
 	}
-	
-	public InvalidateAgent()
-	{
- 	}
+
+	public InvalidateAgent() {
+	}
 }
