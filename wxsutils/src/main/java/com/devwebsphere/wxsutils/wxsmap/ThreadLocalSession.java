@@ -21,74 +21,35 @@ import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 
 /**
- * Each WXSUtils instance uses a ThreadLocal to store a dedicated
- * session for each thread.
- *
+ * Each WXSUtils instance uses a ThreadLocal to store a dedicated session for each thread.
+ * 
  */
-public class ThreadLocalSession extends ThreadLocal<ThreadStuff>
-{
+public class ThreadLocalSession {
 	WXSUtils utils;
 	static Logger logger = Logger.getLogger(ThreadLocalSession.class.getName());
-	
-	public ThreadLocalSession(WXSUtils utils)
-	{
+
+	public ThreadLocalSession(WXSUtils utils) {
 		this.utils = utils;
 	}
-	
-	protected ThreadStuff initialValue()
-	{
-		try
-		{
-			ThreadStuff v = new ThreadStuff();
-			v.grid = utils.getObjectGrid();
-			v.session = utils.getObjectGrid().getSession();
-			return v;
-		}
-		catch(Exception e)
-		{
-			logger.log(Level.SEVERE, "Cannot get Session", e);
-			throw new IllegalStateException("Cannot get session", e);
-		}
-	}
-	
+
 	/**
-	 * This will return the Session for this thread. If checks if the underlying utils
-	 * instance has reconnected or not. If it has then it gets a 'new' session.
+	 * This will return the Session for this thread. If checks if the underlying utils instance has reconnected or not.
+	 * If it has then it gets a 'new' session.
+	 * 
 	 * @return
 	 */
-	public Session getSession()
-	{
-		ThreadStuff v = get();
-		if(utils.getObjectGrid() != v.grid)
-		{
-			try
-			{
-				v.grid = utils.getObjectGrid();
-				v.session = v.grid.getSession();
-			}
-			catch(Exception e)
-			{
-				v.grid = null; // force to get the ObjectGrid again from the utils next time
-				logger.log(Level.SEVERE, "Exception getting Session from grid", e);
-				throw new ObjectGridRuntimeException("Exception getting session from grid", e);
-			}
-		}
-		return v.session;
+	public Session getSession() {
+		return SessionPool.getSessionForThread(utils.getObjectGrid());
 	}
 
-	public ObjectGrid getObjectGrid()
-	{
+	public ObjectGrid getObjectGrid() {
 		return getSession().getObjectGrid();
 	}
-	
-	public ObjectMap getMap(String name)
-	{
-		try
-		{
+
+	public ObjectMap getMap(String name) {
+		try {
 			return getSession().getMap(name);
-		}
-		catch(ObjectGridException e)
-		{
+		} catch (ObjectGridException e) {
 			logger.log(Level.SEVERE, "Cannot get Map", e);
 			throw new ObjectGridRuntimeException(e);
 		}
