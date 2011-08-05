@@ -10,70 +10,51 @@
 //
 package com.devwebsphere.wxsutils.wxsmap;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import com.devwebsphere.wxsutils.Beta;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 
 /**
- * This agent is used to execute an Agent instance for each key using a single RPC call.
- * 
- * @param <K>
- *            The key of the Map
- * @param <A>
- *            The agent type to execute.
+ * This takes an list of Key/Agent pairs and then invokes the agent for each corresponding key and returns a Map with
+ * the agent result for each key if not null
  */
-public class ReduceAgentExecutor<K, A extends ReduceGridAgent> implements ReduceGridAgent {
+@Beta
+public class ReduceAgentNoKeysExecutor<K, A extends ReduceGridAgent, X> implements ReduceGridAgent {
+	static Logger logger = Logger.getLogger(ReduceAgentNoKeysExecutor.class.getName());
+
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6568906743945108310L;
 
-	public Map<K, A> batch;
+	public A agent;
+	public String agentTargetMapName;
 
 	public Object reduce(Session sess, ObjectMap map) {
 		return null;
 	}
 
-	/**
-	 * This is called to execute all the agent/key pairs in batch within a single transaction;.
-	 */
 	public Object reduce(Session sess, ObjectMap map, Collection arg2) {
 		try {
-			Object result = null;
-			List<Object> list = Arrays.asList(result, null);
-			for (Map.Entry<K, A> e : batch.entrySet()) {
-				K k = e.getKey();
-				A agent = e.getValue();
-				Object x = agent.reduce(sess, map, Collections.singleton(k));
-				if (result == null)
-					result = x;
-				else {
-					list.set(0, result);
-					list.set(1, x);
-					result = agent.reduceResults(list);
-				}
-			}
-			return result;
+			ObjectMap targetMap = sess.getMap(agentTargetMapName);
+			X x = (X) agent.reduce(sess, targetMap);
+			return x;
 		} catch (Exception e) {
+			logger.log(Level.SEVERE, "Exception running application agent", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
 
-	/**
-	 * This combines the results from reduce operations above on the client.
-	 */
 	public Object reduceResults(Collection arg0) {
-		A agent = batch.entrySet().iterator().next().getValue();
 		return agent.reduceResults(arg0);
 	}
 
-	public ReduceAgentExecutor() {
+	public ReduceAgentNoKeysExecutor() {
 	}
 }

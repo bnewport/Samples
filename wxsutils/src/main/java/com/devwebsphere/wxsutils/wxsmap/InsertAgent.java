@@ -16,6 +16,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -58,6 +60,34 @@ public class InsertAgent<K, V> implements ReduceGridAgent, Externalizable {
 	 */
 	public boolean doGet;
 
+	static public class Factory implements WXSUtils.AgentFactory {
+		boolean isWriteThrough;
+		boolean doGet;
+
+		public Factory(boolean doGet, boolean isWriteThrough) {
+			this.doGet = doGet;
+			this.isWriteThrough = isWriteThrough;
+		}
+
+		public <K, A> A newAgent(List<K> keys) {
+			throw new ObjectGridRuntimeException("NOT SUPPORTED");
+		}
+
+		public <K, V, A> A newAgent(Map<K, V> map) {
+			InsertAgent<K, V> a = new InsertAgent<K, V>();
+			a.batch = map;
+			a.doGet = doGet;
+			a.isWriteThrough = isWriteThrough;
+			return (A) a;
+		}
+
+		public <K, A> K getKey(A a) {
+			InsertAgent<K, Object> ia = (InsertAgent<K, Object>) a;
+			return ia.batch.entrySet().iterator().next().getKey();
+		}
+
+	}
+
 	public Object reduce(Session sess, ObjectMap map) {
 		return null;
 	}
@@ -65,6 +95,7 @@ public class InsertAgent<K, V> implements ReduceGridAgent, Externalizable {
 	public Object reduce(Session sess, ObjectMap map, Collection arg2) {
 		AgentMBeanImpl agent = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), this.getClass().getName());
 		long startNS = System.nanoTime();
+
 		Session s = null;
 		try {
 			s = SessionPool.getSessionForThread(sess.getObjectGrid());

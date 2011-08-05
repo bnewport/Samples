@@ -52,6 +52,7 @@ import com.devwebsphere.wxsutils.wxsmap.LazyMBeanManagerAtomicReference;
 import com.devwebsphere.wxsutils.wxsmap.MapAgentExecutor;
 import com.devwebsphere.wxsutils.wxsmap.MapAgentNoKeysExecutor;
 import com.devwebsphere.wxsutils.wxsmap.ReduceAgentExecutor;
+import com.devwebsphere.wxsutils.wxsmap.ReduceAgentNoKeysExecutor;
 import com.devwebsphere.wxsutils.wxsmap.RemoveAgent;
 import com.devwebsphere.wxsutils.wxsmap.ThreadLocalSession;
 import com.devwebsphere.wxsutils.wxsmap.WXSBaseMap;
@@ -309,6 +310,14 @@ public class WXSUtils {
 		tls = new ThreadLocalSession(this);
 	}
 
+	static public interface AgentFactory {
+		public <K, A> A newAgent(List<K> keys);
+
+		public <K, V, A> A newAgent(Map<K, V> map);
+
+		public <K, A> K getKey(A a);
+	}
+
 	/**
 	 * Get all the values for keys in parallel from a map
 	 * 
@@ -323,21 +332,24 @@ public class WXSUtils {
 	 * @return A Map of the key/value pairs
 	 */
 	public <K, V> Map<K, V> getAll(Collection<K> keys, BackingMap bmap) {
-		if (keys.size() > 0) {
-			Map<Integer, List<K>> pmap = convertToPartitionEntryMap(bmap, keys);
+		return invokeAgents(GetAllAgent.FACTORY, keys, bmap);
+	}
 
-			Map<K, GetAllAgent<K, V>> agents = new HashMap<K, GetAllAgent<K, V>>();
-			for (Map.Entry<Integer, List<K>> e : pmap.entrySet()) {
-				GetAllAgent<K, V> a = new GetAllAgent<K, V>();
-				a.batch = e.getValue();
-				agents.put(a.batch.get(0), a);
-			}
-
-			Map<K, V> r = callReduceAgentAll(agents, bmap);
-			return r;
-		} else {
+	<A extends ReduceGridAgent, K, V> Map<K, V> invokeAgents(AgentFactory factory, Collection<K> keys, BackingMap bmap) {
+		if (keys.isEmpty()) {
 			return Collections.emptyMap();
 		}
+
+		Map<Integer, List<K>> pmap = convertToPartitionEntryMap(bmap, keys);
+
+		Map<K, A> agents = new HashMap<K, A>(pmap.size());
+		for (Map.Entry<Integer, List<K>> e : pmap.entrySet()) {
+			A a = factory.newAgent(e.getValue());
+			agents.put(factory.<K, A> getKey(a), a);
+		}
+
+		Map<K, V> r = callReduceAgentAll(agents, bmap);
+		return r;
 	}
 
 	/**
@@ -354,21 +366,7 @@ public class WXSUtils {
 	 * @return A Map of the key/value pairs
 	 */
 	public <K> Map<K, Boolean> containsAll(Collection<K> keys, BackingMap bmap) {
-		if (keys.size() > 0) {
-			Map<Integer, List<K>> pmap = convertToPartitionEntryMap(bmap, keys);
-
-			Map<K, ContainsAllAgent<K>> agents = new HashMap<K, ContainsAllAgent<K>>();
-			for (Map.Entry<Integer, List<K>> e : pmap.entrySet()) {
-				ContainsAllAgent<K> a = new ContainsAllAgent<K>();
-				a.batch = e.getValue();
-				agents.put(a.batch.get(0), a);
-			}
-
-			Map<K, Boolean> r = callReduceAgentAll(agents, bmap);
-			return r;
-		} else {
-			return Collections.emptyMap();
-		}
+		return invokeAgents(ContainsAllAgent.FACTORY, keys, bmap);
 	}
 
 	/**
@@ -472,8 +470,9 @@ public class WXSUtils {
 				return rc;
 			}
 			return rc;
-		} else
-			return new HashMap<K, Boolean>();
+		} else {
+			return Collections.emptyMap();
+		}
 	}
 
 	/**
@@ -489,17 +488,19 @@ public class WXSUtils {
 	}
 
 	<K, V> void internalPutAll(Map<K, V> batch, BackingMap bmap, boolean doGet, boolean isWriteThrough) {
+		InsertAgent.Factory f = new InsertAgent.Factory(doGet, isWriteThrough);
+		invokeAgents(f, batch, bmap);
+	}
+
+	<A extends ReduceGridAgent, K, V> void invokeAgents(AgentFactory factory, Map<K, V> batch, BackingMap bmap) {
 		int sz = batch.size();
-		InsertAgent<K, V> ia = null;
+		A a;
 		switch (sz) {
 		case 0:
 			return;
 		case 1: // optimized version, generates a little less garbage.
 			// invoke the agent to add the batch of records to the grid
-			ia = new InsertAgent<K, V>();
-			ia.doGet = doGet;
-			ia.batch = batch;
-			ia.isWriteThrough = isWriteThrough;
+			a = factory.newAgent(batch);
 			// Insert all keys for one partition using the first key as a routing key
 			AgentManager am = null;
 			try {
@@ -507,7 +508,7 @@ public class WXSUtils {
 			} catch (UndefinedMapException e) {
 				throw new ObjectGridRuntimeException(e);
 			}
-			Object rc = am.callReduceAgent(ia, Collections.singleton(batch.keySet().iterator().next()));
+			Object rc = am.callReduceAgent(a, Collections.singletonList(factory.<K, A> getKey(a)));
 			boolean result = checkAgentReturnValue(rc);
 			if (!result) {
 				logger.log(Level.SEVERE, "putAll failed because of a server side exception");
@@ -516,22 +517,18 @@ public class WXSUtils {
 			break;
 		default:
 			Map<Integer, Map<K, V>> pmap = convertToPartitionEntryMap(bmap, batch);
-			Iterator<Map<K, V>> items = pmap.values().iterator();
-			ArrayList<Future<?>> results = new ArrayList<Future<?>>();
+			ArrayList<Future<?>> results = new ArrayList<Future<?>>(pmap.size());
 			CountDownLatch doneSignal = new CountDownLatch(pmap.size());
-			while (items.hasNext()) {
-				Map<K, V> perPartitionEntries = items.next();
+			for (Map.Entry<Integer, Map<K, V>> e : pmap.entrySet()) {
 				// we need one key for partition routing
 				// so get the first one
+				Map<K, V> perPartitionEntries = e.getValue();
 				K key = perPartitionEntries.keySet().iterator().next();
 
 				// invoke the agent to add the batch of records to the grid
-				ia = new InsertAgent<K, V>();
-				ia.doGet = doGet;
-				ia.batch = perPartitionEntries;
-				ia.isWriteThrough = isWriteThrough;
+				a = factory.newAgent(perPartitionEntries);
 				// Insert all keys for one partition using the first key as a routing key
-				Future<?> fv = threadPool.submit(new CallReduceAgentThread(this, bmap.getName(), key, ia, doneSignal));
+				Future<Object> fv = threadPool.submit(new CallReduceAgentThread<K, Object>(this, bmap.getName(), key, a, doneSignal));
 				results.add(fv);
 			}
 
@@ -673,7 +670,7 @@ public class WXSUtils {
 			try {
 				Map<Integer, Map<K, A>> pmap = convertToPartitionEntryMap(bmap, batch);
 				Iterator<Map<K, A>> items = pmap.values().iterator();
-				ArrayList<Future<Map<K, X>>> results = new ArrayList<Future<Map<K, X>>>();
+				ArrayList<Future<Map<K, X>>> results = new ArrayList<Future<Map<K, X>>>(pmap.size());
 				CountDownLatch doneSignal = new CountDownLatch(pmap.size());
 				while (items.hasNext()) {
 					Map<K, A> perPartitionEntries = items.next();
@@ -688,10 +685,11 @@ public class WXSUtils {
 						ia.batch = perPartitionEntries;
 						Future<Map<K, X>> fv = threadPool.submit(new CallReduceAgentThread<K, Map<K, X>>(this, bmap.getName(), key, ia, doneSignal));
 						results.add(fv);
-					} else
+					} else {
 						doneSignal.countDown();
+					}
 				}
-				Map<K, Object> result = new HashMap<K, Object>();
+				Map<K, Object> result = new HashMap<K, Object>(results.size());
 				Iterator<Future<Map<K, X>>> iter = results.iterator();
 				while (iter.hasNext()) {
 					Future<Map<K, X>> fv = iter.next();
@@ -708,13 +706,13 @@ public class WXSUtils {
 	}
 
 	@Beta
-	public <K, A extends MapGridAgent, X> Map<K, Object> callMapAgentHack(A mapAgent, BackingMap bmap) {
+	public <K, A extends MapGridAgent, X> Map<K, Object> callMapAgentAll(A mapAgent, BackingMap bmap) {
 		try {
 			int numPartitions = bmap.getPartitionManager().getNumOfPartitions();
-			ArrayList<Future<Map<K, X>>> results = new ArrayList<Future<Map<K, X>>>();
+			ArrayList<Future<Map<K, X>>> results = new ArrayList<Future<Map<K, X>>>(numPartitions);
 			CountDownLatch doneSignal = new CountDownLatch(numPartitions);
 			for (int i = 0; i < numPartitions; ++i) {
-				Integer key = new Integer(i);
+				Integer key = i;
 				MapAgentNoKeysExecutor<K, A, X> ia = new MapAgentNoKeysExecutor<K, A, X>();
 				ia.agent = mapAgent;
 				ia.agentTargetMapName = bmap.getName();
@@ -755,40 +753,69 @@ public class WXSUtils {
 			try {
 				Map<Integer, Map<K, A>> pmap = convertToPartitionEntryMap(bmap, batch);
 				Iterator<Map<K, A>> items = pmap.values().iterator();
-				ArrayList<Future<X>> results = new ArrayList<Future<X>>();
+				ArrayList<Future<X>> results = new ArrayList<Future<X>>(pmap.size());
 				CountDownLatch doneSignal = new CountDownLatch(pmap.size());
-				if (batch.size() > 0) {
-					while (items.hasNext()) {
-						Map<K, A> perPartitionEntries = items.next();
-						// we need one key for partition routing
-						// so get the first one
-						K key = perPartitionEntries.keySet().iterator().next();
 
-						// invoke the agent to add the batch of records to the grid
-						ReduceAgentExecutor<K, A> ia = new ReduceAgentExecutor<K, A>();
-						ia.batch = perPartitionEntries;
-						// only call if work to go
-						if (ia.batch.size() > 0) {
-							Future<X> fv = threadPool.submit(new CallReduceAgentThread<K, X>(this, bmap.getName(), key, ia, doneSignal));
-							results.add(fv);
-						} else
-							doneSignal.countDown(); // reduce countdown if no work
+				while (items.hasNext()) {
+					Map<K, A> perPartitionEntries = items.next();
+					// we need one key for partition routing
+					// so get the first one
+					K key = perPartitionEntries.keySet().iterator().next();
+
+					// invoke the agent to add the batch of records to the grid
+					ReduceAgentExecutor<K, A> ia = new ReduceAgentExecutor<K, A>();
+					ia.batch = perPartitionEntries;
+					// only call if work to go
+					if (ia.batch.size() > 0) {
+						Future<X> fv = threadPool.submit(new CallReduceAgentThread<K, X>(this, bmap.getName(), key, ia, doneSignal));
+						results.add(fv);
+					} else {
+						doneSignal.countDown(); // reduce countdown if no work
 					}
-					Iterator<Future<X>> iter = results.iterator();
-					A agent = batch.get(batch.keySet().iterator().next());
-					ArrayList<X> tempList = new ArrayList<X>();
-					while (iter.hasNext())
-						tempList.add(iter.next().get());
-					X r = (X) agent.reduceResults(tempList);
-					return r;
-				} else
-					return null;
+				}
+				Iterator<Future<X>> iter = results.iterator();
+				ArrayList<X> tempList = new ArrayList<X>(results.size());
+				while (iter.hasNext())
+					tempList.add(iter.next().get());
+
+				A agent = batch.values().iterator().next();
+				X r = (X) agent.reduceResults(tempList);
+				return r;
 			} catch (Exception e) {
 				logger.log(Level.SEVERE, "Exception", e);
 				throw new ObjectGridRuntimeException(e);
 			}
-		} else
-			return null;
+		}
+
+		return null;
+	}
+
+	@Beta
+	public <K, A extends ReduceGridAgent, X> Map<K, Object> callReduceAgentAll(A reduceAgent, BackingMap bmap) {
+		try {
+			int numPartitions = bmap.getPartitionManager().getNumOfPartitions();
+			ArrayList<Future<Map<K, X>>> results = new ArrayList<Future<Map<K, X>>>(numPartitions);
+			CountDownLatch doneSignal = new CountDownLatch(numPartitions);
+			for (int i = 0; i < numPartitions; ++i) {
+				Integer key = i;
+				ReduceAgentNoKeysExecutor<K, A, X> ia = new ReduceAgentNoKeysExecutor<K, A, X>();
+				ia.agent = reduceAgent;
+				ia.agentTargetMapName = bmap.getName();
+				Future<Map<K, X>> fv = threadPool.submit(new CallReduceAgentThread<Integer, Map<K, X>>(this, JobExecutor.routingMapName, key, ia,
+						doneSignal));
+				results.add(fv);
+			}
+			Map<K, Object> result = new HashMap<K, Object>();
+			Iterator<Future<Map<K, X>>> iter = results.iterator();
+			while (iter.hasNext()) {
+				Future<Map<K, X>> fv = iter.next();
+				result.putAll(fv.get());
+			}
+			return result;
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "Exception", e);
+			throw new ObjectGridRuntimeException(e);
+		}
 	}
 
 	/**
@@ -802,15 +829,13 @@ public class WXSUtils {
 	 * @return A Map with entries for each partition with pairs
 	 */
 	static public <K1, V1> Map<Integer, Map<K1, V1>> convertToPartitionEntryMap(BackingMap baseMap, Map<K1, V1> items) {
-		Iterator<Map.Entry<K1, V1>> iter = items.entrySet().iterator();
 		Map<Integer, Map<K1, V1>> entriesForPartition = new HashMap<Integer, Map<K1, V1>>();
-		while (iter.hasNext()) {
-			Map.Entry<K1, V1> e = iter.next();
-			int partitionId = baseMap.getPartitionManager().getPartition(e.getKey());
-			Map<K1, V1> listEntries = (Map<K1, V1>) entriesForPartition.get(new Integer(partitionId));
+		for (Map.Entry<K1, V1> e : items.entrySet()) {
+			Integer partitionId = baseMap.getPartitionManager().getPartition(e.getKey());
+			Map<K1, V1> listEntries = (Map<K1, V1>) entriesForPartition.get(partitionId);
 			if (listEntries == null) {
 				listEntries = new HashMap<K1, V1>();
-				entriesForPartition.put(new Integer(partitionId), listEntries);
+				entriesForPartition.put(partitionId, listEntries);
 			}
 			listEntries.put(e.getKey(), e.getValue());
 		}
@@ -829,11 +854,11 @@ public class WXSUtils {
 	static public <K> Map<Integer, List<K>> convertToPartitionEntryMap(BackingMap baseMap, Collection<K> keys) {
 		Map<Integer, List<K>> entriesForPartition = new HashMap<Integer, List<K>>();
 		for (K k : keys) {
-			int partitionId = baseMap.getPartitionManager().getPartition(k);
-			List<K> listEntries = (List<K>) entriesForPartition.get(new Integer(partitionId));
+			Integer partitionId = baseMap.getPartitionManager().getPartition(k);
+			List<K> listEntries = (List<K>) entriesForPartition.get(partitionId);
 			if (listEntries == null) {
 				listEntries = new LinkedList<K>();
-				entriesForPartition.put(new Integer(partitionId), listEntries);
+				entriesForPartition.put(partitionId, listEntries);
 			}
 			listEntries.add(k);
 		}
@@ -999,10 +1024,10 @@ public class WXSUtils {
 		String mapName;
 		ReduceGridAgent agent;
 		CountDownLatch doneSignal;
-		WXSUtils utils;
+		WXSUtils wxsutils;
 
-		public CallReduceAgentThread(WXSUtils utils, String mapName, K key, ReduceGridAgent agent, CountDownLatch ds) {
-			this.utils = utils;
+		public CallReduceAgentThread(WXSUtils wxsutils, String mapName, K key, ReduceGridAgent agent, CountDownLatch ds) {
+			this.wxsutils = wxsutils;
 			this.doneSignal = ds;
 			this.key = key;
 			this.mapName = mapName;
@@ -1011,7 +1036,11 @@ public class WXSUtils {
 
 		public X call() {
 			try {
-				Session sess = utils.getSessionForThread();
+				Session sess = wxsutils.getSessionForThread();
+				if (sess.isTransactionActive()) {
+					logger.log(Level.WARNING, "Session has active transaction, create a new one");
+					sess = wxsutils.getObjectGrid().getSession();
+				}
 				AgentManager agentMgr = sess.getMap(mapName).getAgentManager();
 				X x = (X) agentMgr.callReduceAgent(agent, Collections.singleton(key));
 				return x;
@@ -1131,17 +1160,17 @@ public class WXSUtils {
 	 */
 	public <K> long atomic_increment(String mapName, K k) {
 		try {
-			Session sess = tls.getSession();
+			Session sess = getSessionForThread();
 			while (true) {
 				try {
 					sess.begin();
 					ObjectMap map = sess.getMap(mapName);
 					Long partitionIdValue = (Long) map.getForUpdate(k);
 					if (partitionIdValue == null) {
-						partitionIdValue = new Long(Long.MIN_VALUE);
+						partitionIdValue = Long.MIN_VALUE;
 						map.insert(k, partitionIdValue);
 					} else {
-						partitionIdValue = new Long(partitionIdValue.longValue() + 1);// rk changed
+						partitionIdValue = Long.valueOf(partitionIdValue.longValue() + 1);// rk changed
 						map.update(k, partitionIdValue);
 					}
 					sess.commit();
