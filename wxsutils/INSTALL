@@ -22,5 +22,5 @@ mvn install -DskipTests=true
 
 mvn -Dtest=com.devwebsphere.wxsutils.TestClientAPIs test
 
-mvn "-DargLine=-Djava.endorsed.dirs=/Users/fraenkel/ObjectGrid/lib/endorsed" "-Dcom.sun.management.jmxremote" test
+mvn "-DargLine=-Djava.endorsed.dirs=.../og71/lib/endorsed -Dcom.sun.management.jmxremote" test
 

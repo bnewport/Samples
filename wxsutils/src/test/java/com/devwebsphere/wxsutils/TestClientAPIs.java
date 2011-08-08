@@ -24,7 +24,6 @@ import java.util.logging.Logger;
 
 import junit.framework.Assert;
 
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -38,7 +37,6 @@ import com.devwebsphere.wxsutils.filter.path.PojoPropertyPath;
 import com.devwebsphere.wxsutils.multijob.Person;
 import com.devwebsphere.wxsutils.multijob.pingall.PingAllPartitionsJob;
 import com.devwebsphere.wxsutils.wxsmap.BigListPushAgent;
-import com.devwebsphere.wxsutils.wxsmap.SessionPool;
 import com.devwebsphere.wxsutils.wxsmap.WXSMapOfBigListsImpl;
 import com.devwebsphere.wxsutils.wxsmap.dirtyset.DirtyKey;
 import com.devwebsphere.wxsutils.wxsmap.dirtyset.FetchJobsFromAllDirtyListsJob;
@@ -118,7 +116,7 @@ public class TestClientAPIs {
 
 		TestMapGridAgent agent = new TestMapGridAgent();
 
-		Map<String, Object> rc = utils.callMapAgentHack(agent, bmFarMap3);
+		Map<String, Object> rc = utils.callMapAgentAll(agent, bmFarMap3);
 		Assert.assertEquals(numKeys, rc.size());
 		HashSet<String> keysFound = new HashSet<String>();
 		for (Map.Entry<String, Object> e : rc.entrySet()) {
@@ -738,7 +736,7 @@ public class TestClientAPIs {
 
 		System.out.println("Waiting 20 seconds for lock to expire, don't panic...");
 		// wait for lock to expire
-		Thread.currentThread().sleep(20000L);
+		Thread.sleep(20000L);
 
 		// fetch again and they should be there
 		set2 = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease is
@@ -901,7 +899,7 @@ public class TestClientAPIs {
 			allPushers.add(pusherThread);
 			pusherThread.start();
 			try {
-				Thread.currentThread().sleep(10);
+				Thread.sleep(10);
 			} catch (InterruptedException e) {
 				logger.log(Level.SEVERE, "Exception", e);
 				Assert.fail();
@@ -1009,7 +1007,7 @@ public class TestClientAPIs {
 			allPushers.add(pusherThread);
 			pusherThread.start();
 			try {
-				Thread.currentThread().sleep(10);
+				Thread.sleep(10);
 			} catch (InterruptedException e) {
 				logger.log(Level.SEVERE, "Exception", e);
 				Assert.fail();
