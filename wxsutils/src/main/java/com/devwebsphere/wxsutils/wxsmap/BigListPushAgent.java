@@ -27,6 +27,7 @@ import com.devwebsphere.wxsutils.WXSMapOfLists.BulkPushItem;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.utils.ClassSerializer;
+import com.devwebsphere.wxsutils.wxsagent.ReduceAgentFactory;
 import com.devwebsphere.wxsutils.wxsmap.BigListHead.LR;
 import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent.Operation;
 import com.ibm.websphere.objectgrid.ObjectGridException;
@@ -36,12 +37,11 @@ import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.UndefinedMapException;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 
-public class BigListPushAgent <K extends Serializable, V extends Serializable> implements ReduceGridAgent, Externalizable 
-{
+public class BigListPushAgent<K extends Serializable, V extends Serializable> implements ReduceGridAgent, Externalizable {
 	static Logger logger = Logger.getLogger(BigListPushAgent.class.getName());
 
 	public static int BUCKET_SIZE = 5;
-	
+
 	public LR isLeft;
 	// keys MUST be sorted on client
 	public List<K> keys;
@@ -49,137 +49,145 @@ public class BigListPushAgent <K extends Serializable, V extends Serializable> i
 	public List<List<BulkPushItem<V>>> values;
 	public K dirtyKey;
 
-	public void setKeyValues(Map<K, List<BulkPushItem<V>>> batch)
-	{
+	static public class Factory<K extends Serializable, V extends Serializable> implements ReduceAgentFactory<BigListPushAgent<K, V>> {
+
+		private K dirtyKey;
+		private LR side;
+
+		public Factory(K dirtyKey, LR side) {
+			this.dirtyKey = dirtyKey;
+			this.side = side;
+		}
+
+		public <K1> BigListPushAgent<K, V> newAgent(List<K1> keys) {
+			throw new ObjectGridRuntimeException("NOT SUPPORTED");
+		}
+
+		public <K1, V1> BigListPushAgent<K, V> newAgent(Map<K1, V1> map) {
+			BigListPushAgent<K, V> a = new BigListPushAgent<K, V>();
+			a.dirtyKey = dirtyKey;
+			a.isLeft = side;
+
+			a.setKeyValues((Map<K, List<BulkPushItem<V>>>) map);
+
+			return a;
+		}
+
+		public <K1> K1 getKey(BigListPushAgent<K, V> a) {
+			return (K1) a.keys.get(0);
+		}
+
+		public <X> X emptyResult() {
+			return (X) Boolean.FALSE;
+		}
+	}
+
+	public void setKeyValues(Map<K, List<BulkPushItem<V>>> batch) {
 		TreeSet<K> sortedKeys = new TreeSet<K>(batch.keySet());
 		keys = new ArrayList<K>(sortedKeys);
 		values = new ArrayList<List<BulkPushItem<V>>>(keys.size());
-		for(K k : keys)
+		for (K k : keys)
 			values.add(batch.get(k));
 	}
+
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -5627208135087330201L;
-	
-	static public String getDirtySetMapNameForListMap(String mapName)
-	{
+
+	static public String getDirtySetMapNameForListMap(String mapName) {
 		StringBuilder sb = new StringBuilder("LDIRTY.");
 		sb.append(BigListHead.getListNameFromHeadMapName(mapName));
 		return sb.toString();
 	}
-	
-	static public String getDirtySetLockMapNameForListMap(String mapName)
-	{
+
+	static public String getDirtySetLockMapNameForListMap(String mapName) {
 		StringBuilder sb = new StringBuilder("LCKDIRTY.");
 		sb.append(BigListHead.getListNameFromHeadMapName(mapName));
 		return sb.toString();
 	}
-	
-	static <K extends Serializable, V extends Serializable> void push(Session sess, ObjectMap map, LR isLeft, List<K> keys, List<List<BulkPushItem<V>>> values, K dirtyKey)
-	{
+
+	static <K extends Serializable, V extends Serializable> void push(Session sess, ObjectMap map, LR isLeft, List<K> keys,
+			List<List<BulkPushItem<V>>> values, K dirtyKey) {
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListPushAgent.class.getName());
 		long startNS = System.nanoTime();
-		try
-		{
+		try {
 			ObjectMap dirtyMap = null;
 			// lock dirtymap first to avoid dead locks
-			if(dirtyKey != null)
-			{
+			if (dirtyKey != null) {
 				dirtyMap = sess.getMap(getDirtySetMapNameForListMap(map.getName()));
 				dirtyMap.getForUpdate(dirtyKey);
 			}
-			
-			for(int index = 0; index < keys.size(); ++index)
-			{
+
+			for (int index = 0; index < keys.size(); ++index) {
 				K key = keys.get(index);
-				BigListHead<V> head = (BigListHead<V>)map.getForUpdate(key);
+				BigListHead<V> head = (BigListHead<V>) map.getForUpdate(key);
 				List<BulkPushItem<V>> vl = values.get(index);
-				for(BulkPushItem<V> v : vl)
-				{
-					if(head == null)
-					{
+				for (BulkPushItem<V> v : vl) {
+					if (head == null) {
 						// this inserts the head in the map also.
 						head = new BigListHead<V>(sess, map, key, v.getValue(), BUCKET_SIZE);
-					}
-					else
-					{
+					} else {
 						// this updates the head in the map also
 						head.push(sess, map, key, isLeft, v.getValue(), v.getFilter());
 					}
 				}
-				if(dirtyKey != null)
-				{
-					if(logger.isLoggable(Level.FINE))
-					{
-						logger.log(Level.FINE, "Adding key [" + key + "] to dirtySet [" + dirtyKey +"]");
+				if (dirtyKey != null) {
+					if (logger.isLoggable(Level.FINE)) {
+						logger.log(Level.FINE, "Adding key [" + key + "] to dirtySet [" + dirtyKey + "]");
 					}
-					SetAddRemoveAgent.doOperation(sess, dirtyMap, dirtyKey, Operation.ADD, (Serializable)key);
+					SetAddRemoveAgent.doOperation(sess, dirtyMap, dirtyKey, Operation.ADD, (Serializable) key);
 				}
 			}
 			// maintain a set of list keys in this partition when they have
 			// a push
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
-		}
-		catch(UndefinedMapException e)
-		{
+		} catch (UndefinedMapException e) {
 			logger.log(Level.SEVERE, "Undefined map", e);
 			throw new ObjectGridRuntimeException(e);
-		}
-		catch(ObjectGridException e)
-		{
+		} catch (ObjectGridException e) {
 			logger.log(Level.SEVERE, "Unexpected exception", e);
 			mbean.getKeysMetric().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
 
-	public Object reduce(Session sess, ObjectMap map, Collection arg2)
-	{
+	public Object reduce(Session sess, ObjectMap map, Collection arg2) {
 		push(sess, map, isLeft, keys, values, dirtyKey);
 		return Boolean.TRUE;
 	}
 
 	/**
-	 * Combine the Boolean results of the process calls using
-	 * AND
+	 * Combine the Boolean results of the process calls using AND
 	 */
-	public Object reduceResults(Collection arg0) 
-	{
+	public Object reduceResults(Collection arg0) {
 		boolean rc = true;
-		for(Object o : arg0)
-		{
-			if(o instanceof Boolean)
-			{
-				Boolean b = (Boolean)o;
+		for (Object o : arg0) {
+			if (o instanceof Boolean) {
+				Boolean b = (Boolean) o;
 				rc = rc && b;
-			}
-			else
-			{
+			} else {
 				rc = false;
 			}
-			if(!rc) break;
+			if (!rc)
+				break;
 		}
 		return rc;
 	}
 
-	public Object reduce(Session sess, ObjectMap map) 
-	{
+	public Object reduce(Session sess, ObjectMap map) {
 		return null;
 	}
 
-	public void readExternal(ObjectInput in) throws IOException,
-			ClassNotFoundException 
-	{
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		ClassSerializer serializer = WXSUtils.getSerializer();
-		dirtyKey = (K)serializer.readObject(in);
+		dirtyKey = (K) serializer.readObject(in);
 		isLeft = (in.readBoolean()) ? LR.LEFT : LR.RIGHT;
 		keys = serializer.readList(in);
 		values = serializer.readList(in);
 	}
 
-	public void writeExternal(ObjectOutput out) throws IOException 
-	{
+	public void writeExternal(ObjectOutput out) throws IOException {
 		ClassSerializer serializer = WXSUtils.getSerializer();
 		serializer.writeObject(out, dirtyKey);
 		out.writeBoolean(isLeft == LR.LEFT ? true : false);

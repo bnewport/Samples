@@ -10,6 +10,7 @@
 //
 package com.devwebsphere.wxsutils.wxsmap;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -18,12 +19,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
-import com.devwebsphere.wxsutils.WXSUtils.AgentFactory;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
+import com.devwebsphere.wxsutils.wxsagent.ReduceAgentFactory;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
+import com.ibm.ws.xs.jdk5.java.util.Collections;
 
 /**
  * This is used to fetch all the values for a set of keys within a given partition using a single hop.
@@ -37,22 +39,27 @@ public class GetAllAgent<K, V> implements ReduceGridAgent {
 
 	public List<K> batch;
 
-	public static WXSUtils.AgentFactory FACTORY = new AgentFactory() {
+	public static ReduceAgentFactory<GetAllAgent<?, ?>> FACTORY = new ReduceAgentFactory<GetAllAgent<?, ?>>() {
 
-		public <K, A> A newAgent(List<K> keys) {
-			GetAllAgent<K, Object> a = new GetAllAgent<K, Object>();
+		public <K> GetAllAgent<?, ?> newAgent(List<K> keys) {
+			GetAllAgent<K, Serializable> a = new GetAllAgent<K, Serializable>();
 			a.batch = keys;
-			return (A) a;
+			return a;
 		}
 
-		public <K, A> K getKey(A agent) {
-			GetAllAgent<K, ?> a = (GetAllAgent<K, ?>) agent;
-			return a.batch.get(0);
-		}
+		public <K, V> GetAllAgent<?, ?> newAgent(Map<K, V> map) {
 
-		public <K, V, A> A newAgent(Map<K, V> map) {
 			throw new ObjectGridRuntimeException("NOT IMPLEMENTED");
 		}
+
+		public <K> K getKey(GetAllAgent<?, ?> a) {
+			return (K) a.batch.get(0);
+		}
+
+		public <X> X emptyResult() {
+			return (X) Collections.emptyMap();
+		}
+
 	};
 
 	public Object reduce(Session sess, ObjectMap map) {

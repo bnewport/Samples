@@ -18,12 +18,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
-import com.devwebsphere.wxsutils.WXSUtils.AgentFactory;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
+import com.devwebsphere.wxsutils.wxsagent.ReduceAgentFactory;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
+import com.ibm.ws.xs.jdk5.java.util.Collections;
 
 /**
  * This is used to check if a set of keys within a given partition is present using a single hop.
@@ -37,23 +38,27 @@ public class ContainsAllAgent<K> implements ReduceGridAgent {
 
 	public List<K> batch;
 
-	public static final AgentFactory FACTORY = new AgentFactory() {
+	public static final ReduceAgentFactory<ContainsAllAgent<?>> FACTORY = new ReduceAgentFactory<ContainsAllAgent<?>>() {
 
-		public <K, A> A newAgent(List<K> keys) {
+		public <K> ContainsAllAgent<?> newAgent(List<K> keys) {
 			ContainsAllAgent<K> a = new ContainsAllAgent<K>();
-			a.batch = keys;
-			return (A) a;
+			a.batch = (List<K>) keys;
+			return a;
 		}
 
-		public <K, A> K getKey(A agent) {
-			ContainsAllAgent<K> a = (ContainsAllAgent<K>) agent;
-			return a.batch.get(0);
-		}
-
-		public <K, V, A> A newAgent(Map<K, V> map) {
+		public <K, V> ContainsAllAgent<?> newAgent(Map<K, V> map) {
 			throw new UnsupportedOperationException();
 		}
-	};;
+
+		public <K> K getKey(ContainsAllAgent<?> a) {
+			return (K) a.batch.get(0);
+		}
+
+		public <X> X emptyResult() {
+			return (X) Collections.emptyMap();
+		}
+
+	};
 
 	public Object reduce(Session sess, ObjectMap map) {
 		return null;

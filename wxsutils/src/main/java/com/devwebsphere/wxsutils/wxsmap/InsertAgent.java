@@ -14,6 +14,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.logging.Logger;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.utils.ClassSerializer;
+import com.devwebsphere.wxsutils.wxsagent.ReduceAgentFactory;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
@@ -60,7 +62,7 @@ public class InsertAgent<K, V> implements ReduceGridAgent, Externalizable {
 	 */
 	public boolean doGet;
 
-	static public class Factory implements WXSUtils.AgentFactory {
+	static public class Factory implements ReduceAgentFactory<InsertAgent<?, ?>> {
 		boolean isWriteThrough;
 		boolean doGet;
 
@@ -69,21 +71,24 @@ public class InsertAgent<K, V> implements ReduceGridAgent, Externalizable {
 			this.isWriteThrough = isWriteThrough;
 		}
 
-		public <K, A> A newAgent(List<K> keys) {
+		public <K> InsertAgent<?, ?> newAgent(List<K> keys) {
 			throw new ObjectGridRuntimeException("NOT SUPPORTED");
 		}
 
-		public <K, V, A> A newAgent(Map<K, V> map) {
-			InsertAgent<K, V> a = new InsertAgent<K, V>();
-			a.batch = map;
+		public <K, V> InsertAgent<?, ?> newAgent(Map<K, V> map) {
+			InsertAgent<Serializable, Serializable> a = new InsertAgent<Serializable, Serializable>();
+			a.batch = (Map<Serializable, Serializable>) map;
 			a.doGet = doGet;
 			a.isWriteThrough = isWriteThrough;
-			return (A) a;
+			return a;
 		}
 
-		public <K, A> K getKey(A a) {
-			InsertAgent<K, Object> ia = (InsertAgent<K, Object>) a;
-			return ia.batch.entrySet().iterator().next().getKey();
+		public <K> K getKey(InsertAgent<?, ?> a) {
+			return (K) a.batch.entrySet().iterator().next().getKey();
+		}
+
+		public <X> X emptyResult() {
+			return (X) Boolean.FALSE;
 		}
 
 	}
@@ -105,7 +110,7 @@ public class InsertAgent<K, V> implements ReduceGridAgent, Externalizable {
 			} else {
 				s.begin();
 			}
-			ArrayList keys = new ArrayList(batch.keySet());
+			ArrayList<K> keys = new ArrayList<K>(batch.keySet());
 
 			// BN V2.3.1 If write through is disabled DONT DO A GET
 			if (doGet && isWriteThrough) {
@@ -114,7 +119,7 @@ public class InsertAgent<K, V> implements ReduceGridAgent, Externalizable {
 				// would be nice if WXS had a getAllForUpdate method
 				// when a Loader is plugged in.
 
-				TreeSet sortedKeys = new TreeSet(keys);
+				TreeSet<K> sortedKeys = new TreeSet<K>(keys);
 				for (Object k : sortedKeys)
 					m.getForUpdate(k);
 			}
@@ -148,7 +153,6 @@ public class InsertAgent<K, V> implements ReduceGridAgent, Externalizable {
 		boolean rc = true;
 		for (Object o : arg0) {
 			if (o instanceof EntryErrorValue) {
-				EntryErrorValue ev = (EntryErrorValue) o;
 				return o;
 			}
 			if (o instanceof Boolean) {

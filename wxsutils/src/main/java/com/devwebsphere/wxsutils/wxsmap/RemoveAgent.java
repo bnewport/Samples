@@ -10,13 +10,18 @@
 //
 package com.devwebsphere.wxsutils.wxsmap;
 
+import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
+import com.devwebsphere.wxsutils.wxsagent.ReduceAgentFactory;
 import com.ibm.websphere.objectgrid.ObjectGridException;
+import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
@@ -32,7 +37,29 @@ public class RemoveAgent<K> implements ReduceGridAgent {
 	private static final long serialVersionUID = 6568906743945108310L;
 	static Logger logger = Logger.getLogger(RemoveAgent.class.getName());
 
-	public java.util.List<K> batch;
+	public List<K> batch;
+
+	static public ReduceAgentFactory<RemoveAgent<?>> FACTORY = new ReduceAgentFactory<RemoveAgent<?>>() {
+
+		public <K> RemoveAgent<?> newAgent(List<K> keys) {
+			RemoveAgent<Serializable> a = new RemoveAgent<Serializable>();
+			a.batch = (List<Serializable>) keys;
+			return a;
+		}
+
+		public <K, V> RemoveAgent<?> newAgent(Map<K, V> map) {
+			throw new ObjectGridRuntimeException("NOT SUPPORTED");
+		}
+
+		public <K> K getKey(RemoveAgent<?> a) {
+			return (K) a.batch.get(0);
+		}
+
+		public <X> X emptyResult() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+	};
 
 	public Object reduce(Session sess, ObjectMap map) {
 		return null;

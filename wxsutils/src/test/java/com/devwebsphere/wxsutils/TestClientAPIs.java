@@ -36,6 +36,7 @@ import com.devwebsphere.wxsutils.filter.ValuePath;
 import com.devwebsphere.wxsutils.filter.path.PojoPropertyPath;
 import com.devwebsphere.wxsutils.multijob.Person;
 import com.devwebsphere.wxsutils.multijob.pingall.PingAllPartitionsJob;
+import com.devwebsphere.wxsutils.wxsagent.WXSMapAgent;
 import com.devwebsphere.wxsutils.wxsmap.BigListPushAgent;
 import com.devwebsphere.wxsutils.wxsmap.WXSMapOfBigListsImpl;
 import com.devwebsphere.wxsutils.wxsmap.dirtyset.DirtyKey;
@@ -116,7 +117,7 @@ public class TestClientAPIs {
 
 		TestMapGridAgent agent = new TestMapGridAgent();
 
-		Map<String, Object> rc = utils.callMapAgentAll(agent, bmFarMap3);
+		Map<String, Object> rc = WXSMapAgent.callMapAgentAll(utils, agent, bmFarMap3);
 		Assert.assertEquals(numKeys, rc.size());
 		HashSet<String> keysFound = new HashSet<String>();
 		for (Map.Entry<String, Object> e : rc.entrySet()) {
