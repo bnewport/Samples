@@ -10,6 +10,7 @@
 //
 package com.devwebsphere.wxsutils.wxsmap;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +30,7 @@ import com.ibm.ws.xs.jdk5.java.util.Collections;
 /**
  * This is used to check if a set of keys within a given partition is present using a single hop.
  */
-public class ContainsAllAgent<K> implements ReduceGridAgent {
+public class ContainsAllAgent<K extends Serializable> implements ReduceGridAgent {
 	/**
 	 * 
 	 */
@@ -40,17 +41,17 @@ public class ContainsAllAgent<K> implements ReduceGridAgent {
 
 	public static final ReduceAgentFactory<ContainsAllAgent<?>> FACTORY = new ReduceAgentFactory<ContainsAllAgent<?>>() {
 
-		public <K> ContainsAllAgent<?> newAgent(List<K> keys) {
+		public <K extends Serializable> ContainsAllAgent<?> newAgent(List<K> keys) {
 			ContainsAllAgent<K> a = new ContainsAllAgent<K>();
-			a.batch = (List<K>) keys;
+			a.batch = keys;
 			return a;
 		}
 
-		public <K, V> ContainsAllAgent<?> newAgent(Map<K, V> map) {
+		public <K extends Serializable, V> ContainsAllAgent<?> newAgent(Map<K, V> map) {
 			throw new UnsupportedOperationException();
 		}
 
-		public <K> K getKey(ContainsAllAgent<?> a) {
+		public <K extends Serializable> K getKey(ContainsAllAgent<?> a) {
 			return (K) a.batch.get(0);
 		}
 

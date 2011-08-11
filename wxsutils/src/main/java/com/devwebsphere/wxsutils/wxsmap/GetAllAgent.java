@@ -30,7 +30,7 @@ import com.ibm.ws.xs.jdk5.java.util.Collections;
 /**
  * This is used to fetch all the values for a set of keys within a given partition using a single hop.
  */
-public class GetAllAgent<K, V> implements ReduceGridAgent {
+public class GetAllAgent<K extends Serializable, V extends Serializable> implements ReduceGridAgent {
 	/**
 	 * 
 	 */
@@ -39,20 +39,20 @@ public class GetAllAgent<K, V> implements ReduceGridAgent {
 
 	public List<K> batch;
 
-	public static ReduceAgentFactory<GetAllAgent<?, ?>> FACTORY = new ReduceAgentFactory<GetAllAgent<?, ?>>() {
+	public static ReduceAgentFactory<GetAllAgent<? extends Serializable, ? extends Serializable>> FACTORY = new ReduceAgentFactory<GetAllAgent<? extends Serializable, ? extends Serializable>>() {
 
-		public <K> GetAllAgent<?, ?> newAgent(List<K> keys) {
+		public <K extends Serializable> GetAllAgent<? extends Serializable, ? extends Serializable> newAgent(List<K> keys) {
 			GetAllAgent<K, Serializable> a = new GetAllAgent<K, Serializable>();
 			a.batch = keys;
 			return a;
 		}
 
-		public <K, V> GetAllAgent<?, ?> newAgent(Map<K, V> map) {
+		public <K extends Serializable, V> GetAllAgent<? extends Serializable, ? extends Serializable> newAgent(Map<K, V> map) {
 
 			throw new ObjectGridRuntimeException("NOT IMPLEMENTED");
 		}
 
-		public <K> K getKey(GetAllAgent<?, ?> a) {
+		public <K extends Serializable> K getKey(GetAllAgent<? extends Serializable, ? extends Serializable> a) {
 			return (K) a.batch.get(0);
 		}
 

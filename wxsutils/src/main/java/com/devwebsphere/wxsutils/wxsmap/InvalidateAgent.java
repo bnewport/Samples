@@ -30,7 +30,7 @@ import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
  * This is used to remove a set of records for a given partition using a single hop.
  */
 
-public class InvalidateAgent<K> implements ReduceGridAgent {
+public class InvalidateAgent<K extends Serializable> implements ReduceGridAgent {
 	/**
 	 * 
 	 */
@@ -39,19 +39,19 @@ public class InvalidateAgent<K> implements ReduceGridAgent {
 
 	public List<K> batch;
 
-	static public ReduceAgentFactory<InvalidateAgent<?>> FACTORY = new ReduceAgentFactory<InvalidateAgent<?>>() {
+	static public ReduceAgentFactory<InvalidateAgent<?>> FACTORY = new ReduceAgentFactory<InvalidateAgent<? extends Serializable>>() {
 
-		public <K> InvalidateAgent<?> newAgent(List<K> keys) {
+		public <K extends Serializable> InvalidateAgent<? extends Serializable> newAgent(List<K> keys) {
 			InvalidateAgent<Serializable> a = new InvalidateAgent<Serializable>();
 			a.batch = (List<Serializable>) keys;
 			return a;
 		}
 
-		public <K, V> InvalidateAgent<?> newAgent(Map<K, V> map) {
+		public <K extends Serializable, V> InvalidateAgent<? extends Serializable> newAgent(Map<K, V> map) {
 			throw new ObjectGridRuntimeException("NOT SUPPORTED");
 		}
 
-		public <K> K getKey(InvalidateAgent<?> a) {
+		public <K extends Serializable> K getKey(InvalidateAgent<? extends Serializable> a) {
 			return (K) a.batch.get(0);
 		}
 

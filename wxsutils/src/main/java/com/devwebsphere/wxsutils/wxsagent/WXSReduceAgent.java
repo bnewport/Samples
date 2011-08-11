@@ -1,5 +1,6 @@
 package com.devwebsphere.wxsutils.wxsagent;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -23,10 +24,11 @@ import com.ibm.websphere.objectgrid.UndefinedMapException;
 import com.ibm.websphere.objectgrid.datagrid.AgentManager;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 
-public class WXSReduceAgent<A extends ReduceGridAgent, X> {
+public class WXSReduceAgent<A extends ReduceGridAgent, X extends Serializable> {
 	static Logger logger = Logger.getLogger(WXSReduceAgent.class.getName());
 
-	public <K, V> X callReduceAgentAll(WXSUtils utils, ReduceAgentFactory<A> factory, Collection<K> keys, BackingMap bmap) {
+	public <K extends Serializable, V extends Serializable> X callReduceAgentAll(WXSUtils utils, ReduceAgentFactory<A> factory, Collection<K> keys,
+			BackingMap bmap) {
 		if (keys.isEmpty()) {
 			return factory.emptyResult();
 		}
@@ -58,7 +60,7 @@ public class WXSReduceAgent<A extends ReduceGridAgent, X> {
 	 *            The map containing the keys
 	 * @return The reduced value for all agents
 	 */
-	public <K> X callReduceAgentAll(WXSUtils utils, Map<K, A> batch, BackingMap bmap) {
+	public <K extends Serializable> X callReduceAgentAll(WXSUtils utils, Map<K, A> batch, BackingMap bmap) {
 		if (batch.size() > 0) {
 			try {
 				Map<Integer, Map<K, A>> pmap = WXSAgent.convertToPartitionEntryMap(bmap, batch);
@@ -95,7 +97,8 @@ public class WXSReduceAgent<A extends ReduceGridAgent, X> {
 		return null;
 	}
 
-	public <K, V> void callReduceAgentAll(WXSUtils utils, ReduceAgentFactory<A> factory, Map<K, V> batch, BackingMap bmap) {
+	public <K extends Serializable, V> void callReduceAgentAll(WXSUtils utils, ReduceAgentFactory<A> factory, Map<K, V> batch,
+			BackingMap bmap) {
 		int sz = batch.size();
 		A a;
 		switch (sz) {

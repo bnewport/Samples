@@ -49,32 +49,32 @@ public class BigListPushAgent<K extends Serializable, V extends Serializable> im
 	public List<List<BulkPushItem<V>>> values;
 	public K dirtyKey;
 
-	static public class Factory<K extends Serializable, V extends Serializable> implements ReduceAgentFactory<BigListPushAgent<K, V>> {
+	static public class Factory<K1 extends Serializable, V1 extends Serializable> implements ReduceAgentFactory<BigListPushAgent<K1, V1>> {
 
-		private K dirtyKey;
+		private K1 dirtyKey;
 		private LR side;
 
-		public Factory(K dirtyKey, LR side) {
+		public Factory(K1 dirtyKey, LR side) {
 			this.dirtyKey = dirtyKey;
 			this.side = side;
 		}
 
-		public <K1> BigListPushAgent<K, V> newAgent(List<K1> keys) {
+		public <K extends Serializable> BigListPushAgent<K1, V1> newAgent(List<K> keys) {
 			throw new ObjectGridRuntimeException("NOT SUPPORTED");
 		}
 
-		public <K1, V1> BigListPushAgent<K, V> newAgent(Map<K1, V1> map) {
-			BigListPushAgent<K, V> a = new BigListPushAgent<K, V>();
+		public <K extends Serializable, V> BigListPushAgent<K1, V1> newAgent(Map<K, V> map) {
+			BigListPushAgent<K1, V1> a = new BigListPushAgent<K1, V1>();
 			a.dirtyKey = dirtyKey;
 			a.isLeft = side;
 
-			a.setKeyValues((Map<K, List<BulkPushItem<V>>>) map);
+			a.setKeyValues((Map<K1, List<BulkPushItem<V1>>>) map);
 
 			return a;
 		}
 
-		public <K1> K1 getKey(BigListPushAgent<K, V> a) {
-			return (K1) a.keys.get(0);
+		public <K extends Serializable> K getKey(BigListPushAgent<K1, V1> a) {
+			return (K) a.keys.get(0);
 		}
 
 		public <X> X emptyResult() {

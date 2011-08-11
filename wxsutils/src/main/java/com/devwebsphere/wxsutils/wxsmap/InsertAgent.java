@@ -47,7 +47,7 @@ import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
  * @see WXSUtils#insertAll(java.util.Map, com.ibm.websphere.objectgrid.BackingMap)
  * @see WXSUtils#putAll(java.util.Map, com.ibm.websphere.objectgrid.BackingMap)
  */
-public class InsertAgent<K, V> implements ReduceGridAgent, Externalizable {
+public class InsertAgent<K extends Serializable, V extends Serializable> implements ReduceGridAgent, Externalizable {
 	static Logger logger = Logger.getLogger(InsertAgent.class.getName());
 	/**
 	 * 
@@ -62,7 +62,7 @@ public class InsertAgent<K, V> implements ReduceGridAgent, Externalizable {
 	 */
 	public boolean doGet;
 
-	static public class Factory implements ReduceAgentFactory<InsertAgent<?, ?>> {
+	static public class Factory implements ReduceAgentFactory<InsertAgent<? extends Serializable, ? extends Serializable>> {
 		boolean isWriteThrough;
 		boolean doGet;
 
@@ -71,11 +71,11 @@ public class InsertAgent<K, V> implements ReduceGridAgent, Externalizable {
 			this.isWriteThrough = isWriteThrough;
 		}
 
-		public <K> InsertAgent<?, ?> newAgent(List<K> keys) {
+		public <K extends Serializable> InsertAgent<? extends Serializable, ? extends Serializable> newAgent(List<K> keys) {
 			throw new ObjectGridRuntimeException("NOT SUPPORTED");
 		}
 
-		public <K, V> InsertAgent<?, ?> newAgent(Map<K, V> map) {
+		public <K extends Serializable, V> InsertAgent<? extends Serializable, ? extends Serializable> newAgent(Map<K, V> map) {
 			InsertAgent<Serializable, Serializable> a = new InsertAgent<Serializable, Serializable>();
 			a.batch = (Map<Serializable, Serializable>) map;
 			a.doGet = doGet;
@@ -83,7 +83,7 @@ public class InsertAgent<K, V> implements ReduceGridAgent, Externalizable {
 			return a;
 		}
 
-		public <K> K getKey(InsertAgent<?, ?> a) {
+		public <K extends Serializable> K getKey(InsertAgent<? extends Serializable, ? extends Serializable> a) {
 			return (K) a.batch.entrySet().iterator().next().getKey();
 		}
 
