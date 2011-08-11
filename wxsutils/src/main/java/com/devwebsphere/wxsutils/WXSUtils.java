@@ -309,8 +309,8 @@ public class WXSUtils {
 	 *            The map from which to fetch the keys
 	 * @return A Map of the key/value pairs
 	 */
-	public <K, V> Map<K, V> getAll(Collection<K> keys, BackingMap bmap) {
-		return (Map<K, V>) new WXSReduceAgent().callReduceAgentAll(this, GetAllAgent.FACTORY, keys, bmap);
+	public <K extends Serializable, V extends Serializable> Map<K, V> getAll(Collection<K> keys, BackingMap bmap) {
+		return WXSReduceAgent.callReduceAgentAll(this, GetAllAgent.FACTORY, keys, bmap);
 	}
 
 	/**
@@ -326,8 +326,8 @@ public class WXSUtils {
 	 *            The map from which to fetch the keys
 	 * @return A Map of the key/value pairs
 	 */
-	public <K> Map<K, Boolean> containsAll(Collection<K> keys, BackingMap bmap) {
-		return (Map<K, Boolean>) new WXSReduceAgent().callReduceAgentAll(this, ContainsAllAgent.FACTORY, keys, bmap);
+	public <K extends Serializable> Map<K, Boolean> containsAll(Collection<K> keys, BackingMap bmap) {
+		return WXSReduceAgent.callReduceAgentAll(this, ContainsAllAgent.FACTORY, keys, bmap);
 	}
 
 	/**
@@ -344,7 +344,7 @@ public class WXSUtils {
 	 * @param bmap
 	 *            The map to store them in.
 	 */
-	public <K, V> void putAll(Map<K, V> batch, BackingMap bmap) {
+	public <K extends Serializable, V extends Serializable> void putAll(Map<K, V> batch, BackingMap bmap) {
 		internalPutAll(batch, bmap, true, true);
 	}
 
@@ -358,7 +358,7 @@ public class WXSUtils {
 	 * @param batch
 	 * @param bmap
 	 */
-	public <K, V> void putAll_noLoader(Map<K, V> batch, BackingMap bmap) {
+	public <K extends Serializable, V extends Serializable> void putAll_noLoader(Map<K, V> batch, BackingMap bmap) {
 		// no doGet and no writethrough
 		internalPutAll(batch, bmap, false, false);
 	}
@@ -427,13 +427,13 @@ public class WXSUtils {
 	 * @param batch
 	 * @param bmap
 	 */
-	public <K, V> void insertAll(Map<K, V> batch, BackingMap bmap) {
+	public <K extends Serializable, V extends Serializable> void insertAll(Map<K, V> batch, BackingMap bmap) {
 		internalPutAll(batch, bmap, false, true);
 	}
 
-	<K, V> void internalPutAll(Map<K, V> batch, BackingMap bmap, boolean doGet, boolean isWriteThrough) {
+	<K extends Serializable, V extends Serializable> void internalPutAll(Map<K, V> batch, BackingMap bmap, boolean doGet, boolean isWriteThrough) {
 		InsertAgent.Factory f = new InsertAgent.Factory(doGet, isWriteThrough);
-		new WXSReduceAgent().callReduceAgentAll(this, f, batch, bmap);
+		WXSReduceAgent.callReduceAgentAll(this, f, batch, bmap);
 	}
 
 	/**
@@ -447,8 +447,8 @@ public class WXSUtils {
 	 * @param bmap
 	 *            The map to store them in.
 	 */
-	public <K> void removeAll(Collection<K> batch, BackingMap bmap) {
-		new WXSReduceAgent().callReduceAgentAll(this, RemoveAgent.FACTORY, batch, bmap);
+	public <K extends Serializable> void removeAll(Collection<K> batch, BackingMap bmap) {
+		WXSReduceAgent.callReduceAgentAll(this, RemoveAgent.FACTORY, batch, bmap);
 	}
 
 	/**
@@ -462,8 +462,8 @@ public class WXSUtils {
 	 * @param bmap
 	 *            The map to store them in.
 	 */
-	public <K> void invalidateAll(Collection<K> batch, BackingMap bmap) {
-		new WXSReduceAgent().callReduceAgentAll(this, InvalidateAgent.FACTORY, batch, bmap);
+	public <K extends Serializable> void invalidateAll(Collection<K> batch, BackingMap bmap) {
+		WXSReduceAgent.callReduceAgentAll(this, InvalidateAgent.FACTORY, batch, bmap);
 	}
 
 	static Container container;

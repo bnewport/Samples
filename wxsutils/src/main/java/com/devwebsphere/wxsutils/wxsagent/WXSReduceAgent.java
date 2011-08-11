@@ -24,11 +24,11 @@ import com.ibm.websphere.objectgrid.UndefinedMapException;
 import com.ibm.websphere.objectgrid.datagrid.AgentManager;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 
-public class WXSReduceAgent<A extends ReduceGridAgent, X extends Serializable> {
+public class WXSReduceAgent {
 	static Logger logger = Logger.getLogger(WXSReduceAgent.class.getName());
 
-	public <K extends Serializable, V extends Serializable> X callReduceAgentAll(WXSUtils utils, ReduceAgentFactory<A> factory, Collection<K> keys,
-			BackingMap bmap) {
+	static public <A extends ReduceGridAgent, K extends Serializable, V extends Serializable, X> X callReduceAgentAll(
+			WXSUtils utils, ReduceAgentFactory<A> factory, Collection<K> keys, BackingMap bmap) {
 		if (keys.isEmpty()) {
 			return factory.emptyResult();
 		}
@@ -60,7 +60,8 @@ public class WXSReduceAgent<A extends ReduceGridAgent, X extends Serializable> {
 	 *            The map containing the keys
 	 * @return The reduced value for all agents
 	 */
-	public <K extends Serializable> X callReduceAgentAll(WXSUtils utils, Map<K, A> batch, BackingMap bmap) {
+	static public <A extends ReduceGridAgent, K extends Serializable, X> X callReduceAgentAll(WXSUtils utils, Map<K, A> batch,
+			BackingMap bmap) {
 		if (batch.size() > 0) {
 			try {
 				Map<Integer, Map<K, A>> pmap = WXSAgent.convertToPartitionEntryMap(bmap, batch);
@@ -97,8 +98,8 @@ public class WXSReduceAgent<A extends ReduceGridAgent, X extends Serializable> {
 		return null;
 	}
 
-	public <K extends Serializable, V> void callReduceAgentAll(WXSUtils utils, ReduceAgentFactory<A> factory, Map<K, V> batch,
-			BackingMap bmap) {
+	static public <A extends ReduceGridAgent, K extends Serializable, V> void callReduceAgentAll(WXSUtils utils, ReduceAgentFactory<A> factory,
+			Map<K, V> batch, BackingMap bmap) {
 		int sz = batch.size();
 		A a;
 		switch (sz) {
@@ -145,7 +146,8 @@ public class WXSReduceAgent<A extends ReduceGridAgent, X extends Serializable> {
 	}
 
 	@Beta
-	public <K> Map<K, X> callReduceAgentAll(WXSUtils utils, A reduceAgent, BackingMap bmap) {
+	static public <A extends ReduceGridAgent, K extends Serializable, X extends Serializable> Map<K, X> callReduceAgentAll(WXSUtils utils,
+			A reduceAgent, BackingMap bmap) {
 		int numPartitions = bmap.getPartitionManager().getNumOfPartitions();
 		ArrayList<Future<Map<K, X>>> results = new ArrayList<Future<Map<K, X>>>(numPartitions);
 		for (int i = 0; i < numPartitions; ++i) {
