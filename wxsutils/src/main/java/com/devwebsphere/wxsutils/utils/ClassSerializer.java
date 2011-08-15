@@ -22,6 +22,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -323,6 +325,21 @@ public class ClassSerializer {
 		Map<K, V> rc = null;
 		if (size >= 0) {
 			rc = new HashMap<K, V>(size);
+			for (int i = 0; i < size; ++i) {
+				K k = (K) readObject(in);
+				V v = (V) readObject(in);
+				rc.put(k, v);
+			}
+		}
+
+		return rc;
+	}
+
+	public <K, V> SortedMap<K, V> readSortedMap(ObjectInput in) throws IOException {
+		int size = in.readInt();
+		SortedMap<K, V> rc = null;
+		if (size >= 0) {
+			rc = new TreeMap<K, V>();
 			for (int i = 0; i < size; ++i) {
 				K k = (K) readObject(in);
 				V v = (V) readObject(in);

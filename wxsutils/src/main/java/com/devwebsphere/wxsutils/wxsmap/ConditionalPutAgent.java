@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,8 +44,8 @@ public class ConditionalPutAgent<K, V> implements ReduceGridAgent, Externalizabl
 	 */
 	private static final long serialVersionUID = 6568906743945108310L;
 
-	public java.util.Map<K, V> batchBefore;
-	public java.util.Map<K, V> newValues;
+	public SortedMap<K, V> batchBefore;
+	public Map<K, V> newValues;
 
 	public Object reduce(Session sess, ObjectMap map) {
 		return null;
@@ -117,7 +118,7 @@ public class ConditionalPutAgent<K, V> implements ReduceGridAgent, Externalizabl
 
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		ClassSerializer serializer = WXSUtils.getSerializer();
-		batchBefore = serializer.readMap(in);
+		batchBefore = serializer.readSortedMap(in);
 		newValues = serializer.readMap(in);
 	}
 

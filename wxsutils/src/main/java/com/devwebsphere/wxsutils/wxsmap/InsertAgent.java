@@ -18,6 +18,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -52,7 +53,7 @@ public class InsertAgent<K extends Serializable, V extends Serializable> impleme
 	 */
 	private static final long serialVersionUID = 6568906743945108310L;
 
-	public java.util.Map<K, V> batch;
+	public SortedMap<K, V> batch;
 	public boolean isWriteThrough = true;
 
 	/**
@@ -75,7 +76,7 @@ public class InsertAgent<K extends Serializable, V extends Serializable> impleme
 
 		public <K extends Serializable, V> InsertAgent<? extends Serializable, ? extends Serializable> newAgent(Map<K, V> map) {
 			InsertAgent<Serializable, Serializable> a = new InsertAgent<Serializable, Serializable>();
-			a.batch = (Map<Serializable, Serializable>) map;
+			a.batch = (SortedMap<Serializable, Serializable>) map;
 			a.doGet = doGet;
 			a.isWriteThrough = isWriteThrough;
 			return a;
@@ -167,7 +168,7 @@ public class InsertAgent<K extends Serializable, V extends Serializable> impleme
 		ClassSerializer serializer = WXSUtils.getSerializer();
 		doGet = in.readBoolean();
 		isWriteThrough = in.readBoolean();
-		batch = serializer.readMap(in);
+		batch = serializer.readSortedMap(in);
 	}
 
 	public void writeExternal(ObjectOutput out) throws IOException {

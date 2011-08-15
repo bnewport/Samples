@@ -125,7 +125,7 @@ public class WXSReduceAgent extends WXSAgent {
 			for (Map.Entry<Integer, SortedMap<K, V>> e : pmap.entrySet()) {
 				// we need one key for partition routing
 				// so get the first one
-				Map<K, V> perPartitionEntries = e.getValue();
+				SortedMap<K, V> perPartitionEntries = e.getValue();
 				K key = perPartitionEntries.keySet().iterator().next();
 
 				// invoke the agent to add the batch of records to the grid
