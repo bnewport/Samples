@@ -25,7 +25,7 @@ import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
  * the agent result for each key if not null
  */
 @Beta
-public class ReduceAgentNoKeysExecutor<K, A extends ReduceGridAgent, X> implements ReduceGridAgent {
+public class ReduceAgentNoKeysExecutor<A extends ReduceGridAgent, X> implements ReduceGridAgent {
 	static Logger logger = Logger.getLogger(ReduceAgentNoKeysExecutor.class.getName());
 
 	/**

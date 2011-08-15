@@ -377,7 +377,7 @@ public class WXSUtils {
 	 *            The map to use
 	 * @return True for every key updated/inserted, false if not updated/inserted
 	 */
-	public <K, V> Map<K, Boolean> cond_putAll(Map<K, V> original, Map<K, V> updated, BackingMap bmap) {
+	public <K extends Serializable, V extends Serializable> Map<K, Boolean> cond_putAll(Map<K, V> original, Map<K, V> updated, BackingMap bmap) {
 		if (updated.size() != original.size())
 			throw new ObjectGridRuntimeException("Maps are different sizes");
 		Set<K> origKeys = original.keySet();
@@ -409,7 +409,7 @@ public class WXSUtils {
 				ia.batchBefore = origPerPartitionEntries.getValue();
 				ia.newValues = updPerPartitionEntries;
 				// Insert all keys for one partition using the first key as a routing key
-				Future<Map<K, Boolean>> fv = threadPool.submit(new WXSAgent.CallReduceAgentThread<K, Map<K, Boolean>>(this, bmap.getName(), key, ia));
+				Future<Map<K, Boolean>> fv = threadPool.submit(new WXSAgent.CallReduceAgentThread<Map<K, Boolean>>(this, bmap.getName(), key, ia));
 				results.add(fv);
 			}
 

@@ -1,5 +1,6 @@
 package com.devwebsphere.wxsutils.wxsagent;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,13 +26,13 @@ import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 public class WXSAgent {
 	static Logger logger = Logger.getLogger(WXSAgent.class.getName());
 
-	static public class CallReduceAgentThread<K, X> implements Callable<X> {
-		K key;
+	static public class CallReduceAgentThread<X> implements Callable<X> {
+		Serializable key;
 		String mapName;
 		ReduceGridAgent agent;
 		WXSUtils wxsutils;
 
-		public CallReduceAgentThread(WXSUtils wxsutils, String mapName, K key, ReduceGridAgent agent) {
+		public CallReduceAgentThread(WXSUtils wxsutils, String mapName, Serializable key, ReduceGridAgent agent) {
 			this.wxsutils = wxsutils;
 			this.key = key;
 			this.mapName = mapName;
@@ -104,7 +105,7 @@ public class WXSAgent {
 		return entriesForPartition;
 	}
 
-	static public <K, V> Map<K, V> collectResultsAsMap(List<Future<Map<K, V>>> futures, long timeout) {
+	static public <K, V> Map<K, V> collectResultsAsMap(Collection<Future<Map<K, V>>> futures, long timeout) {
 		Map<K, V> result = new HashMap<K, V>(futures.size());
 		for (Future<Map<K, V>> f : futures) {
 			long start = System.nanoTime();
@@ -121,7 +122,7 @@ public class WXSAgent {
 		return result;
 	}
 
-	static public <V> List<V> collectResultsAsList(List<Future<V>> futures, long timeout) {
+	static public <V> List<V> collectResultsAsList(Collection<Future<V>> futures, long timeout) {
 		List<V> result = new ArrayList<V>(futures.size());
 		for (Future<V> f : futures) {
 			long start = System.nanoTime();
@@ -144,7 +145,7 @@ public class WXSAgent {
 	 * @param results
 	 * @return true if all Agents returned true
 	 */
-	static public <V> boolean areAllFutures(V expected, List<Future<V>> results, long timeout) {
+	static public <V> boolean areAllFutures(V expected, Collection<Future<V>> results, long timeout) {
 		try {
 			for (Future<V> f : results) {
 				long start = System.nanoTime();

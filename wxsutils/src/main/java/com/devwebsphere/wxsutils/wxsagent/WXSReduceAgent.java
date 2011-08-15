@@ -24,16 +24,16 @@ import com.ibm.websphere.objectgrid.UndefinedMapException;
 import com.ibm.websphere.objectgrid.datagrid.AgentManager;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 
-public class WXSReduceAgent {
+public class WXSReduceAgent extends WXSAgent {
 	static Logger logger = Logger.getLogger(WXSReduceAgent.class.getName());
 
-	static public <A extends ReduceGridAgent, K extends Serializable, V extends Serializable, X> X callReduceAgentAll(
-			WXSUtils utils, ReduceAgentFactory<A> factory, Collection<K> keys, BackingMap bmap) {
+	static public <A extends ReduceGridAgent, K extends Serializable, X> X callReduceAgentAll(WXSUtils utils, ReduceAgentFactory<A> factory,
+			Collection<K> keys, BackingMap bmap) {
 		if (keys.isEmpty()) {
 			return factory.emptyResult();
 		}
 
-		Map<Integer, List<K>> pmap = WXSAgent.convertToPartitionEntryMap(bmap, keys);
+		Map<Integer, List<K>> pmap = convertToPartitionEntryMap(bmap, keys);
 
 		Map<K, A> agents = new HashMap<K, A>(pmap.size());
 		for (Map.Entry<Integer, List<K>> e : pmap.entrySet()) {
@@ -60,11 +60,10 @@ public class WXSReduceAgent {
 	 *            The map containing the keys
 	 * @return The reduced value for all agents
 	 */
-	static public <A extends ReduceGridAgent, K extends Serializable, X> X callReduceAgentAll(WXSUtils utils, Map<K, A> batch,
-			BackingMap bmap) {
+	static public <A extends ReduceGridAgent, K extends Serializable, X> X callReduceAgentAll(WXSUtils utils, Map<K, A> batch, BackingMap bmap) {
 		if (batch.size() > 0) {
 			try {
-				Map<Integer, Map<K, A>> pmap = WXSAgent.convertToPartitionEntryMap(bmap, batch);
+				Map<Integer, Map<K, A>> pmap = convertToPartitionEntryMap(bmap, batch);
 				Iterator<Map<K, A>> items = pmap.values().iterator();
 				ArrayList<Future<X>> results = new ArrayList<Future<X>>(pmap.size());
 
@@ -75,16 +74,16 @@ public class WXSReduceAgent {
 					K key = perPartitionEntries.keySet().iterator().next();
 
 					// invoke the agent to add the batch of records to the grid
-					ReduceAgentExecutor<K, A> ia = new ReduceAgentExecutor<K, A>();
+					ReduceAgentExecutor<A, K> ia = new ReduceAgentExecutor<A, K>();
 					ia.batch = perPartitionEntries;
 					// only call if work to go
 					if (ia.batch.size() > 0) {
-						Future<X> fv = utils.getExecutorService().submit(new WXSAgent.CallReduceAgentThread<K, X>(utils, bmap.getName(), key, ia));
+						Future<X> fv = utils.getExecutorService().submit(new CallReduceAgentThread<X>(utils, bmap.getName(), key, ia));
 						results.add(fv);
 					}
 				}
 
-				List<X> r = WXSAgent.collectResultsAsList(results, ConfigProperties.getAgentTimeout(utils.getConfigProperties()));
+				List<X> r = collectResultsAsList(results, ConfigProperties.getAgentTimeout(utils.getConfigProperties()));
 				A agent = batch.values().iterator().next();
 				X retVal = (X) agent.reduceResults(r);
 
@@ -116,14 +115,14 @@ public class WXSReduceAgent {
 				throw new ObjectGridRuntimeException(e);
 			}
 			Object rc = am.callReduceAgent(a, Collections.singletonList(factory.getKey(a)));
-			boolean result = WXSAgent.checkReturnValue(Boolean.TRUE, rc);
+			boolean result = checkReturnValue(Boolean.TRUE, rc);
 			if (!result) {
 				logger.log(Level.SEVERE, "putAll failed because of a server side exception");
 				throw new ObjectGridRuntimeException("putAll failed");
 			}
 			break;
 		default:
-			Map<Integer, Map<K, V>> pmap = WXSAgent.convertToPartitionEntryMap(bmap, batch);
+			Map<Integer, Map<K, V>> pmap = convertToPartitionEntryMap(bmap, batch);
 			ArrayList<Future<Boolean>> results = new ArrayList<Future<Boolean>>(pmap.size());
 			for (Map.Entry<Integer, Map<K, V>> e : pmap.entrySet()) {
 				// we need one key for partition routing
@@ -134,11 +133,11 @@ public class WXSReduceAgent {
 				// invoke the agent to add the batch of records to the grid
 				a = factory.newAgent(perPartitionEntries);
 				// Insert all keys for one partition using the first key as a routing key
-				Future<Boolean> fv = utils.getExecutorService().submit(new WXSAgent.CallReduceAgentThread<K, Boolean>(utils, bmap.getName(), key, a));
+				Future<Boolean> fv = utils.getExecutorService().submit(new CallReduceAgentThread<Boolean>(utils, bmap.getName(), key, a));
 				results.add(fv);
 			}
 
-			if (!WXSAgent.areAllFutures(Boolean.TRUE, results, ConfigProperties.getAgentTimeout(utils.getConfigProperties()))) {
+			if (!areAllFutures(Boolean.TRUE, results, ConfigProperties.getAgentTimeout(utils.getConfigProperties()))) {
 				logger.log(Level.SEVERE, "putAll failed because of a server side exception");
 				throw new ObjectGridRuntimeException("putAll failed");
 			}
@@ -152,14 +151,14 @@ public class WXSReduceAgent {
 		ArrayList<Future<Map<K, X>>> results = new ArrayList<Future<Map<K, X>>>(numPartitions);
 		for (int i = 0; i < numPartitions; ++i) {
 			Integer key = i;
-			ReduceAgentNoKeysExecutor<K, A, X> ia = new ReduceAgentNoKeysExecutor<K, A, X>();
+			ReduceAgentNoKeysExecutor<A, X> ia = new ReduceAgentNoKeysExecutor<A, X>();
 			ia.agent = reduceAgent;
 			ia.agentTargetMapName = bmap.getName();
-			Future<Map<K, X>> fv = utils.getExecutorService().submit(
-					new WXSAgent.CallReduceAgentThread<Integer, Map<K, X>>(utils, JobExecutor.routingMapName, key, ia));
+			Future<Map<K, X>> fv = utils.getExecutorService()
+					.submit(new CallReduceAgentThread<Map<K, X>>(utils, JobExecutor.routingMapName, key, ia));
 			results.add(fv);
 		}
 
-		return WXSAgent.collectResultsAsMap(results, ConfigProperties.getAgentTimeout(utils.getConfigProperties()));
+		return collectResultsAsMap(results, ConfigProperties.getAgentTimeout(utils.getConfigProperties()));
 	}
 }

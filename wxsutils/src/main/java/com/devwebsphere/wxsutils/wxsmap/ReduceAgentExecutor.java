@@ -10,6 +10,7 @@
 //
 package com.devwebsphere.wxsutils.wxsmap;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,7 +30,7 @@ import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
  * @param <A>
  *            The agent type to execute.
  */
-public class ReduceAgentExecutor<K, A extends ReduceGridAgent> implements ReduceGridAgent {
+public class ReduceAgentExecutor<A extends ReduceGridAgent, K extends Serializable> implements ReduceGridAgent {
 	/**
 	 * 
 	 */

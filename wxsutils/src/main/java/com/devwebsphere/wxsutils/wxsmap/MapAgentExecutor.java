@@ -10,6 +10,7 @@
 //
 package com.devwebsphere.wxsutils.wxsmap;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,54 +22,46 @@ import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 
 /**
- * This takes an list of Key/Agent pairs and then invokes the agent for each corresponding key and returns
- * a Map with the agent result for each key if not null
+ * This takes an list of Key/Agent pairs and then invokes the agent for each corresponding key and returns a Map with
+ * the agent result for each key if not null
  */
-public class MapAgentExecutor<K, A extends MapGridAgent, X> implements ReduceGridAgent 
-{
+public class MapAgentExecutor<A extends MapGridAgent, K extends Serializable, X> implements ReduceGridAgent {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6568906743945108310L;
-	
+
 	public Map<K, A> batch;
 
-	public Object reduce(Session sess, ObjectMap map) 
-	{
+	public Object reduce(Session sess, ObjectMap map) {
 		return null;
 	}
 
 	public Object reduce(Session sess, ObjectMap map, Collection arg2) {
-		try
-		{
-			Map<K,X> results = new HashMap<K, X>();
-			for(K k : batch.keySet())
-			{
-				A agent = batch.get(k);
+		try {
+			Map<K, X> results = new HashMap<K, X>(batch.size());
+			for (Map.Entry<K, A> e : batch.entrySet()) {
+				K k = e.getKey();
+				A agent = e.getValue();
 				X x = (X) agent.process(sess, map, k);
-				if(x != null)
+				if (x != null)
 					results.put(k, x);
 			}
 			return results;
-		}
-		catch(Exception e)
-		{
+		} catch (Exception e) {
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
 
-	public Object reduceResults(Collection arg0) 
-	{
-		Collection<Map<K,X>> list = arg0;
-		Map<K,X> rc = new HashMap<K, X>();
-		for(Map<K,X> m : list)
-		{
+	public Object reduceResults(Collection arg0) {
+		Collection<Map<K, X>> list = arg0;
+		Map<K, X> rc = new HashMap<K, X>();
+		for (Map<K, X> m : list) {
 			rc.putAll(m);
 		}
 		return rc;
 	}
-	
-	public MapAgentExecutor()
-	{
- 	}
+
+	public MapAgentExecutor() {
+	}
 }

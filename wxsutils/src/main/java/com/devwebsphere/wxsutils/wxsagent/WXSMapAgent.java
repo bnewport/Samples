@@ -1,5 +1,6 @@
 package com.devwebsphere.wxsutils.wxsagent;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -16,7 +17,7 @@ import com.devwebsphere.wxsutils.wxsmap.MapAgentNoKeysExecutor;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
-public class WXSMapAgent {
+public class WXSMapAgent extends WXSAgent {
 	static Logger logger = Logger.getLogger(WXSMapAgent.class.getName());
 
 	/**
@@ -34,48 +35,48 @@ public class WXSMapAgent {
 	 *            The map containing the keys
 	 * @return A Map with the agent result for each key
 	 */
-	static public <A extends MapGridAgent, K, X> Map<K, X> callMapAgentAll(WXSUtils utils, Map<K, A> batch, BackingMap bmap) {
+	static public <A extends MapGridAgent, K extends Serializable, X> Map<K, X> callMapAgentAll(WXSUtils utils, Map<K, A> batch, BackingMap bmap) {
 		if (batch.size() > 0) {
-			Map<Integer, Map<K, A>> pmap = WXSAgent.convertToPartitionEntryMap(bmap, batch);
+			Map<Integer, Map<K, A>> pmap = convertToPartitionEntryMap(bmap, batch);
 			Iterator<Map<K, A>> items = pmap.values().iterator();
 			ArrayList<Future<Map<K, X>>> results = new ArrayList<Future<Map<K, X>>>(pmap.size());
 			while (items.hasNext()) {
 				Map<K, A> perPartitionEntries = items.next();
-				// we need one key for partition routing
-				// so get the first one
-				K key = perPartitionEntries.keySet().iterator().next();
 
 				// invoke the agent to add the batch of records to the grid
 				// but if no work for this partition then skip it
 				if (perPartitionEntries.size() > 0) {
-					MapAgentExecutor<K, A, X> ia = new MapAgentExecutor<K, A, X>();
+					// we need one key for partition routing
+					// so get the first one
+					Serializable key = perPartitionEntries.keySet().iterator().next();
+
+					MapAgentExecutor<A, K, X> ia = new MapAgentExecutor<A, K, X>();
 					ia.batch = perPartitionEntries;
-					Future<Map<K, X>> fv = utils.getExecutorService().submit(
-							new WXSAgent.CallReduceAgentThread<K, Map<K, X>>(utils, bmap.getName(), key, ia));
+					Future<Map<K, X>> fv = utils.getExecutorService().submit(new CallReduceAgentThread<Map<K, X>>(utils, bmap.getName(), key, ia));
 					results.add(fv);
 				}
 			}
 
-			return WXSAgent.collectResultsAsMap(results, ConfigProperties.getAgentTimeout(utils.getConfigProperties()));
+			return collectResultsAsMap(results, ConfigProperties.getAgentTimeout(utils.getConfigProperties()));
 		} else {
 			return Collections.emptyMap();
 		}
 	}
 
 	@Beta
-	static public <A extends MapGridAgent, K, X> Map<K, X> callMapAgentAll(WXSUtils utils, A mapAgent, BackingMap bmap) {
+	static public <A extends MapGridAgent, K extends Serializable, X> Map<K, X> callMapAgentAll(WXSUtils utils, A mapAgent, BackingMap bmap) {
 		int numPartitions = bmap.getPartitionManager().getNumOfPartitions();
 		ArrayList<Future<Map<K, X>>> results = new ArrayList<Future<Map<K, X>>>(numPartitions);
 		for (int i = 0; i < numPartitions; ++i) {
 			Integer key = i;
-			MapAgentNoKeysExecutor<K, A, X> ia = new MapAgentNoKeysExecutor<K, A, X>();
+			MapAgentNoKeysExecutor<A, X> ia = new MapAgentNoKeysExecutor<A, X>();
 			ia.agent = mapAgent;
 			ia.agentTargetMapName = bmap.getName();
-			Future<Map<K, X>> fv = utils.getExecutorService().submit(
-					new WXSAgent.CallReduceAgentThread<Integer, Map<K, X>>(utils, JobExecutor.routingMapName, key, ia));
+			Future<Map<K, X>> fv = utils.getExecutorService()
+					.submit(new CallReduceAgentThread<Map<K, X>>(utils, JobExecutor.routingMapName, key, ia));
 			results.add(fv);
 		}
 
-		return WXSAgent.collectResultsAsMap(results, ConfigProperties.getAgentTimeout(utils.getConfigProperties()));
+		return collectResultsAsMap(results, ConfigProperties.getAgentTimeout(utils.getConfigProperties()));
 	}
 }

@@ -10,6 +10,7 @@
 //
 package com.devwebsphere.wxsutils.wxsmap;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,53 +25,45 @@ import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 
 /**
- * This takes an list of Key/Agent pairs and then invokes the agent for each corresponding key and returns
- * a Map with the agent result for each key if not null
+ * This takes an list of Key/Agent pairs and then invokes the agent for each corresponding key and returns a Map with
+ * the agent result for each key if not null
  */
 @Beta
-public class MapAgentNoKeysExecutor<K, A extends MapGridAgent, X> implements ReduceGridAgent 
-{
+public class MapAgentNoKeysExecutor<A extends MapGridAgent, X> implements ReduceGridAgent {
 	static Logger logger = Logger.getLogger(MapAgentNoKeysExecutor.class.getName());
-	
+
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6568906743945108310L;
-	
+
 	public A agent;
 	public String agentTargetMapName;
 
-	public Object reduce(Session sess, ObjectMap map) 
-	{
+	public Object reduce(Session sess, ObjectMap map) {
 		return null;
 	}
 
 	public Object reduce(Session sess, ObjectMap map, Collection arg2) {
-		try
-		{
+		try {
 			ObjectMap targetMap = sess.getMap(agentTargetMapName);
 			X x = (X) agent.processAllEntries(sess, targetMap);
 			return x;
-		}
-		catch(Exception e)
-		{
+		} catch (Exception e) {
 			logger.log(Level.SEVERE, "Exception running application agent", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
 
-	public Object reduceResults(Collection arg0) 
-	{
-		Collection<Map<K,X>> list = arg0;
-		Map<K,X> rc = new HashMap<K, X>();
-		for(Map<K,X> m : list)
-		{
+	public Object reduceResults(Collection arg0) {
+		Collection<Map<Serializable, X>> list = arg0;
+		Map<Serializable, X> rc = new HashMap<Serializable, X>();
+		for (Map<Serializable, X> m : list) {
 			rc.putAll(m);
 		}
 		return rc;
 	}
-	
-	public MapAgentNoKeysExecutor()
-	{
- 	}
+
+	public MapAgentNoKeysExecutor() {
+	}
 }
