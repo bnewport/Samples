@@ -3,8 +3,8 @@ package com.devwebsphere.wxsutils.wxsagent;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
@@ -37,11 +37,9 @@ public class WXSMapAgent extends WXSAgent {
 	 */
 	static public <A extends MapGridAgent, K extends Serializable, X> Map<K, X> callMapAgentAll(WXSUtils utils, Map<K, A> batch, BackingMap bmap) {
 		if (batch.size() > 0) {
-			Map<Integer, Map<K, A>> pmap = convertToPartitionEntryMap(bmap, batch);
-			Iterator<Map<K, A>> items = pmap.values().iterator();
+			Map<Integer, SortedMap<K, A>> pmap = convertToPartitionEntryMap(bmap, batch);
 			ArrayList<Future<Map<K, X>>> results = new ArrayList<Future<Map<K, X>>>(pmap.size());
-			while (items.hasNext()) {
-				Map<K, A> perPartitionEntries = items.next();
+			for (SortedMap<K, A> perPartitionEntries : pmap.values()) {
 
 				// invoke the agent to add the batch of records to the grid
 				// but if no work for this partition then skip it

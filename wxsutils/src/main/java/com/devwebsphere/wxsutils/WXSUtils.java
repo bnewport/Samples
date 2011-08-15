@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -386,13 +387,13 @@ public class WXSUtils {
 			throw new ObjectGridRuntimeException("Maps have different keys");
 		}
 		if (updated.size() > 0) {
-			Map<Integer, Map<K, V>> origPmap = WXSAgent.convertToPartitionEntryMap(bmap, original);
-			Iterator<Map.Entry<Integer, Map<K, V>>> origItems = origPmap.entrySet().iterator();
-			Map<Integer, Map<K, V>> updPmap = WXSAgent.convertToPartitionEntryMap(bmap, updated);
+			Map<Integer, SortedMap<K, V>> origPmap = WXSAgent.convertToPartitionEntryMap(bmap, original);
+			Iterator<Map.Entry<Integer, SortedMap<K, V>>> origItems = origPmap.entrySet().iterator();
+			Map<Integer, SortedMap<K, V>> updPmap = WXSAgent.convertToPartitionEntryMap(bmap, updated);
 
 			ArrayList<Future<Map<K, Boolean>>> results = new ArrayList<Future<Map<K, Boolean>>>(origPmap.size());
 			while (origItems.hasNext()) {
-				Map.Entry<Integer, Map<K, V>> origPerPartitionEntries = origItems.next();
+				Map.Entry<Integer, SortedMap<K, V>> origPerPartitionEntries = origItems.next();
 				Map<K, V> updPerPartitionEntries = updPmap.get(origPerPartitionEntries.getKey());
 				// if there are items for this partition
 				int updSize = updPerPartitionEntries.size();

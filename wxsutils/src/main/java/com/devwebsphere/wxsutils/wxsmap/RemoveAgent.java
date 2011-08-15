@@ -37,7 +37,7 @@ public class RemoveAgent<K extends Serializable> implements ReduceGridAgent {
 	private static final long serialVersionUID = 6568906743945108310L;
 	static Logger logger = Logger.getLogger(RemoveAgent.class.getName());
 
-	public List<K> batch;
+	public List<Serializable> batch;
 
 	static public ReduceAgentFactory<RemoveAgent<? extends Serializable>> FACTORY = new ReduceAgentFactory<RemoveAgent<? extends Serializable>>() {
 

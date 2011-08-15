@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -63,12 +63,10 @@ public class WXSReduceAgent extends WXSAgent {
 	static public <A extends ReduceGridAgent, K extends Serializable, X> X callReduceAgentAll(WXSUtils utils, Map<K, A> batch, BackingMap bmap) {
 		if (batch.size() > 0) {
 			try {
-				Map<Integer, Map<K, A>> pmap = convertToPartitionEntryMap(bmap, batch);
-				Iterator<Map<K, A>> items = pmap.values().iterator();
+				Map<Integer, SortedMap<K, A>> pmap = convertToPartitionEntryMap(bmap, batch);
 				ArrayList<Future<X>> results = new ArrayList<Future<X>>(pmap.size());
 
-				while (items.hasNext()) {
-					Map<K, A> perPartitionEntries = items.next();
+				for (SortedMap<K, A> perPartitionEntries : pmap.values()) {
 					// we need one key for partition routing
 					// so get the first one
 					K key = perPartitionEntries.keySet().iterator().next();
@@ -122,9 +120,9 @@ public class WXSReduceAgent extends WXSAgent {
 			}
 			break;
 		default:
-			Map<Integer, Map<K, V>> pmap = convertToPartitionEntryMap(bmap, batch);
+			Map<Integer, SortedMap<K, V>> pmap = convertToPartitionEntryMap(bmap, batch);
 			ArrayList<Future<Boolean>> results = new ArrayList<Future<Boolean>>(pmap.size());
-			for (Map.Entry<Integer, Map<K, V>> e : pmap.entrySet()) {
+			for (Map.Entry<Integer, SortedMap<K, V>> e : pmap.entrySet()) {
 				// we need one key for partition routing
 				// so get the first one
 				Map<K, V> perPartitionEntries = e.getValue();

@@ -15,11 +15,9 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -110,17 +108,14 @@ public class InsertAgent<K extends Serializable, V extends Serializable> impleme
 			} else {
 				s.begin();
 			}
-			ArrayList<K> keys = new ArrayList<K>(batch.keySet());
 
 			// BN V2.3.1 If write through is disabled DONT DO A GET
 			if (doGet && isWriteThrough) {
-				// sort keys to get U locks in the same order each time
+				// assume keys are sorted to get U locks in the same order each time
 				// to avoid deadlock.
 				// would be nice if WXS had a getAllForUpdate method
 				// when a Loader is plugged in.
-
-				TreeSet<K> sortedKeys = new TreeSet<K>(keys);
-				for (Object k : sortedKeys)
+				for (Object k : batch.keySet())
 					m.getForUpdate(k);
 			}
 			// then do a put. Just a put won't work as it will treat

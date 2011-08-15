@@ -4,10 +4,14 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +26,7 @@ import com.ibm.websphere.objectgrid.UndefinedMapException;
 import com.ibm.websphere.objectgrid.datagrid.AgentManager;
 import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
+import com.ibm.ws.xs.jdk5.java.util.Arrays;
 
 public class WXSAgent {
 	static Logger logger = Logger.getLogger(WXSAgent.class.getName());
@@ -66,15 +71,21 @@ public class WXSAgent {
 	 * @param <V1>
 	 * @param baseMap
 	 * @param items
-	 * @return A Map with entries for each partition with pairs
+	 * @return A Map with entries for each partition with sorted pairs
 	 */
-	static public <K1, V1> Map<Integer, Map<K1, V1>> convertToPartitionEntryMap(BackingMap baseMap, Map<K1, V1> items) {
-		Map<Integer, Map<K1, V1>> entriesForPartition = new HashMap<Integer, Map<K1, V1>>();
+	static public <K1, V1> Map<Integer, SortedMap<K1, V1>> convertToPartitionEntryMap(BackingMap baseMap, Map<K1, V1> items) {
+		// get the comparator if it exists
+		Comparator<K1> comparator = null;
+		if (items instanceof SortedMap) {
+			comparator = ((SortedMap) items).comparator();
+		}
+
+		Map<Integer, SortedMap<K1, V1>> entriesForPartition = new HashMap<Integer, SortedMap<K1, V1>>();
 		for (Map.Entry<K1, V1> e : items.entrySet()) {
 			Integer partitionId = baseMap.getPartitionManager().getPartition(e.getKey());
-			Map<K1, V1> listEntries = (Map<K1, V1>) entriesForPartition.get(partitionId);
+			SortedMap<K1, V1> listEntries = entriesForPartition.get(partitionId);
 			if (listEntries == null) {
-				listEntries = new HashMap<K1, V1>();
+				listEntries = new TreeMap<K1, V1>();
 				entriesForPartition.put(partitionId, listEntries);
 			}
 			listEntries.put(e.getKey(), e.getValue());
@@ -89,7 +100,7 @@ public class WXSAgent {
 	 * @param <K>
 	 * @param baseMap
 	 * @param keys
-	 * @return
+	 * @return a map of partition to sorted keys
 	 */
 	static public <K> Map<Integer, List<K>> convertToPartitionEntryMap(BackingMap baseMap, Collection<K> keys) {
 		Map<Integer, List<K>> entriesForPartition = new HashMap<Integer, List<K>>();
@@ -101,6 +112,19 @@ public class WXSAgent {
 				entriesForPartition.put(partitionId, listEntries);
 			}
 			listEntries.add(k);
+		}
+
+		// get the comparator if it exists
+		Comparator<K> comparator = null;
+		if (keys instanceof SortedSet) {
+			comparator = ((SortedSet) keys).comparator();
+		}
+
+		// sort all the keys per partition
+		for (Map.Entry<Integer, List<K>> entry : entriesForPartition.entrySet()) {
+			Object[] o = entry.getValue().toArray();
+			Arrays.sort(o, comparator);
+			entry.setValue(Arrays.asList(o));
 		}
 		return entriesForPartition;
 	}
