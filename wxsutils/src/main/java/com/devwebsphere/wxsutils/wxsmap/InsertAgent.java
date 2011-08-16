@@ -168,13 +168,13 @@ public class InsertAgent<K extends Serializable, V extends Serializable> impleme
 		ClassSerializer serializer = WXSUtils.getSerializer();
 		doGet = in.readBoolean();
 		isWriteThrough = in.readBoolean();
-		batch = serializer.readSortedMap(in);
+		batch = (SortedMap<K, V>) serializer.readObject(in);
 	}
 
 	public void writeExternal(ObjectOutput out) throws IOException {
 		ClassSerializer serializer = WXSUtils.getSerializer();
 		out.writeBoolean(doGet);
 		out.writeBoolean(isWriteThrough);
-		serializer.writeMap(out, batch);
+		serializer.writeObject(out, batch);
 	}
 }

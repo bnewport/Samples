@@ -73,8 +73,7 @@ public class UpdateEveryWhereAgent<K extends Serializable, V extends Serializabl
 				}
 			}
 			for (K k : entriesToRemove) {
-				if (map.containsKey(k))
-					map.remove(k);
+				map.remove(k);
 			}
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "Exception", e);
@@ -139,13 +138,13 @@ public class UpdateEveryWhereAgent<K extends Serializable, V extends Serializabl
 
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		ClassSerializer serializer = WXSUtils.getSerializer();
-		entries = serializer.readSortedMap(in);
+		entries = (SortedMap<K, V>) serializer.readObject(in);
 		entriesToRemove = serializer.readList(in);
 	}
 
 	public void writeExternal(ObjectOutput out) throws IOException {
 		ClassSerializer serializer = WXSUtils.getSerializer();
-		serializer.writeMap(out, entries);
+		serializer.writeObject(out, entries);
 		serializer.writeList(out, entriesToRemove);
 	}
 }

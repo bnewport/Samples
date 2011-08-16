@@ -16,6 +16,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -334,20 +335,4 @@ public class ClassSerializer {
 
 		return rc;
 	}
-
-	public <K, V> SortedMap<K, V> readSortedMap(ObjectInput in) throws IOException {
-		int size = in.readInt();
-		SortedMap<K, V> rc = null;
-		if (size >= 0) {
-			rc = new TreeMap<K, V>();
-			for (int i = 0; i < size; ++i) {
-				K k = (K) readObject(in);
-				V v = (V) readObject(in);
-				rc.put(k, v);
-			}
-		}
-
-		return rc;
-	}
-
 }
