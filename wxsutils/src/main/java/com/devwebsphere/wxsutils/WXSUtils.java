@@ -434,7 +434,7 @@ public class WXSUtils {
 
 	<K extends Serializable, V extends Serializable> void internalPutAll(Map<K, V> batch, BackingMap bmap, boolean doGet, boolean isWriteThrough) {
 		InsertAgent.Factory f = new InsertAgent.Factory(doGet, isWriteThrough);
-		WXSReduceAgent.callReduceAgentAll(this, f, batch, bmap);
+		WXSReduceAgent.callReduceAgentAll(this, f, batch, bmap, Boolean.TRUE);
 	}
 
 	/**

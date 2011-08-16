@@ -419,7 +419,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 
 	void bulkPushAll(BackingMap bmap, Map<K, List<BulkPushItem<V>>> batch, LR side, K dirtyKey) {
 		BigListPushAgent.Factory<K, V> factory = new BigListPushAgent.Factory<K, V>(dirtyKey, side);
-		WXSReduceAgent.callReduceAgentAll(utils, factory, batch, bmap);
+		WXSReduceAgent.callReduceAgentAll(utils, factory, batch, bmap, Boolean.TRUE);
 	}
 
 	public void setEvictionPolicyFor(K key, EvictionType type, int evictionTimeInMinutes) {

@@ -20,13 +20,12 @@ import com.devwebsphere.wxsutils.multijob.SinglePartTask;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 
 /**
- * This implements a MultiTaskPart so users can run a query on all
- * data in the grid
+ * This implements a MultiTaskPart so users can run a query on all data in the grid
+ * 
  * @author bnewport
- *
+ * 
  */
-public class GridQuery implements MultipartTask<GridQueryChunk, ArrayList<Serializable>>
-{
+public class GridQuery implements MultipartTask<GridQueryChunk, ArrayList<Serializable>> {
 	Map<String, Serializable> queryParameters;
 	Map<String, Serializable> queryHints;
 	int limit;
@@ -34,9 +33,8 @@ public class GridQuery implements MultipartTask<GridQueryChunk, ArrayList<Serial
 	JobExecutor<GridQueryChunk, ArrayList<Serializable>> je;
 
 	boolean lastExtractWasFull = false;
-	
-	public ArrayList<Serializable> extractResult(GridQueryChunk rawRC)
-	{
+
+	public ArrayList<Serializable> extractResult(GridQueryChunk rawRC) {
 		ArrayList<Serializable> rc = rawRC.result;
 		// check if last block was < limit records and if it was then
 		// assume there is no more data in this partition
@@ -45,29 +43,30 @@ public class GridQuery implements MultipartTask<GridQueryChunk, ArrayList<Serial
 	}
 
 	/**
-	 * Construct an instance. It's important that any query parameters or hints
-	 * be specified using {@link #setQueryHints(Map)} and {@link #setQueryParameters(Map)}
-	 * @param ogclient The objectgrid client to use
-	 * @param queryString The OGQL query
-	 * @param limit The maximum number of results to return at once
+	 * Construct an instance. It's important that any query parameters or hints be specified using
+	 * {@link #setQueryHints(Map)} and {@link #setQueryParameters(Map)}
+	 * 
+	 * @param ogclient
+	 *            The objectgrid client to use
+	 * @param queryString
+	 *            The OGQL query
+	 * @param limit
+	 *            The maximum number of results to return at once
 	 */
-	public GridQuery(ObjectGrid ogclient, String queryString, int limit)
-	{
+	public GridQuery(ObjectGrid ogclient, String queryString, int limit) {
 		this.queryString = queryString;
 		this.limit = limit;
 		je = new JobExecutor<GridQueryChunk, ArrayList<Serializable>>(ogclient, this);
 	}
-	
+
 	/**
-	 * This will return a new SingleTaskPart job if there are more blocks within the current partition
-	 * otherwise it should return null to indicate all data can been consumed for the current
-	 * partition
+	 * This will return a new SingleTaskPart job if there are more blocks within the current partition otherwise it
+	 * should return null to indicate all data can been consumed for the current partition
 	 */
-	public SinglePartTask<GridQueryChunk, ArrayList<Serializable>> createTaskForPartition(SinglePartTask<GridQueryChunk, ArrayList<Serializable>> previousTask)
-	{
+	public SinglePartTask<GridQueryChunk, ArrayList<Serializable>> createTaskForPartition(
+			SinglePartTask<GridQueryChunk, ArrayList<Serializable>> previousTask) {
 		// prevtask is null when called for first time for a partition
-		if(previousTask == null)
-		{
+		if (previousTask == null) {
 			GridQueryPartitionTask qpa = new GridQueryPartitionTask();
 			qpa.limit = limit;
 			qpa.queryString = queryString;
@@ -75,18 +74,14 @@ public class GridQuery implements MultipartTask<GridQueryChunk, ArrayList<Serial
 			qpa.queryParameters = queryParameters;
 			qpa.offset = 0;
 			return qpa;
-		}
-		else
-		{
+		} else {
 			// if last SinglePartTask wasn't the last one then just get the next
 			// block of limit records
-			GridQueryPartitionTask qpa = (GridQueryPartitionTask)previousTask;
-			if(lastExtractWasFull)
-			{
+			GridQueryPartitionTask qpa = (GridQueryPartitionTask) previousTask;
+			if (lastExtractWasFull) {
 				qpa.offset += qpa.limit;
 				return qpa;
-			}
-			else
+			} else
 				// otherwise we got all the records in this partition
 				return null;
 		}
@@ -94,6 +89,7 @@ public class GridQuery implements MultipartTask<GridQueryChunk, ArrayList<Serial
 
 	/**
 	 * This must be called before getNextResult is called if required.
+	 * 
 	 * @param queryParameters
 	 */
 	public final void setQueryParameters(Map<String, Serializable> queryParameters) {
@@ -102,19 +98,20 @@ public class GridQuery implements MultipartTask<GridQueryChunk, ArrayList<Serial
 
 	/**
 	 * This must be called before getNextResult is called if required.
+	 * 
 	 * @param queryHints
 	 */
 	public final void setQueryHints(Map<String, Serializable> queryHints) {
 		this.queryHints = queryHints;
 	}
-	
+
 	/**
-	 * This is just a delegate to the JobExecutor. This can return arrays of zero length. Only
-	 * a null return indicates the end of the operation.
+	 * This is just a delegate to the JobExecutor. This can return arrays of zero length. Only a null return indicates
+	 * the end of the operation.
+	 * 
 	 * @return
 	 */
-	public ArrayList<Serializable> getNextResult()
-	{
+	public ArrayList<Serializable> getNextResult() {
 		return je.getNextResult();
 	}
 }

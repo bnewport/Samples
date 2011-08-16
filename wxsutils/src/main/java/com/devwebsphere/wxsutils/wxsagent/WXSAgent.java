@@ -2,6 +2,7 @@ package com.devwebsphere.wxsutils.wxsagent;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -26,7 +27,6 @@ import com.ibm.websphere.objectgrid.UndefinedMapException;
 import com.ibm.websphere.objectgrid.datagrid.AgentManager;
 import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
-import com.ibm.ws.xs.jdk5.java.util.Arrays;
 
 public class WXSAgent {
 	static Logger logger = Logger.getLogger(WXSAgent.class.getName());
@@ -122,7 +122,7 @@ public class WXSAgent {
 
 		// sort all the keys per partition
 		for (Map.Entry<Integer, List<K>> entry : entriesForPartition.entrySet()) {
-			Object[] o = entry.getValue().toArray();
+			K[] o = (K[]) entry.getValue().toArray();
 			Arrays.sort(o, comparator);
 			entry.setValue(Arrays.asList(o));
 		}
