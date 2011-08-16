@@ -2,13 +2,17 @@ package com.devwebsphere.wxsutils.wxsagent;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -95,14 +99,15 @@ public class WXSReduceAgent extends WXSAgent {
 		return null;
 	}
 
-	static public <A extends ReduceGridAgent, K extends Serializable, V> void callReduceAgentAll(WXSUtils utils, ReduceAgentFactory<A> factory,
-			Map<K, V> batch, BackingMap bmap) {
+	static public <A extends ReduceGridAgent, K extends Serializable, V, X> List<Future<X>> callReduceAgentAll(WXSUtils utils,
+			ReduceAgentFactory<A> factory, Map<K, V> batch, BackingMap bmap) {
 		int sz = batch.size();
 		A a;
-		switch (sz) {
-		case 0:
-			return;
-		case 1: // optimized version, generates a little less garbage.
+
+		if (sz == 0) {
+			return Collections.emptyList();
+		} else if (sz == 1) {
+			// optimized version, generates a little less garbage.
 			// invoke the agent to add the batch of records to the grid
 			a = factory.newAgent(batch);
 			// Insert all keys for one partition using the first key as a routing key
@@ -112,16 +117,13 @@ public class WXSReduceAgent extends WXSAgent {
 			} catch (UndefinedMapException e) {
 				throw new ObjectGridRuntimeException(e);
 			}
-			Object rc = am.callReduceAgent(a, Collections.singletonList(factory.getKey(a)));
-			boolean result = checkReturnValue(Boolean.TRUE, rc);
-			if (!result) {
-				logger.log(Level.SEVERE, "putAll failed because of a server side exception");
-				throw new ObjectGridRuntimeException("putAll failed");
-			}
-			break;
-		default:
+			X rc = (X) am.callReduceAgent(a, Collections.singletonList(factory.getKey(a)));
+			Future<X> future = new DoneFuture<X>(rc);
+			return Arrays.asList(future);
+		} else {
+
 			Map<Integer, SortedMap<K, V>> pmap = convertToPartitionEntryMap(bmap, batch);
-			ArrayList<Future<Boolean>> results = new ArrayList<Future<Boolean>>(pmap.size());
+			ArrayList<Future<X>> results = new ArrayList<Future<X>>(pmap.size());
 			for (Map.Entry<Integer, SortedMap<K, V>> e : pmap.entrySet()) {
 				// we need one key for partition routing
 				// so get the first one
@@ -131,13 +133,23 @@ public class WXSReduceAgent extends WXSAgent {
 				// invoke the agent to add the batch of records to the grid
 				a = factory.newAgent(perPartitionEntries);
 				// Insert all keys for one partition using the first key as a routing key
-				Future<Boolean> fv = utils.getExecutorService().submit(new CallReduceAgentThread<Boolean>(utils, bmap.getName(), key, a));
+				Future<X> fv = utils.getExecutorService().submit(new CallReduceAgentThread<X>(utils, bmap.getName(), key, a));
 				results.add(fv);
-			}
 
-			if (!areAllFutures(Boolean.TRUE, results, ConfigProperties.getAgentTimeout(utils.getConfigProperties()))) {
-				logger.log(Level.SEVERE, "putAll failed because of a server side exception");
-				throw new ObjectGridRuntimeException("putAll failed");
+			}
+			return results;
+		}
+
+	}
+
+	static public <A extends ReduceGridAgent, K extends Serializable, V, X> void callReduceAgentAll(WXSUtils utils, ReduceAgentFactory<A> factory,
+			Map<K, V> batch, BackingMap bmap, X result) {
+		List<Future<X>> r = callReduceAgentAll(utils, factory, batch, bmap);
+
+		if (!r.isEmpty()) {
+			if (!areAllFutures(result, r, ConfigProperties.getAgentTimeout(utils.getConfigProperties()))) {
+				logger.log(Level.SEVERE, "Agent failed because of a server side exception");
+				throw new ObjectGridRuntimeException("Agent failed");
 			}
 		}
 	}
@@ -158,5 +170,34 @@ public class WXSReduceAgent extends WXSAgent {
 		}
 
 		return collectResultsAsMap(results, ConfigProperties.getAgentTimeout(utils.getConfigProperties()));
+	}
+
+	static class DoneFuture<X> implements Future<X> {
+		X result;
+
+		DoneFuture(X r) {
+			result = r;
+		}
+
+		public boolean cancel(boolean mayInterruptIfRunning) {
+			return false;
+		}
+
+		public boolean isCancelled() {
+			return false;
+		}
+
+		public boolean isDone() {
+			return true;
+		}
+
+		public X get() throws InterruptedException, ExecutionException {
+			return result;
+		}
+
+		public X get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+			return result;
+		}
+
 	}
 }

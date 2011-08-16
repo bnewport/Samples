@@ -184,7 +184,7 @@ public class TestClientAPIs {
 
 		// try with maps different size, orig = 10, new = 11
 		try {
-			Map<String, Boolean> rc = utils.cond_putAll(original, newValues, bmFarMap3);
+			utils.cond_putAll(original, newValues, bmFarMap3);
 			Assert.fail("Should have thrown exception");
 		} catch (ObjectGridRuntimeException e) {
 			// this is expected
@@ -762,43 +762,6 @@ public class TestClientAPIs {
 	public void testPingAllPartitions() {
 		int partitionCount = PingAllPartitionsJob.visitAllPartitions(ogclient);
 		Assert.assertEquals(ogclient.getMap("Set").getPartitionManager().getNumOfPartitions(), partitionCount);
-	}
-
-	/**
-	 * This does a simple stress test against the grid.
-	 */
-	// @Test
-	public void testPutRate() {
-		clearMap();
-		int maxTests = 50;
-		// run more than one time to allow JIT to settle
-		// for unit test once is enough
-		for (int loop = 0; loop < 1; ++loop) {
-			for (int batchSize = 1000; batchSize <= 32000; batchSize *= 2) {
-				Map<String, String> batch = new HashMap<String, String>();
-				for (int i = 0; i < batchSize; ++i)
-					batch.put(Integer.toString(i), "V" + i);
-
-				long start = System.nanoTime();
-				for (int test = 0; test < maxTests; ++test) {
-					utils.putAll(batch, ogclient.getMap("FarMap3"));
-				}
-				if (false) {
-					ArrayList<String> keys = new ArrayList<String>();
-					for (int i = 0; i < batchSize; ++i) {
-						keys.add(Integer.toString(i));
-					}
-					Map<String, String> rc = utils.getAll(keys, ogclient.getMap("FarMap3"));
-
-					for (Map.Entry<String, String> e : rc.entrySet()) {
-						Assert.assertEquals("V" + e.getKey(), e.getValue());
-					}
-				}
-				double duration = (System.nanoTime() - start) / 1000000000.0;
-				double rate = (double) batchSize * (double) maxTests / duration;
-				System.out.println("Batch of " + batchSize + " rate is " + rate + " <" + (batch.size() * maxTests) + ":" + duration + ">");
-			}
-		}
 	}
 
 	@Test

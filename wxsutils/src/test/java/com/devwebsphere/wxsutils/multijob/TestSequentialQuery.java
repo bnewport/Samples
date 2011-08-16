@@ -104,6 +104,6 @@ public class TestSequentialQuery
 			}
 			block = q.getNextResult();
 		}
-		Assert.assertEquals(true, personSet.size() == 0);
+		Assert.assertEquals(0, personSet.size());
 	}
 }
