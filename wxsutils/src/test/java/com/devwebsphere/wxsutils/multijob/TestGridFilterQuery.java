@@ -11,11 +11,8 @@ package com.devwebsphere.wxsutils.multijob;
 //
 
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import junit.framework.Assert;
 
@@ -26,13 +23,9 @@ import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.filter.FilterBuilder;
-import com.devwebsphere.wxsutils.filter.NotFilter;
-import com.devwebsphere.wxsutils.filter.TrueFilter;
 import com.devwebsphere.wxsutils.filter.ValuePath;
 import com.devwebsphere.wxsutils.filter.path.PojoPropertyPath;
 import com.devwebsphere.wxsutils.filter.set.GridFilteredIndex;
-import com.devwebsphere.wxsutils.filter.set.GridFilteredIndex.Operation;
-import com.devwebsphere.wxsutils.multijob.ogql.GridQuery;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
