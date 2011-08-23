@@ -75,7 +75,7 @@ public class InsertAgent<K extends Serializable, V extends Serializable> impleme
 		}
 
 		public <K extends Serializable, V> InsertAgent<? extends Serializable, ? extends Serializable> newAgent(Map<K, V> map) {
-			InsertAgent<Serializable, Serializable> a = new InsertAgent<Serializable, Serializable>();
+			InsertAgent<Serializable, Serializable> a = newAgent();
 			a.batch = (SortedMap<Serializable, Serializable>) map;
 			a.doGet = doGet;
 			a.isWriteThrough = isWriteThrough;
@@ -88,6 +88,10 @@ public class InsertAgent<K extends Serializable, V extends Serializable> impleme
 
 		public <X> X emptyResult() {
 			return (X) Boolean.FALSE;
+		}
+		
+		protected InsertAgent<Serializable, Serializable> newAgent() {
+			return new InsertAgent<Serializable, Serializable>();
 		}
 
 	}

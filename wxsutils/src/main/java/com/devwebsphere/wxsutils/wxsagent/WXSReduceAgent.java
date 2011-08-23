@@ -155,21 +155,20 @@ public class WXSReduceAgent extends WXSAgent {
 	}
 
 	@Beta
-	static public <A extends ReduceGridAgent, K extends Serializable, X extends Serializable> Map<K, X> callReduceAgentAll(WXSUtils utils,
+	static public <A extends ReduceGridAgent, K extends Serializable, X extends Serializable> List<Future<X>> callReduceAgentAll(WXSUtils utils,
 			A reduceAgent, BackingMap bmap) {
 		int numPartitions = bmap.getPartitionManager().getNumOfPartitions();
-		ArrayList<Future<Map<K, X>>> results = new ArrayList<Future<Map<K, X>>>(numPartitions);
+		ArrayList<Future<X>> results = new ArrayList<Future<X>>(numPartitions);
 		for (int i = 0; i < numPartitions; ++i) {
 			Integer key = i;
 			ReduceAgentNoKeysExecutor<A, X> ia = new ReduceAgentNoKeysExecutor<A, X>();
 			ia.agent = reduceAgent;
 			ia.agentTargetMapName = bmap.getName();
-			Future<Map<K, X>> fv = utils.getExecutorService()
-					.submit(new CallReduceAgentThread<Map<K, X>>(utils, JobExecutor.routingMapName, key, ia));
+			Future<X> fv = utils.getExecutorService().submit(new CallReduceAgentThread<X>(utils, JobExecutor.routingMapName, key, ia));
 			results.add(fv);
 		}
 
-		return collectResultsAsMap(results, ConfigProperties.getAgentTimeout(utils.getConfigProperties()));
+		return results;
 	}
 
 	static class DoneFuture<X> implements Future<X> {
