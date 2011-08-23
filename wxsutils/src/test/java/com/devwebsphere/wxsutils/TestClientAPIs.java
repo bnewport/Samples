@@ -106,7 +106,7 @@ public class TestClientAPIs {
 	}
 
 	@Test
-	public void testCallMapAgentHack() {
+	public void testCallMapAgentAll() {
 		clearMap();
 		WXSMap<String, String> map = utils.getCache(bmFarMap3.getName());
 
@@ -133,6 +133,26 @@ public class TestClientAPIs {
 	/**
 	 * This tests the basic putAll/getAll/removeAll capabilities
 	 */
+	@Test
+	public void testSingletonPutAll() {
+		clearMap();
+		Map<String, String> batch = new HashMap<String, String>();
+		batch.put("A", "B");
+		utils.putAll(batch, bmFarMap3);
+
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add("A");
+
+		Map<String, String> rc = utils.getAll(keys, bmFarMap3);
+
+		Assert.assertEquals("B", rc.get("A"));
+
+		utils.removeAll(keys, bmFarMap3);
+		rc = utils.getAll(keys, bmFarMap3);
+
+		Assert.assertNull(rc.get("A"));
+	}
+
 	@Test
 	public void testPutAll() {
 		clearMap();
