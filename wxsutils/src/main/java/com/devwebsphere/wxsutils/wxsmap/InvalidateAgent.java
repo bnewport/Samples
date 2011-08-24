@@ -39,24 +39,24 @@ public class InvalidateAgent<K extends Serializable> implements ReduceGridAgent 
 
 	public List<K> batch;
 
-	static public ReduceAgentFactory<InvalidateAgent<?>> FACTORY = new ReduceAgentFactory<InvalidateAgent<? extends Serializable>>() {
+	static public class Factory<K extends Serializable> implements ReduceAgentFactory<InvalidateAgent<K>, K, Object, Boolean> {
 
-		public <K extends Serializable> InvalidateAgent<? extends Serializable> newAgent(List<K> keys) {
-			InvalidateAgent<Serializable> a = new InvalidateAgent<Serializable>();
-			a.batch = (List<Serializable>) keys;
+		public InvalidateAgent<K> newAgent(List<K> keys) {
+			InvalidateAgent<K> a = new InvalidateAgent<K>();
+			a.batch = keys;
 			return a;
 		}
 
-		public <K extends Serializable, V> InvalidateAgent<? extends Serializable> newAgent(Map<K, V> map) {
+		public InvalidateAgent<K> newAgent(Map<K, Object> map) {
 			throw new ObjectGridRuntimeException("NOT SUPPORTED");
 		}
 
-		public <K extends Serializable> K getKey(InvalidateAgent<? extends Serializable> a) {
-			return (K) a.batch.get(0);
+		public K getKey(InvalidateAgent<K> a) {
+			return a.batch.get(0);
 		}
 
-		public <X> X emptyResult() {
-			return (X) Boolean.FALSE;
+		public Boolean emptyResult() {
+			return Boolean.FALSE;
 		}
 	};
 

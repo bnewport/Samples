@@ -61,7 +61,7 @@ public class InsertAgent<K extends Serializable, V extends Serializable> impleme
 	 */
 	public boolean doGet;
 
-	static public class Factory implements ReduceAgentFactory<InsertAgent<? extends Serializable, ? extends Serializable>> {
+	static public class Factory<K extends Serializable, V extends Serializable> implements ReduceAgentFactory<InsertAgent<K, V>, K, V, Boolean> {
 		boolean isWriteThrough;
 		boolean doGet;
 
@@ -70,28 +70,28 @@ public class InsertAgent<K extends Serializable, V extends Serializable> impleme
 			this.isWriteThrough = isWriteThrough;
 		}
 
-		public <K extends Serializable> InsertAgent<? extends Serializable, ? extends Serializable> newAgent(List<K> keys) {
+		public InsertAgent<K, V> newAgent(List<K> keys) {
 			throw new ObjectGridRuntimeException("NOT SUPPORTED");
 		}
 
-		public <K extends Serializable, V> InsertAgent<? extends Serializable, ? extends Serializable> newAgent(Map<K, V> map) {
-			InsertAgent<Serializable, Serializable> a = newAgent();
-			a.batch = (Map<Serializable, Serializable>) map;
+		public InsertAgent<K, V> newAgent(Map<K, V> map) {
+			InsertAgent<K, V> a = newAgent();
+			a.batch = map;
 			a.doGet = doGet;
 			a.isWriteThrough = isWriteThrough;
 			return a;
 		}
 
-		public <K extends Serializable> K getKey(InsertAgent<? extends Serializable, ? extends Serializable> a) {
-			return (K) a.batch.entrySet().iterator().next().getKey();
+		public K getKey(InsertAgent<K, V> a) {
+			return a.batch.entrySet().iterator().next().getKey();
 		}
 
-		public <X> X emptyResult() {
-			return (X) Boolean.FALSE;
+		public Boolean emptyResult() {
+			return Boolean.FALSE;
 		}
-		
-		protected InsertAgent<Serializable, Serializable> newAgent() {
-			return new InsertAgent<Serializable, Serializable>();
+
+		protected InsertAgent<K, V> newAgent() {
+			return new InsertAgent<K, V>();
 		}
 
 	}

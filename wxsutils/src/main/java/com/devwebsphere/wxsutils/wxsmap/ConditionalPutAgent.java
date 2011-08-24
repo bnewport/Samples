@@ -17,6 +17,7 @@ import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +51,8 @@ public class ConditionalPutAgent<K extends Serializable, V extends Serializable>
 	public Map<K, V> batchBefore;
 	public Map<K, V> newValues;
 
-	static public class Factory<K extends Serializable, V extends Serializable> implements ReduceAgentFactory<ConditionalPutAgent<K, V>> {
+	static public class Factory<K extends Serializable, V extends Serializable> implements
+			ReduceAgentFactory<ConditionalPutAgent<K, V>, K, V, Map<K, Boolean>> {
 
 		Map<K, V> newVals;
 
@@ -58,17 +60,17 @@ public class ConditionalPutAgent<K extends Serializable, V extends Serializable>
 			this.newVals = updated;
 		}
 
-		public <K1 extends Serializable> ConditionalPutAgent<K, V> newAgent(List<K1> keys) {
+		public ConditionalPutAgent<K, V> newAgent(List<K> keys) {
 			throw new ObjectGridRuntimeException("NOT SUPPORTED");
 		}
 
-		public <K1 extends Serializable, V1> ConditionalPutAgent<K, V> newAgent(Map<K1, V1> map) {
+		public ConditionalPutAgent<K, V> newAgent(Map<K, V> map) {
 			ConditionalPutAgent<K, V> a = new ConditionalPutAgent<K, V>();
-			a.batchBefore = (Map<K, V>) map;
+			a.batchBefore = map;
 
 			// build the map for new values
-			HashMap<Serializable, V> updated = new HashMap<Serializable, V>();
-			for (Serializable k : map.keySet()) {
+			HashMap<K, V> updated = new HashMap<K, V>();
+			for (K k : map.keySet()) {
 				V v = newVals.get(k);
 				if (v == null) {
 					// check if its actually present
@@ -80,17 +82,16 @@ public class ConditionalPutAgent<K extends Serializable, V extends Serializable>
 				}
 			}
 
-			a.newValues = (Map<K, V>) updated;
+			a.newValues = updated;
 			return a;
 		}
 
-		public <K1 extends Serializable> K1 getKey(ConditionalPutAgent<K, V> a) {
-			return (K1) a.batchBefore.keySet().iterator().next();
+		public K getKey(ConditionalPutAgent<K, V> a) {
+			return a.batchBefore.keySet().iterator().next();
 		}
 
-		public <X> X emptyResult() {
-			// TODO Auto-generated method stub
-			return (X) Boolean.FALSE;
+		public Map<K, Boolean> emptyResult() {
+			return Collections.emptyMap();
 		}
 
 	}

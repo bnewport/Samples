@@ -309,7 +309,8 @@ public class WXSUtils {
 	 * @return A Map of the key/value pairs
 	 */
 	public <K extends Serializable, V extends Serializable> Map<K, V> getAll(Collection<K> keys, BackingMap bmap) {
-		return WXSReduceAgent.callReduceAgentAll(this, GetAllAgent.FACTORY, keys, bmap);
+		GetAllAgent.Factory<K, V> factory = new GetAllAgent.Factory<K, V>();
+		return WXSReduceAgent.callReduceAgentAll(this, factory, keys, bmap);
 	}
 
 	/**
@@ -326,7 +327,8 @@ public class WXSUtils {
 	 * @return A Map of the key/value pairs
 	 */
 	public <K extends Serializable> Map<K, Boolean> containsAll(Collection<K> keys, BackingMap bmap) {
-		return WXSReduceAgent.callReduceAgentAll(this, ContainsAllAgent.FACTORY, keys, bmap);
+		ContainsAllAgent.Factory<K> factory = new ContainsAllAgent.Factory<K>();
+		return WXSReduceAgent.callReduceAgentAll(this, factory, keys, bmap);
 	}
 
 	/**
@@ -406,7 +408,7 @@ public class WXSUtils {
 	}
 
 	<K extends Serializable, V extends Serializable> void internalPutAll(Map<K, V> batch, BackingMap bmap, boolean doGet, boolean isWriteThrough) {
-		InsertAgent.Factory f = new InsertAgent.Factory(doGet, isWriteThrough);
+		InsertAgent.Factory<K, V> f = new InsertAgent.Factory<K, V>(doGet, isWriteThrough);
 		WXSReduceAgent.callReduceAgentAll(this, f, batch, bmap, Boolean.TRUE);
 	}
 
@@ -422,7 +424,8 @@ public class WXSUtils {
 	 *            The map to store them in.
 	 */
 	public <K extends Serializable> void removeAll(Collection<K> batch, BackingMap bmap) {
-		WXSReduceAgent.callReduceAgentAll(this, RemoveAgent.FACTORY, batch, bmap);
+		RemoveAgent.Factory<K> factory = new RemoveAgent.Factory<K>();
+		WXSReduceAgent.callReduceAgentAll(this, factory, batch, bmap);
 	}
 
 	/**
@@ -437,7 +440,8 @@ public class WXSUtils {
 	 *            The map to store them in.
 	 */
 	public <K extends Serializable> void invalidateAll(Collection<K> batch, BackingMap bmap) {
-		WXSReduceAgent.callReduceAgentAll(this, InvalidateAgent.FACTORY, batch, bmap);
+		InvalidateAgent.Factory<K> factory = new InvalidateAgent.Factory<K>();
+		WXSReduceAgent.callReduceAgentAll(this, factory, batch, bmap);
 	}
 
 	static Container container;

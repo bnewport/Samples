@@ -37,27 +37,27 @@ public class RemoveAgent<K extends Serializable> implements ReduceGridAgent {
 	private static final long serialVersionUID = 6568906743945108310L;
 	static Logger logger = Logger.getLogger(RemoveAgent.class.getName());
 
-	public List<Serializable> batch;
+	public List<K> batch;
 
-	static public ReduceAgentFactory<RemoveAgent<? extends Serializable>> FACTORY = new ReduceAgentFactory<RemoveAgent<? extends Serializable>>() {
+	static public class Factory<K extends Serializable> implements ReduceAgentFactory<RemoveAgent<K>, K, Object, Boolean> {
 
-		public <K extends Serializable> RemoveAgent<? extends Serializable> newAgent(List<K> keys) {
-			RemoveAgent<Serializable> a = new RemoveAgent<Serializable>();
-			a.batch = (List<Serializable>) keys;
+		public RemoveAgent<K> newAgent(List<K> keys) {
+			RemoveAgent<K> a = new RemoveAgent<K>();
+			a.batch = keys;
 			return a;
 		}
 
-		public <K extends Serializable, V> RemoveAgent<? extends Serializable> newAgent(Map<K, V> map) {
+		public RemoveAgent<K> newAgent(Map<K, Object> map) {
 			throw new ObjectGridRuntimeException("NOT SUPPORTED");
 		}
 
-		public <K extends Serializable> K getKey(RemoveAgent<? extends Serializable> a) {
-			return (K) a.batch.get(0);
+		public K getKey(RemoveAgent<K> a) {
+			return a.batch.get(0);
 		}
 
-		public <X> X emptyResult() {
+		public Boolean emptyResult() {
 			// TODO Auto-generated method stub
-			return null;
+			return Boolean.FALSE;
 		}
 	};
 

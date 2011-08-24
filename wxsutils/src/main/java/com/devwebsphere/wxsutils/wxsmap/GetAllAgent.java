@@ -12,6 +12,7 @@ package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,6 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
-import com.ibm.ws.xs.jdk5.java.util.Collections;
 
 /**
  * This is used to fetch all the values for a set of keys within a given partition using a single hop.
@@ -39,25 +39,24 @@ public class GetAllAgent<K extends Serializable, V extends Serializable> impleme
 
 	public List<K> batch;
 
-	public static ReduceAgentFactory<GetAllAgent<? extends Serializable, ? extends Serializable>> FACTORY = new ReduceAgentFactory<GetAllAgent<? extends Serializable, ? extends Serializable>>() {
+	public static class Factory<K extends Serializable, V extends Serializable> implements ReduceAgentFactory<GetAllAgent<K, V>, K, V, Map<K, V>> {
 
-		public <K extends Serializable> GetAllAgent<? extends Serializable, ? extends Serializable> newAgent(List<K> keys) {
-			GetAllAgent<K, Serializable> a = new GetAllAgent<K, Serializable>();
+		public GetAllAgent<K, V> newAgent(List<K> keys) {
+			GetAllAgent<K, V> a = new GetAllAgent<K, V>();
 			a.batch = keys;
 			return a;
 		}
 
-		public <K extends Serializable, V> GetAllAgent<? extends Serializable, ? extends Serializable> newAgent(Map<K, V> map) {
-
+		public GetAllAgent<K, V> newAgent(Map<K, V> map) {
 			throw new ObjectGridRuntimeException("NOT IMPLEMENTED");
 		}
 
-		public <K extends Serializable> K getKey(GetAllAgent<? extends Serializable, ? extends Serializable> a) {
-			return (K) a.batch.get(0);
+		public K getKey(GetAllAgent<K, V> a) {
+			return a.batch.get(0);
 		}
 
-		public <X> X emptyResult() {
-			return (X) Collections.emptyMap();
+		public Map<K, V> emptyResult() {
+			return Collections.emptyMap();
 		}
 
 	};

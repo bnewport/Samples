@@ -31,7 +31,7 @@ import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 public class WXSReduceAgent extends WXSAgent {
 	static Logger logger = Logger.getLogger(WXSReduceAgent.class.getName());
 
-	static public <A extends ReduceGridAgent, K extends Serializable, X> X callReduceAgentAll(WXSUtils utils, ReduceAgentFactory<A> factory,
+	static public <A extends ReduceGridAgent, K extends Serializable, X> X callReduceAgentAll(WXSUtils utils, ReduceAgentFactory<A, K, ?, X> factory,
 			Collection<K> keys, BackingMap bmap) {
 		if (keys.isEmpty()) {
 			return factory.emptyResult();
@@ -42,7 +42,7 @@ public class WXSReduceAgent extends WXSAgent {
 		Map<K, A> agents = new HashMap<K, A>(pmap.size());
 		for (Map.Entry<Integer, List<K>> e : pmap.entrySet()) {
 			A a = factory.newAgent(e.getValue());
-			agents.put(factory.<K> getKey(a), a);
+			agents.put(factory.getKey(a), a);
 		}
 
 		X r = callReduceAgentAll(utils, agents, bmap);
@@ -100,7 +100,7 @@ public class WXSReduceAgent extends WXSAgent {
 	}
 
 	static public <A extends ReduceGridAgent, K extends Serializable, V, X> List<Future<X>> callReduceAgentAll(WXSUtils utils,
-			ReduceAgentFactory<A> factory, Map<K, V> batch, BackingMap bmap) {
+			ReduceAgentFactory<A, K, V, X> factory, Map<K, V> batch, BackingMap bmap) {
 		int sz = batch.size();
 		A a;
 
@@ -142,8 +142,8 @@ public class WXSReduceAgent extends WXSAgent {
 
 	}
 
-	static public <A extends ReduceGridAgent, K extends Serializable, V, X> void callReduceAgentAll(WXSUtils utils, ReduceAgentFactory<A> factory,
-			Map<K, V> batch, BackingMap bmap, X result) {
+	static public <A extends ReduceGridAgent, K extends Serializable, V, X> void callReduceAgentAll(WXSUtils utils,
+			ReduceAgentFactory<A, K, V, X> factory, Map<K, V> batch, BackingMap bmap, X result) {
 		List<Future<X>> r = callReduceAgentAll(utils, factory, batch, bmap);
 
 		if (!r.isEmpty()) {

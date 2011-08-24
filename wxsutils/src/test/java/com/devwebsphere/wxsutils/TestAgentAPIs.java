@@ -50,7 +50,9 @@ public class TestAgentAPIs {
 			keys.add(String.valueOf(i));
 		}
 		Collections.shuffle(keys);
-		List<List<String>> skeys = WXSReduceAgent.callReduceAgentAll(utils, FACTORY, keys, bmFarMap3);
+		Factory<List<List<String>>> factory = new Factory<List<List<String>>>();
+		List<List<String>> skeys = WXSReduceAgent.<TestReduceGridAgent<String, Serializable>, String, List<List<String>>> callReduceAgentAll(utils,
+				factory, keys, bmFarMap3);
 		System.out.println("skeys: " + skeys);
 		for (List<String> s : skeys) {
 			System.out.println("s: " + s);
@@ -63,13 +65,14 @@ public class TestAgentAPIs {
 	@Test
 	public void testSortedMap() {
 		int partitions = bmFarMap3.getPartitionManager().getNumOfPartitions();
-		HashMap<String, String> map = new HashMap<String, String>();
+		Map<String, Serializable> map = new HashMap<String, Serializable>();
 		for (int i = 0; i < partitions * 3 + 1; i++) {
 			String s = String.valueOf(i);
 			map.put(s, s);
 		}
 
-		List<Future<List<String>>> futures = WXSReduceAgent.callReduceAgentAll(utils, FACTORY, map, bmFarMap3);
+		Factory<List<String>> factory = new Factory<List<String>>();
+		List<Future<List<String>>> futures = WXSReduceAgent.callReduceAgentAll(utils, factory, map, bmFarMap3);
 		List<List<String>> skeys = WXSAgent.collectResultsAsList(futures, ConfigProperties.getAgentTimeout(utils.getConfigProperties()));
 		for (List<String> s : skeys) {
 			ArrayList<String> sorted = new ArrayList<String>(s);
@@ -78,43 +81,43 @@ public class TestAgentAPIs {
 		}
 	}
 
-	static ReduceAgentFactory<TestReduceGridAgent> FACTORY = new ReduceAgentFactory<TestReduceGridAgent>() {
+	static class Factory<X> implements ReduceAgentFactory<TestReduceGridAgent<String, Serializable>, String, Serializable, X> {
 
-		public <K extends Serializable> TestReduceGridAgent newAgent(List<K> keys) {
-			TestReduceGridAgent a = new TestReduceGridAgent();
-			a.keys = (List<Serializable>) keys;
+		public TestReduceGridAgent<String, Serializable> newAgent(List<String> keys) {
+			TestReduceGridAgent<String, Serializable> a = new TestReduceGridAgent<String, Serializable>();
+			a.keys = keys;
 			return a;
 		}
 
-		public <K extends Serializable, V> TestReduceGridAgent newAgent(Map<K, V> map) {
-			TestReduceGridAgent a = new TestReduceGridAgent();
-			a.map = (Map<Serializable, Serializable>) map;
+		public TestReduceGridAgent<String, Serializable> newAgent(Map<String, Serializable> map) {
+			TestReduceGridAgent<String, Serializable> a = new TestReduceGridAgent<String, Serializable>();
+			a.map = map;
 			return a;
 		}
 
-		public <K extends Serializable> K getKey(TestReduceGridAgent a) {
+		public String getKey(TestReduceGridAgent<String, Serializable> a) {
 			if (a.keys != null) {
-				return (K) a.keys.get(0);
+				return a.keys.get(0);
 			} else {
-				return (K) a.map.keySet().iterator().next();
+				return a.map.keySet().iterator().next();
 			}
 		}
 
-		public <X> X emptyResult() {
+		public X emptyResult() {
 			return null;
 		}
 	};
 
-	static class TestReduceGridAgent implements ReduceGridAgent {
-
-		List<Serializable> keys;
-		Map<Serializable, Serializable> map;
+	static class TestReduceGridAgent<K, V> implements ReduceGridAgent {
+		private static final long serialVersionUID = 2235930254411812853L;
+		List<K> keys;
+		Map<K, V> map;
 
 		public Object reduce(Session paramSession, ObjectMap paramObjectMap, Collection paramCollection) {
 			if (keys != null) {
 				return keys;
 			} else {
-				return new ArrayList<Serializable>(map.keySet());
+				return new ArrayList<K>(map.keySet());
 			}
 		}
 

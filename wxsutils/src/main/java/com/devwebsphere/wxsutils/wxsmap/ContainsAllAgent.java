@@ -12,6 +12,7 @@ package com.devwebsphere.wxsutils.wxsmap;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,6 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
-import com.ibm.ws.xs.jdk5.java.util.Collections;
 
 /**
  * This is used to check if a set of keys within a given partition is present using a single hop.
@@ -39,24 +39,24 @@ public class ContainsAllAgent<K extends Serializable> implements ReduceGridAgent
 
 	public List<K> batch;
 
-	public static final ReduceAgentFactory<ContainsAllAgent<?>> FACTORY = new ReduceAgentFactory<ContainsAllAgent<?>>() {
+	public static class Factory<K extends Serializable> implements ReduceAgentFactory<ContainsAllAgent<K>, K, Object, Map<K, Boolean>> {
 
-		public <K extends Serializable> ContainsAllAgent<?> newAgent(List<K> keys) {
+		public ContainsAllAgent<K> newAgent(List<K> keys) {
 			ContainsAllAgent<K> a = new ContainsAllAgent<K>();
 			a.batch = keys;
 			return a;
 		}
 
-		public <K extends Serializable, V> ContainsAllAgent<?> newAgent(Map<K, V> map) {
+		public ContainsAllAgent<K> newAgent(Map<K, Object> map) {
 			throw new UnsupportedOperationException();
 		}
 
-		public <K extends Serializable> K getKey(ContainsAllAgent<?> a) {
-			return (K) a.batch.get(0);
+		public K getKey(ContainsAllAgent<K> a) {
+			return a.batch.get(0);
 		}
 
-		public <X> X emptyResult() {
-			return (X) Collections.emptyMap();
+		public Map<K, Boolean> emptyResult() {
+			return Collections.emptyMap();
 		}
 
 	};
