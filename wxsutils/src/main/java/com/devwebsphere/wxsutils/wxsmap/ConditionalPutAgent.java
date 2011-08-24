@@ -14,6 +14,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -26,7 +27,9 @@ import java.util.logging.Logger;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.utils.ClassSerializer;
+import com.devwebsphere.wxsutils.wxsagent.ReduceAgentFactory;
 import com.ibm.websphere.objectgrid.ObjectGridException;
+import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
@@ -37,15 +40,60 @@ import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
  * 
  * @see WXSUtils#cond_putAll(java.util.Map, java.util.Map, com.ibm.websphere.objectgrid.BackingMap)
  */
-public class ConditionalPutAgent<K, V> implements ReduceGridAgent, Externalizable {
+public class ConditionalPutAgent<K extends Serializable, V extends Serializable> implements ReduceGridAgent, Externalizable {
 	static Logger logger = Logger.getLogger(ConditionalPutAgent.class.getName());
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6568906743945108310L;
 
-	public SortedMap<K, V> batchBefore;
+	public Map<K, V> batchBefore;
 	public Map<K, V> newValues;
+
+	static public class Factory<K extends Serializable, V extends Serializable> implements ReduceAgentFactory<ConditionalPutAgent<K, V>> {
+
+		Map<K, V> newVals;
+
+		public Factory(Map<K, V> updated) {
+			this.newVals = updated;
+		}
+
+		public <K1 extends Serializable> ConditionalPutAgent<K, V> newAgent(List<K1> keys) {
+			throw new ObjectGridRuntimeException("NOT SUPPORTED");
+		}
+
+		public <K1 extends Serializable, V1> ConditionalPutAgent<K, V> newAgent(Map<K1, V1> map) {
+			ConditionalPutAgent<K, V> a = new ConditionalPutAgent<K, V>();
+			a.batchBefore = (Map<K, V>) map;
+
+			// build the map for new values
+			HashMap<Serializable, V> updated = new HashMap<Serializable, V>();
+			for (Serializable k : map.keySet()) {
+				V v = newVals.get(k);
+				if (v == null) {
+					// check if its actually present
+					if (!newVals.containsKey(v)) {
+						throw new ObjectGridRuntimeException("Orig and new maps must have same keys: mising " + k);
+					}
+				} else {
+					updated.put(k, v);
+				}
+			}
+
+			a.newValues = (Map<K, V>) updated;
+			return a;
+		}
+
+		public <K1 extends Serializable> K1 getKey(ConditionalPutAgent<K, V> a) {
+			return (K1) a.batchBefore.keySet().iterator().next();
+		}
+
+		public <X> X emptyResult() {
+			// TODO Auto-generated method stub
+			return (X) Boolean.FALSE;
+		}
+
+	}
 
 	public Object reduce(Session sess, ObjectMap map) {
 		return null;
