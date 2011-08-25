@@ -169,7 +169,6 @@ public class CreateJSONSnapshotAgent implements ReduceGridAgent
 			logger.log(Level.SEVERE, "Exception creating snapshot file ", e);
 			throw new ObjectGridRuntimeException(e);
 		}
-		// TODO Auto-generated method stub
 	}
 
 	public Object reduce(Session arg0, ObjectMap arg1, Collection arg2) 
