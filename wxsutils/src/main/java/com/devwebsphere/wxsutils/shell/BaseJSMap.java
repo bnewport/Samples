@@ -12,7 +12,6 @@ package com.devwebsphere.wxsutils.shell;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,9 +23,6 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 import com.ibm.websphere.objectgrid.ObjectGrid;
-import com.ibm.websphere.objectgrid.Session;
-import com.ibm.websphere.objectgrid.datagrid.AgentManager;
-import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 
 /**
  * This is used by the Javascript shell to manipulate entries in this Map.

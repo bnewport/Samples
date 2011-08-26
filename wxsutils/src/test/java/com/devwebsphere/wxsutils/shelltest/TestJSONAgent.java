@@ -13,8 +13,8 @@ package com.devwebsphere.wxsutils.shelltest;
 import junit.framework.Assert;
 
 import org.junit.BeforeClass;
-import org.junit.Test;
 import org.junit.Ignore;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.EvaluatorException;

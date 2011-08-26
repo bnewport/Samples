@@ -13,9 +13,6 @@ import org.apache.derby.jdbc.EmbeddedDriver;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.devwebsphere.jdbc.loader.GenericJDBCLoader;
-import com.devwebsphere.wxs.jdbcloader.telco.Device;
-
 
 public class TestPreloaderFramework extends TestCase
 {

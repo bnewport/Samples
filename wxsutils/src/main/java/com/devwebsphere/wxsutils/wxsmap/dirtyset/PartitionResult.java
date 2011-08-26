@@ -13,8 +13,6 @@ package com.devwebsphere.wxsutils.wxsmap.dirtyset;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-import com.devwebsphere.wxsutils.wxsmap.SetElement;
-
 /**
  * This is returned from the SingleTask to the MultiTask. The intent is for
  * the current singletask to return the bucket in use to the multitask.

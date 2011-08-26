@@ -14,13 +14,9 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.devwebsphere.wxsutils.filter.path.PojoFieldPath;
-import com.devwebsphere.wxsutils.filter.path.PojoPropertyPath;
 import com.devwebsphere.wxsutils.utils.ClassSerializer;
-import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
 /**
  * This is an abstract filter. It defines a filter for testing

@@ -13,7 +13,6 @@ package com.devwebsphere.wxsutils.jmx.loader;
 import java.util.List;
 
 import com.devwebsphere.wxsutils.WXSUtils;
-import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanImpl;
 import com.ibm.websphere.objectgrid.TxID;
 import com.ibm.websphere.objectgrid.jpa.JPALoader;
 import com.ibm.websphere.objectgrid.plugins.LoaderException;
