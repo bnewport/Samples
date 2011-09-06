@@ -29,20 +29,20 @@ import javax.management.StandardMBean;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
 /**
- * This is an abstract base class to create a SummaryMBean for a collection of homogenous MBeans. It has
- * two methods to retrieve a TabularData of EVERY attribute of all the mbeans as well as one with only
- * the attributes for an external monitor. Typically, the monitor only attributes exclude things like
- * calculated statistics which a 'real' JMX monitor will calculate it self.
- *
- * @param <M> The MBean Impl class
+ * This is an abstract base class to create a SummaryMBean for a collection of homogenous MBeans. It has two methods to
+ * retrieve a TabularData of EVERY attribute of all the mbeans as well as one with only the attributes for an external
+ * monitor. Typically, the monitor only attributes exclude things like calculated statistics which a 'real' JMX monitor
+ * will calculate it self.
+ * 
+ * @param <M>
+ *            The MBean Impl class
  */
-public abstract class MBeanGroupManager <M>
-{
+public abstract class MBeanGroupManager<M> {
 	public ConcurrentMap<String, M> beans = new ConcurrentHashMap<String, M>();
 	static Logger logger = Logger.getLogger(MBeanGroupManager.class.getName());
 
 	final static public String UNKNOWN_MAP = "_UNDEFINED";
-	
+
 	/**
 	 * The MBeanImpl class to use
 	 */
@@ -56,11 +56,12 @@ public abstract class MBeanGroupManager <M>
 	 */
 	String typeName;
 	/**
-	 * The name of the MBean attribute thats the unique key for this group.
-	 * Example: Map MBeans then MapName would be the key
+	 * The name of the MBean attribute thats the unique key for this group. Example: Map MBeans then MapName would be
+	 * the key
 	 */
 	String keyAttributeName;
-	
+
+	static public String domainNameSuffix = "";
 	/**
 	 * The domain name to register MBeans under.
 	 */
@@ -70,17 +71,14 @@ public abstract class MBeanGroupManager <M>
 	 */
 	String groupingAttributeName;
 	SummaryMBeanImpl<M> summaryMBean;
-	
+
 	volatile MBeanServer mbeanServer;
-	
-	public String getDomainName()
-	{
+
+	public String getDomainName() {
 		return domainName;
 	}
-	
-	public ObjectName makeObjectName(String groupName, String keyValue)
-		throws MalformedObjectNameException
-	{
+
+	public ObjectName makeObjectName(String groupName, String keyValue) throws MalformedObjectNameException {
 		Hashtable<String, String> props = new Hashtable<String, String>();
 		props.put(groupingAttributeName, groupName);
 		props.put(keyAttributeName, keyValue);
@@ -90,17 +88,26 @@ public abstract class MBeanGroupManager <M>
 
 	/**
 	 * Construct a manager.
-	 * @param clazz The MBeanImpl class file
-	 * @param clazzI The JMX interface implemented by clazz
-	 * @param domainName The domain to register MBeans for
-	 * @param groupName The name of the container of these MBeans
-	 * @param typeName The name of the attribute (agentClass or mapName...)
-	 * @param keyName The attribute value attribute
+	 * 
+	 * @param clazz
+	 *            The MBeanImpl class file
+	 * @param clazzI
+	 *            The JMX interface implemented by clazz
+	 * @param domainName
+	 *            The domain to register MBeans for
+	 * @param groupName
+	 *            The name of the container of these MBeans
+	 * @param typeName
+	 *            The name of the attribute (agentClass or mapName...)
+	 * @param keyName
+	 *            The attribute value attribute
 	 */
 	public MBeanGroupManager(Class<M> clazz, Class clazzI, String domainName, String groupName, String typeName, String keyName)
-		throws InstanceAlreadyExistsException
-	{
+			throws InstanceAlreadyExistsException {
 		this.domainName = domainName;
+		if (domainNameSuffix != null) {
+			domainName += '-' + domainNameSuffix;
+		}
 		groupingAttributeName = groupName;
 		mbeanClass = clazz;
 		mbeanInterface = clazzI;
@@ -108,62 +115,45 @@ public abstract class MBeanGroupManager <M>
 		this.keyAttributeName = keyName;
 		init();
 	}
-	
-	public Collection<M> getAllBeans()
-	{
+
+	public Collection<M> getAllBeans() {
 		return beans.values();
 	}
-	
-	void init()
-		throws InstanceAlreadyExistsException
-	{
-		ArrayList<MBeanServer> mBeanServers = MBeanServerFactory.findMBeanServer(null);
-		if(mBeanServers.size() == 0)
-		{
-			logger.log(Level.FINE, "No MBeanServer found, creating a new one");
-			mbeanServer = MBeanServerFactory.createMBeanServer(domainName);
-		}
-		else
-		{
-			logger.log(Level.FINE, "Reusing existing MBeanServer");
-			mbeanServer = (MBeanServer)mBeanServers.get(0);
-		}
-		
-        try
-        {
-	        summaryMBean = new SummaryMBeanImpl<M>(this, mbeanClass, typeName);
-	        
+
+	void init() throws InstanceAlreadyExistsException {
+		mbeanServer = findMBeanServer(domainName);
+
+		try {
+			summaryMBean = new SummaryMBeanImpl<M>(this, mbeanClass, typeName);
+
 			Hashtable<String, String> props = new Hashtable<String, String>();
 			props.put("type", typeName + "Summary");
 			ObjectName on = new ObjectName(domainName, props);
 			StandardMBean realMBean = new StandardMBean(summaryMBean, SummaryMBean.class);
 			mbeanServer.registerMBean(realMBean, on);
-        }
-        catch(InstanceAlreadyExistsException e)
-        {
-//	        	logger.log(Level.INFO, "Summary MBean already exists, reuse old one");
-        	throw e;
-        }
-        catch(Exception e)
-        {
-        	e.printStackTrace();
-        	logger.log(Level.SEVERE, "Exception initializing MBeanGroupManager: " + e.toString(), e);
+		} catch (InstanceAlreadyExistsException e) {
+			// logger.log(Level.INFO, "Summary MBean already exists, reuse old one");
+			throw e;
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.log(Level.SEVERE, "Exception initializing MBeanGroupManager: " + e.toString(), e);
 		}
 	}
-	
+
 	/**
-	 * This returns the JMXServer to use for registering mbeans. The first time that it's called
-	 * it also registers the Summary MBean for this group
+	 * This returns the JMXServer to use for registering mbeans. The first time that it's called it also registers the
+	 * Summary MBean for this group
+	 * 
 	 * @return
 	 */
-	public MBeanServer getServer()
-	{
+	public MBeanServer getServer() {
 		// if MBeanServer isn't available then return a fake one to allow everything to pretend everything is ok
 		return mbeanServer;
 	}
-	
+
 	/**
 	 * This must be implemented and return an MBeanImpl for the parameters.
+	 * 
 	 * @param gridName
 	 * @param mapName
 	 * @return
@@ -171,37 +161,27 @@ public abstract class MBeanGroupManager <M>
 	abstract public M createMBean(String gridName, String keyName);
 
 	/**
-	 * This is called to fetch the MBeanImpl for a given key. The bean
-	 * is created if it didn't already exist.
+	 * This is called to fetch the MBeanImpl for a given key. The bean is created if it didn't already exist.
 	 */
-	public M getBean(String groupName, String keyValue)
-	{
+	public M getBean(String groupName, String keyValue) {
 		M bean = beans.get(keyValue);
-		if(bean == null)
-		{
-			synchronized(MBeanGroupManager.class)
-			{
+		if (bean == null) {
+			synchronized (MBeanGroupManager.class) {
 				bean = beans.get(keyValue);
-				if(bean == null)
-				{
+				if (bean == null) {
 					bean = createMBean(groupName, keyValue);
-					try
-					{
+					try {
 						MBeanServer server = getServer();
-						if(server != null && !keyValue.equals(UNKNOWN_MAP))
-						{
+						if (server != null && !keyValue.equals(UNKNOWN_MAP)) {
 							StandardMBean mbean = new StandardMBean(bean, mbeanInterface);
 							MBeanInfo info = mbean.getMBeanInfo();
-							if(summaryMBean != null)
-							{
+							if (summaryMBean != null) {
 								ObjectName on = summaryMBean.makeObjectName(bean, typeName);
 								server.registerMBean(mbean, on);
 							}
 						}
 						beans.put(keyValue, bean);
-					}
-					catch(Exception e)
-					{
+					} catch (Exception e) {
 						logger.log(Level.SEVERE, "Exception registering MBean for " + groupName + ":" + keyValue, e);
 						throw new ObjectGridRuntimeException(e);
 					}
@@ -210,4 +190,19 @@ public abstract class MBeanGroupManager <M>
 		}
 		return bean;
 	}
+
+	static public MBeanServer findMBeanServer(String domainName) {
+		ArrayList<MBeanServer> mBeanServers = MBeanServerFactory.findMBeanServer(null);
+		MBeanServer mbeanServer;
+		if (mBeanServers.size() == 0) {
+			logger.log(Level.FINE, "No MBeanServer found, creating a new one");
+			mbeanServer = MBeanServerFactory.createMBeanServer(domainName);
+		} else {
+			logger.log(Level.FINE, "Reusing existing MBeanServer");
+			mbeanServer = (MBeanServer) mBeanServers.get(0);
+		}
+
+		return mbeanServer;
+	}
+
 }
