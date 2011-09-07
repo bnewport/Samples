@@ -25,7 +25,7 @@ public class TestBusinessObject implements Serializable
 	 */
 	private static final long serialVersionUID = 6204599238843897028L;
 	
-	@PrefixIndex(maxMatches=2000)
+	@PrefixIndex(maxMatches=2)
 	String firstName;
 	/**
 	 * Index middle name using a LIKE XXXX% style index

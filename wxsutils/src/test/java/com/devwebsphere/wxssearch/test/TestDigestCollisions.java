@@ -23,8 +23,8 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-import com.devwebsphere.wxssearch.ByteArrayKey;
 import com.devwebsphere.wxssearch.IndexManager;
+import com.devwebsphere.wxsutils.ByteArrayKey;
 
 public class TestDigestCollisions 
 {

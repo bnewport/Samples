@@ -26,12 +26,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxssearch.jmx.TextIndexMBeanImpl;
+import com.devwebsphere.wxsutils.ByteArrayKey;
 import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.wxsagent.WXSMapAgent;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
-import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
@@ -80,7 +80,7 @@ public abstract class Index<C, RK extends Serializable> {
 			// make sure the maps based on the index name are dynamically created
 			// a Dynamic Map won't exist unless a client calls Session#getMap using
 			// the dynamic map name.
-			Session s = manager.utils.getObjectGrid().getSession();
+			Session s = manager.utils.getSessionForThread();
 			ObjectMap m = s.getMap(manager.getInternalKeyToRealKeyMapName());
 			m = s.getMap(attributeIndexMapName);
 			m = s.getMap(indexMapName);
@@ -100,8 +100,6 @@ public abstract class Index<C, RK extends Serializable> {
 	public void insert(Map<RK, String> entries) {
 		long start = System.nanoTime();
 		try {
-			ObjectGrid grid = manager.utils.getObjectGrid();
-
 			HashMap<ByteArrayKey, RK> ik2rk = new HashMap<ByteArrayKey, RK>();
 			HashMap<String, Set<byte[]>> symbolToHashMap = new HashMap<String, Set<byte[]>>();
 
@@ -121,23 +119,22 @@ public abstract class Index<C, RK extends Serializable> {
 					list.add(hash);
 				}
 			}
-			BackingMap bmap = grid.getMap(manager.getInternalKeyToRealKeyMapName());
+			WXSMap<ByteArrayKey, RK> ik2rkMap = manager.utils.getCache(manager.getInternalKeyToRealKeyMapName());
 			// store hash, real key pairs in the grid
-			manager.utils.putAll(ik2rk, bmap);
+			ik2rkMap.putAll(ik2rk);
 
-			Set<String> allSymbols = symbolToHashMap.keySet();
-			Map<String, IndexEntryUpdateAgent> batchAgents = new HashMap<String, IndexEntryUpdateAgent>();
-			for (String symbol : allSymbols) {
-				Set<byte[]> keys = symbolToHashMap.get(symbol);
+			String gridName = manager.utils.getObjectGrid().getName();
+			Map<String, IndexEntryUpdateAgent> batchAgents = new HashMap<String, IndexEntryUpdateAgent>(symbolToHashMap.size());
+			for (Map.Entry<String, Set<byte[]>> e : symbolToHashMap.entrySet()) {
 				IndexEntryUpdateAgent agent = new IndexEntryUpdateAgent();
 				agent.maxMatches = maxMatches;
-				agent.internalKeyList = new ArrayList<byte[]>(keys.size());
-				agent.internalKeyList.addAll(keys);
-				agent.gridName = manager.utils.getObjectGrid().getName();
+				agent.internalKeyList = new ArrayList<byte[]>(e.getValue());
+				agent.gridName = gridName;
 				agent.isAddOperation = true;
 				agent.indexName = indexName;
-				batchAgents.put(symbol, agent);
+				batchAgents.put(e.getKey(), agent);
 			}
+			ObjectGrid grid = manager.utils.getObjectGrid();
 			WXSMapAgent.callMapAgentAll(manager.utils, batchAgents, grid.getMap(attributeIndexMapName));
 			mbean.getInsertMetrics().logTime(System.nanoTime() - start);
 		} catch (Exception e) {
@@ -166,6 +163,10 @@ public abstract class Index<C, RK extends Serializable> {
 				}
 			}
 
+			if (rc == null) {
+				rc = new SearchResult<RK>();
+			}
+			
 			mbean.getContainsMetrics().logTime(System.nanoTime() - start);
 			return rc;
 		} catch (Exception e) {
@@ -176,9 +177,9 @@ public abstract class Index<C, RK extends Serializable> {
 	}
 
 	public List<RK> fetchKeysForInternalKeys(List<ByteArrayKey> keys) {
-		ObjectGrid grid = manager.utils.getObjectGrid();
+		WXSMap<ByteArrayKey, RK> allMap = manager.utils.getCache(manager.getInternalKeyToRealKeyMapName());
 
-		Map<ByteArrayKey, RK> all = manager.utils.getAll(keys, grid.getMap(manager.getInternalKeyToRealKeyMapName()));
+		Map<ByteArrayKey, RK> all = allMap.getAll(keys);
 		List<RK> rc = new ArrayList<RK>(all.values());
 		return rc;
 	}
@@ -190,21 +191,20 @@ public abstract class Index<C, RK extends Serializable> {
 
 	public SearchResult<byte[]> rawContains(String symbol) {
 		try {
-			ObjectGrid grid = manager.utils.getObjectGrid();
-			Session sess = grid.getSession();
-			ObjectMap indexMap = sess.getMap(indexMapName);
-			ObjectMap badSymbolMap = sess.getMap(badSymbolMapName);
+			WXSMap<String, ArrayList<byte[]>> indexMap = manager.utils.getCache(indexMapName);
+			WXSMap<String, ?> badSymbolMap = manager.utils.getCache(badSymbolMapName);
 
 			SearchResult<byte[]> rc = null;
-			if (!badSymbolMap.containsKey(symbol)) {
-				List<byte[]> rl = (List<byte[]>) indexMap.get(symbol);
+			if (!badSymbolMap.contains(symbol)) {
+				List<byte[]> rl = indexMap.get(symbol);
 				rc = new SearchResult<byte[]>(rl);
-			} else
+			} else {
 				rc = new SearchResult<byte[]>();
+			}
 			return rc;
-		} catch (ObjectGridException e) {
+		} catch (ObjectGridRuntimeException e) {
 			logger.log(Level.SEVERE, "Exception looking up substrings", e);
-			throw new ObjectGridRuntimeException(e);
+			throw e;
 		}
 	}
 
@@ -218,21 +218,22 @@ public abstract class Index<C, RK extends Serializable> {
 		long start = System.nanoTime();
 		try {
 			WXSUtils utils = manager.utils;
-			WXSMap<String, RK> badSymbolMap = utils.getCache(indexMapName);
-			ObjectGrid grid = utils.getObjectGrid();
-			Session sess = grid.getSession();
+			WXSMap<String, RK> badSymbolMap = utils.getCache(badSymbolMapName);
+
 			byte[] hash = calculateHash(key);
 			ByteArrayKey hashKey = new ByteArrayKey(hash);
 			Set<String> symbols = generate(attributeValue);
 			Map<String, IndexEntryUpdateAgent> agentList = new HashMap<String, IndexEntryUpdateAgent>();
-			ObjectMap names = sess.getMap(manager.getInternalKeyToRealKeyMapName());
+			WXSMap<ByteArrayKey, ?> ik2rkMap = utils.getCache(manager.getInternalKeyToRealKeyMapName());
 			// remove the int key -> real key record
-			names.remove(hashKey);
+			ik2rkMap.remove(hashKey);
+
+			ObjectGrid grid = utils.getObjectGrid();
+			String gridName = grid.getName();
 			// for each possible index key
 			for (String s : symbols) {
 				// if key was useful
-				if (!badSymbolMap.contains(s)) // RPC
-				{
+				if (!badSymbolMap.contains(s)) { // RPC
 					// remove this records hash from the list of matches
 					// the agent avoids pulling the whole list to here and
 					// then writing it back
@@ -241,19 +242,20 @@ public abstract class Index<C, RK extends Serializable> {
 					agent.internalKeyList = Collections.singletonList(hash);
 					agent.isAddOperation = false;
 					agent.indexName = indexName;
-					agent.gridName = grid.getName();
+					agent.gridName = gridName;
 					agentList.put(s, agent);
 				}
 			}
+
 			BackingMap bmap = grid.getMap(indexMapName);
 			// invoke all agents as efficiently as we can
 			// this minimizes RPCs
 			WXSMapAgent.callMapAgentAll(utils, agentList, bmap);
 			mbean.getRemoveMetrics().logTime(System.nanoTime() - start);
-		} catch (ObjectGridException e) {
+		} catch (ObjectGridRuntimeException e) {
 			mbean.getRemoveMetrics().logException(e);
 			logger.log(Level.SEVERE, "Exception removing entries", e);
-			throw new ObjectGridRuntimeException(e);
+			throw e;
 		}
 	}
 
@@ -273,10 +275,9 @@ public abstract class Index<C, RK extends Serializable> {
 				String s = (String) o;
 				return digest.digest(s.getBytes());
 			} else if (o instanceof Serializable) {
-				ByteArrayOutputStream bos = new ByteArrayOutputStream();
+				ByteArrayOutputStream bos = new ByteArrayOutputStream(512);
 				ObjectOutputStream oos = new ObjectOutputStream(bos);
 				oos.writeObject(o);
-				oos.flush();
 				oos.close();
 				byte[] b = bos.toByteArray();
 				return digest.digest(b);

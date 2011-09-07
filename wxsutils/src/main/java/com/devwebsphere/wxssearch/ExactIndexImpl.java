@@ -16,15 +16,14 @@ import java.util.Set;
 
 import com.devwebsphere.wxssearch.type.ExactIndex;
 
-public class ExactIndexImpl<C,RK extends Serializable> extends Index<C,RK> {
+public class ExactIndexImpl<C, RK extends Serializable> extends Index<C, RK> {
 
-	ExactIndexImpl(IndexManager<C,RK> im, String indexName, ExactIndex e) {
+	ExactIndexImpl(IndexManager<C, RK> im, String indexName, ExactIndex e) {
 		super(im, indexName, e.maxMatches());
 	}
 
 	@Override
-	public Set<String> generate(String str) 
-	{
+	public Set<String> generate(String str) {
 		Set<String> rc = new HashSet<String>();
 		rc.add(str);
 		return rc;

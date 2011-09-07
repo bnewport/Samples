@@ -134,7 +134,10 @@ public class WXSAgent {
 		for (Future<Map<K, V>> f : futures) {
 			long start = System.nanoTime();
 			try {
-				result.putAll(f.get(timeout, TimeUnit.NANOSECONDS));
+				Map<K, V> r = f.get(timeout, TimeUnit.NANOSECONDS);
+				if (r != null) {
+					result.putAll(r);
+				}
 			} catch (Exception e) {
 				logger.log(Level.SEVERE, "Exception", e);
 				throw new ObjectGridRuntimeException(e);
