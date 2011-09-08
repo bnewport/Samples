@@ -16,20 +16,16 @@ import com.devwebsphere.wxsutils.jmx.MBeanGroupManager;
 
 /**
  * This tracks all AgentMBeans within a JMX and creates the SummaryMBean for those agents.
- *
+ * 
  */
-public final class AgentMBeanManager extends MBeanGroupManager<AgentMBeanImpl>
-{
-	public AgentMBeanManager()
-		throws InstanceAlreadyExistsException
-	{
-		super(AgentMBeanImpl.class, AgentMBean.class, "com.devwebsphere.wxs", "grid", "Agent", "ClassName");
+public final class AgentMBeanManager extends MBeanGroupManager<AgentMBeanImpl> {
+	public AgentMBeanManager() throws InstanceAlreadyExistsException {
+		super(AgentMBeanImpl.class, AgentMBean.class, "grid", "Agent", "ClassName");
 	}
 
 	@Override
-	public AgentMBeanImpl createMBean(String gridName, String className) 
-	{
+	public AgentMBeanImpl createMBean(String gridName, String className) {
 		return new AgentMBeanImpl(gridName, className);
 	}
-	
+
 }

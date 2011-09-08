@@ -14,21 +14,16 @@ import javax.management.InstanceAlreadyExistsException;
 
 import com.devwebsphere.wxsutils.jmx.MBeanGroupManager;
 
-public final class WXSMapMBeanManager extends MBeanGroupManager<WXSMapMBeanImpl>
-{
-	public WXSMapMBeanManager() 
-		throws InstanceAlreadyExistsException
-	{
-		super(WXSMapMBeanImpl.class, WXSMapMBean.class, "com.devwebsphere.wxs", "grid", "WXSMap", "MapName");
-		// TODO Auto-generated constructor stub
+public final class WXSMapMBeanManager extends MBeanGroupManager<WXSMapMBeanImpl> {
+	public WXSMapMBeanManager() throws InstanceAlreadyExistsException {
+		super(WXSMapMBeanImpl.class, WXSMapMBean.class, "grid", "WXSMap", "MapName");
 	}
 
 	final static public String UNKNOWN_MAP = "_UNDEFINED";
 
 	@Override
-	public WXSMapMBeanImpl createMBean(String gridName, String mapName) 
-	{
+	public WXSMapMBeanImpl createMBean(String gridName, String mapName) {
 		return new WXSMapMBeanImpl(gridName, mapName);
 	}
-	
+
 }

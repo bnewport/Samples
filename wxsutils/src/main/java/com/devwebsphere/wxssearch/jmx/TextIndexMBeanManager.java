@@ -14,17 +14,13 @@ import javax.management.InstanceAlreadyExistsException;
 
 import com.devwebsphere.wxsutils.jmx.MBeanGroupManager;
 
-public class TextIndexMBeanManager extends MBeanGroupManager<TextIndexMBeanImpl> 
-{
-	public TextIndexMBeanManager() 
-		throws InstanceAlreadyExistsException
-	{
-		super(TextIndexMBeanImpl.class, TextIndexMBean.class, "com.devwebsphere.wxssearch", "grid", "TextIndex", "IndexName");
+public class TextIndexMBeanManager extends MBeanGroupManager<TextIndexMBeanImpl> {
+	public TextIndexMBeanManager() throws InstanceAlreadyExistsException {
+		super(TextIndexMBeanImpl.class, TextIndexMBean.class, "grid", "TextIndex", "IndexName");
 	}
 
 	@Override
-	public TextIndexMBeanImpl createMBean(String gridName, String indexName) 
-	{
+	public TextIndexMBeanImpl createMBean(String gridName, String indexName) {
 		return new TextIndexMBeanImpl(gridName, indexName);
 	}
 }

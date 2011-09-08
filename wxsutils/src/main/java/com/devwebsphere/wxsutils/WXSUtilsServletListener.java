@@ -10,15 +10,12 @@
 //
 package com.devwebsphere.wxsutils;
 
-import java.util.Set;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import com.devwebsphere.wxsutils.jmx.DomainMBean;
 import com.devwebsphere.wxsutils.jmx.MBeanGroupManager;
 
 /**
@@ -45,31 +42,13 @@ public class WXSUtilsServletListener implements ServletContextListener {
 	}
 
 	public void contextDestroyed(ServletContextEvent arg0) {
-		cleanup(WXSUtils.wxsMapMBeanManager.get());
-		cleanup(WXSUtils.agentMBeanManager.get());
-		cleanup(WXSUtils.loaderMBeanManager.get());
-		cleanup(WXSUtils.indexMBeanManager.get());
-	}
-
-	private void cleanup(MBeanGroupManager<?> mbeanGroupManager) {
-		if (mbeanGroupManager == null) {
-			// no group manager to cleanup
-			return;
-		}
-		MBeanServer mbeanServer = mbeanGroupManager.getServer();
-		try {
-			ObjectName domain = new ObjectName(mbeanGroupManager.getDomainName() + ":*");
-			Set<ObjectName> names = mbeanServer.queryNames(domain, null);
-			for (ObjectName name : names) {
-				mbeanServer.unregisterMBean(name);
-			}
-		} catch (Exception e) {
-			logger.log(Level.SEVERE, "Exception destroying MBeans", e);
+		DomainMBean domainMBean = MBeanGroupManager.domainRef.get();
+		if (domainMBean != null) {
+			domainMBean.destroy();
 		}
 	}
 
 	public void contextInitialized(ServletContextEvent arg0) {
-		MBeanGroupManager.domainNameSuffix = arg0.getServletContext().getServletContextName();
 	}
 
 }

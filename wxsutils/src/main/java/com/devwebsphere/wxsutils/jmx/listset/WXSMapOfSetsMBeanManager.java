@@ -19,7 +19,7 @@ public final class WXSMapOfSetsMBeanManager extends MBeanGroupManager<WXSMapOfSe
 	public WXSMapOfSetsMBeanManager() 
 		throws InstanceAlreadyExistsException
 	{
-		super(WXSMapOfSetsMBeanImpl.class, WXSMapOfSetsMBean.class, "com.devwebsphere.wxs", "grid", "WXSMapOfSets", "MapName");
+		super(WXSMapOfSetsMBeanImpl.class, WXSMapOfSetsMBean.class, "grid", "WXSMapOfSets", "MapName");
 		// TODO Auto-generated constructor stub
 	}
 

@@ -14,21 +14,17 @@ import javax.management.InstanceAlreadyExistsException;
 
 import com.devwebsphere.wxsutils.jmx.MBeanGroupManager;
 
-public final class LoaderMBeanManager extends MBeanGroupManager<LoaderMBeanImpl>
-{
-	public LoaderMBeanManager() 
-		throws InstanceAlreadyExistsException
-	{
-		super(LoaderMBeanImpl.class, LoaderMBean.class, "com.devwebsphere.wxs", "grid", "Loader", "MapName");
+public final class LoaderMBeanManager extends MBeanGroupManager<LoaderMBeanImpl> {
+	public LoaderMBeanManager() throws InstanceAlreadyExistsException {
+		super(LoaderMBeanImpl.class, LoaderMBean.class, "grid", "Loader", "MapName");
 		// TODO Auto-generated constructor stub
 	}
 
 	final static public String UNKNOWN_MAP = "_UNDEFINED";
 
 	@Override
-	public LoaderMBeanImpl createMBean(String gridName, String mapName) 
-	{
+	public LoaderMBeanImpl createMBean(String gridName, String mapName) {
 		return new LoaderMBeanImpl(gridName, mapName);
 	}
-	
+
 }

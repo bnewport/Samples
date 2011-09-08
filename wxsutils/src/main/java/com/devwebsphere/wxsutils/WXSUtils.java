@@ -805,7 +805,7 @@ public class WXSUtils {
 		logger.log(Level.WARNING, "Switching to new client connection for wxsutils instance", client);
 		ObjectGrid oldGrid = grid;
 		grid = client;
-		
+
 		if (oldGrid != null) {
 			oldGrid.destroy();
 		}
