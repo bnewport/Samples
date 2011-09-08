@@ -215,58 +215,54 @@ public class TestSubstringIndex {
 
 	@Test
 	public void simpleSearch() {
-		Index<TestBusinessObject, Long> index = indexManager.getIndex("firstName");
-		SearchResult<Long> matches = index.contains("JA");
+		SearchResult<Long> matches = firstNameIndex.contains("JA");
 		Assert.assertFalse(matches.isTooManyMatches());
 		Assert.assertEquals(2, matches.getResults().size());
 	}
 
 	@Test
 	public void toomanyMatches() {
-		Index<TestBusinessObject, Long> index = indexManager.getIndex("firstName");
 		Map<Long, String> entries = new HashMap<Long, String>(3);
 		entries.put(999L, "Michael");
 		entries.put(1000L, "Mich");
 		entries.put(1001L, "Michel");
-		index.insert(entries);
+		firstNameIndex.insert(entries);
 
-		SearchResult<Long> matches = index.contains("MI");
+		SearchResult<Long> matches = firstNameIndex.contains("MI");
 		Assert.assertTrue(matches.isTooManyMatches());
 		Assert.assertNull(matches.getResults());
 
 		// once too many always too many
 		String val = entries.remove(1000L);
-		index.remove(1000L, val);
-		matches = index.contains("MI");
+		firstNameIndex.remove(1000L, val);
+		matches = firstNameIndex.contains("MI");
 		Assert.assertTrue(matches.isTooManyMatches());
 		Assert.assertNull(matches.getResults());
 
-		index.insert(entries);
-		matches = index.contains("MI");
+		firstNameIndex.insert(entries);
+		matches = firstNameIndex.contains("MI");
 		Assert.assertTrue(matches.isTooManyMatches());
 		Assert.assertNull(matches.getResults());
 	}
-	
+
 	@Test
 	public void testInsert() {
-		Index<TestBusinessObject, Long> index = indexManager.getIndex("surname");
 		Map<Long, String> entries = new HashMap<Long, String>(1);
 		entries.put(999L, "Abc");
-		index.insert(entries);
+		surnameIndex.insert(entries);
 
-		SearchResult<Long> matches = index.contains("ABC");
+		SearchResult<Long> matches = surnameIndex.contains("ABC");
 		Assert.assertFalse(matches.isTooManyMatches());
 		Assert.assertEquals(1, matches.getResults().size());
 
 		entries.clear();
 		entries.put(1000L, "Abcd");
-		index.insert(entries);
+		surnameIndex.insert(entries);
 
-		matches = index.contains("ABC");
+		matches = surnameIndex.contains("ABC");
 		Assert.assertFalse(matches.isTooManyMatches());
 		Assert.assertEquals(2, matches.getResults().size());
 	}
-
 
 	@Test
 	public void multipleSearch() {
@@ -284,9 +280,18 @@ public class TestSubstringIndex {
 
 	@Test
 	public void searchMiss() {
+		SearchResult<Long> matches = firstNameIndex.contains("Foo");
+		Assert.assertFalse(matches.isTooManyMatches());
+		Assert.assertEquals(0, matches.getResults().size());
+
 		TestBusinessObject criteria = new TestBusinessObject();
 		criteria.firstName = "Foo";
-		SearchResult<Long> matches = indexManager.searchMultipleIndexes(criteria, true);
+		matches = indexManager.searchMultipleIndexes(criteria, true);
+		Assert.assertFalse(matches.isTooManyMatches());
+		Assert.assertEquals(0, matches.getResults().size());
+
+		criteria.surname = "RA";
+		matches = indexManager.searchMultipleIndexes(criteria, true);
 		Assert.assertFalse(matches.isTooManyMatches());
 		Assert.assertEquals(0, matches.getResults().size());
 	}

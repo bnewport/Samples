@@ -160,13 +160,14 @@ public abstract class Index<C, RK extends Serializable> {
 
 				if (keys != null) {
 					rc = new SearchResult<RK>(fetchKeysForInternalByteKeys(keys));
+				} else {
+					rc = new SearchResult<RK>(Collections.<RK> emptyList());
 				}
-			}
-
-			if (rc == null) {
+			} else {
+				// too many matches
 				rc = new SearchResult<RK>();
 			}
-			
+
 			mbean.getContainsMetrics().logTime(System.nanoTime() - start);
 			return rc;
 		} catch (Exception e) {
