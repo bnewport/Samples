@@ -265,6 +265,38 @@ public class TestSubstringIndex {
 	}
 
 	@Test
+	public void testDupeIndexes() {
+		Map<Long, String> entries = new HashMap<Long, String>(1);
+		entries.put(999L, "Xyz");
+		surnameIndex.insert(entries);
+
+		SearchResult<Long> matches = surnameIndex.contains("XYZ");
+		Assert.assertFalse(matches.isTooManyMatches());
+		Assert.assertEquals(1, matches.getResults().size());
+
+		entries.clear();
+		entries.put(1000L, "Xyz");
+		surnameIndex.insert(entries);
+
+		matches = surnameIndex.contains("XYZ");
+		Assert.assertFalse(matches.isTooManyMatches());
+		Assert.assertEquals(2, matches.getResults().size());
+
+		surnameIndex.insert(entries);
+
+		matches = surnameIndex.contains("XYZ");
+		Assert.assertFalse(matches.isTooManyMatches());
+		Assert.assertEquals(2, matches.getResults().size());
+
+		surnameIndex.remove(1000L, "Xyz");
+
+		matches = surnameIndex.contains("XYZ");
+		Assert.assertFalse(matches.isTooManyMatches());
+		Assert.assertEquals(1, matches.getResults().size());
+		Assert.assertEquals(999L, matches.getResults().get(0).longValue());
+	}
+
+	@Test
 	public void multipleSearch() {
 		TestBusinessObject criteria = new TestBusinessObject();
 		criteria.firstName = "ANDR";
