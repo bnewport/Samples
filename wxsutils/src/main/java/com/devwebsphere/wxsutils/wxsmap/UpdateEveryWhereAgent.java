@@ -15,12 +15,13 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -56,7 +57,7 @@ public class UpdateEveryWhereAgent<K extends Serializable, V extends Serializabl
 	/**
 	 * This holds the keys of entries to remove if present
 	 */
-	List<K> entriesToRemove = new ArrayList<K>();
+	SortedSet<K> entriesToRemove;
 
 	/**
 	 * This reduce operation returns a String. The String is zero length if it was successful otherwise it returns the
@@ -117,8 +118,8 @@ public class UpdateEveryWhereAgent<K extends Serializable, V extends Serializabl
 	 * @param mapName
 	 * @throws ObjectGridException
 	 */
-	static public <K extends Serializable, V extends Serializable> void updateEveryWhere(Session sess, Map<K, V> entries, List<K> entriesToRemove,
-			String mapName) throws ObjectGridException {
+	static public <K extends Serializable, V extends Serializable> void updateEveryWhere(Session sess, Map<K, V> entries,
+			List<K> entriesToRemove, String mapName) throws ObjectGridException {
 		UpdateEveryWhereAgent<K, V> agent = new UpdateEveryWhereAgent<K, V>();
 		if (entries instanceof SortedMap) {
 			agent.entries = (SortedMap) entries;
@@ -126,7 +127,12 @@ public class UpdateEveryWhereAgent<K extends Serializable, V extends Serializabl
 			agent.entries = new TreeMap<K, V>(entries);
 		}
 
-		agent.entriesToRemove = entriesToRemove;
+		if (entriesToRemove instanceof SortedSet) {
+			agent.entriesToRemove = (SortedSet<K>) entriesToRemove;
+		} else {
+			agent.entriesToRemove = new TreeSet<K>(entriesToRemove);
+		}
+
 		AgentManager am = sess.getMap(mapName).getAgentManager();
 		Object rc = am.callReduceAgent(agent);
 		if (rc != null && rc instanceof String) {
@@ -139,12 +145,12 @@ public class UpdateEveryWhereAgent<K extends Serializable, V extends Serializabl
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		ClassSerializer serializer = WXSUtils.getSerializer();
 		entries = (SortedMap<K, V>) serializer.readObject(in);
-		entriesToRemove = serializer.readList(in);
+		entriesToRemove = (SortedSet<K>) serializer.readObject(in);
 	}
 
 	public void writeExternal(ObjectOutput out) throws IOException {
 		ClassSerializer serializer = WXSUtils.getSerializer();
 		serializer.writeObject(out, entries);
-		serializer.writeList(out, entriesToRemove);
+		serializer.writeObject(out, entriesToRemove);
 	}
 }
