@@ -54,6 +54,7 @@ import com.ibm.websphere.objectgrid.ClientClusterContext;
 import com.ibm.websphere.objectgrid.ClientServerLoaderException;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
+import com.ibm.websphere.objectgrid.ObjectGridManager;
 import com.ibm.websphere.objectgrid.ObjectGridManagerFactory;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
@@ -579,7 +580,9 @@ public class WXSUtils {
 	 */
 	static public ObjectGrid connectClient(String cep, String gridName, URL ogXMLURL) {
 		try {
-			ClientClusterContext ccc = ObjectGridManagerFactory.getObjectGridManager().connect(cep, null, ogXMLURL);
+			ObjectGridManager ogm = ObjectGridManagerFactory.getObjectGridManager();
+			// must call 2-arg version if cep is null
+			ClientClusterContext ccc = (cep == null) ? ogm.connect(null, ogXMLURL) : ogm.connect(cep, null, ogXMLURL);
 			ObjectGrid grid = ObjectGridManagerFactory.getObjectGridManager().getObjectGrid(ccc, gridName);
 			return grid;
 		} catch (Exception e) {
