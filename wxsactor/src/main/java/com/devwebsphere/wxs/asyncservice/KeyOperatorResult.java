@@ -12,10 +12,12 @@ package com.devwebsphere.wxs.asyncservice;
 
 import java.io.Serializable;
 
-public interface KeyOperatorResult <K extends Serializable>
-{
+public interface KeyOperatorResult<K extends Serializable> {
 	boolean isApplied();
+
 	boolean isUnApplySuccesful();
+
 	String getErrorString();
+
 	KeyOperator<K> getKeyOperator();
 }

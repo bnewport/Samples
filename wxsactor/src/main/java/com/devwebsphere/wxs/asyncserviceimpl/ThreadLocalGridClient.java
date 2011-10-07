@@ -10,35 +10,20 @@
 //
 package com.devwebsphere.wxs.asyncserviceimpl;
 
-import com.ibm.websphere.objectgrid.ClientClusterContext;
+import com.devwebsphere.wxsutils.WXSUtils;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
-import com.ibm.websphere.objectgrid.ObjectGridManagerFactory;
-import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
-public class ThreadLocalGridClient extends ThreadLocal<ObjectGrid> 
-{
+public class ThreadLocalGridClient extends ThreadLocal<ObjectGrid> {
 	ObjectGrid localGrid;
-	
-	public ThreadLocalGridClient(ObjectGrid localGridRef)
-		throws ObjectGridException
-	{
+
+	public ThreadLocalGridClient(ObjectGrid localGridRef) throws ObjectGridException {
 		localGrid = localGridRef;
 	}
-	
+
 	@Override
-	protected ObjectGrid initialValue() 
-	{
-		try
-		{
-			ClientClusterContext ccc = ObjectGridManagerFactory.getObjectGridManager().connect(null, null);
-			ObjectGrid clientGrid = ObjectGridManagerFactory.getObjectGridManager().getObjectGrid(ccc, localGrid.getName());
-			return clientGrid;
-		}
-		catch(ObjectGridException e)
-		{
-			throw new ObjectGridRuntimeException(e);
-		}
+	protected ObjectGrid initialValue() {
+		return WXSUtils.connectClient(null, localGrid.getName());
 	}
 
 }

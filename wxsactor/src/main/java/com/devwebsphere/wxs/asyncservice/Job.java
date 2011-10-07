@@ -16,15 +16,16 @@ import com.devwebsphere.wxs.asyncserviceimpl.RoutableKey;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.Session;
 
-public interface Job<V> extends Serializable
-{
+public interface Job<V> extends Serializable {
 	/**
-	 * This is called within the JVM hosting the partition primary this Job
-	 * was assigned to. The session is a reference to a local session. It is
-	 * not a 'client' session.
-	 * @param localSession A session to the local shard for the partition
-	 * @param MsgId
-	 * @param clientOG This is a client reference to this grid if needed
+	 * This is called within the JVM hosting the partition primary this Job was assigned to. The session is a reference
+	 * to a local session. It is not a 'client' session.
+	 * 
+	 * @param localSession
+	 *            A session to the local shard for the partition
+	 * @param msgId
+	 * @param clientOG
+	 *            This is a client reference to this grid if needed
 	 */
-	V process(Session localSession, RoutableKey MsgId, ObjectGrid clientOG);
+	V process(Session localSession, RoutableKey msgId, ObjectGrid clientOG);
 }

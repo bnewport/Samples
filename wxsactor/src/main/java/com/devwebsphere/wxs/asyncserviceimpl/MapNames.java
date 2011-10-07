@@ -12,11 +12,11 @@ package com.devwebsphere.wxs.asyncserviceimpl;
 
 /**
  * Just some map names
+ * 
  * @author bnewport
- *
+ * 
  */
-public final class MapNames 
-{ 
+public final class MapNames {
 	public static final String QUEUE_MAP = "Queue";
 	public static final String HISTORY_MAP = "IdHistory";
 	public static final String TRANSMIT_Q = "TransmitQ";

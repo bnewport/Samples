@@ -117,8 +117,8 @@ public class AsyncServiceProcessor<T> implements ObjectGridEventGroup.ShardEvent
 		int counter;
 		int sleepTime;
 
-		boolean getIsActive() {
-			return isActive;
+		boolean isActive() {
+			return this.isActive;
 		}
 
 		Listener(ObjectGrid g, BackingMap q, int threadID) throws ObjectGridException {
@@ -133,11 +133,11 @@ public class AsyncServiceProcessor<T> implements ObjectGridEventGroup.ShardEvent
 		}
 
 		void stopListening() {
-			isActive = false;
+			this.isActive = false;
 		}
 
 		public Boolean call() {
-			if (getIsActive()) {
+			if (isActive()) {
 				try {
 					sess.begin();
 					// get next unlocked/unprocessed message from queue
@@ -157,7 +157,6 @@ public class AsyncServiceProcessor<T> implements ObjectGridEventGroup.ShardEvent
 						// short timeouts when we're busy
 						sleepTime = busySleepTime;
 					} else {
-						sess.rollback();
 						// if no work then reset transaction every maxCounter tries
 						if (--counter == 0) {
 							counter = maxCounter;
@@ -167,6 +166,7 @@ public class AsyncServiceProcessor<T> implements ObjectGridEventGroup.ShardEvent
 					}
 				} catch (Exception e) {
 					logger.log(Level.SEVERE, "Exception processing message ", e);
+				} finally {
 					if (sess.isTransactionActive()) {
 						try {
 							sess.rollback();
@@ -203,18 +203,19 @@ public class AsyncServiceProcessor<T> implements ObjectGridEventGroup.ShardEvent
 
 	public void setListenerClass(String name) {
 		try {
-			Class<?> l = Class.forName(name);
-			listenerInstance = (MessageProcessor<T>) l.newInstance();
+			Class<MessageProcessor<T>> l = (Class<MessageProcessor<T>>) Class.forName(name);
+			listenerInstance = l.newInstance();
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "Cannot create listener class", e);
 		}
 	}
 
 	public String getListenerClass() {
-		if (listenerInstance != null)
+		if (listenerInstance != null) {
 			return listenerInstance.getClass().getName();
-		else
+		} else {
 			return null;
+		}
 	}
 
 }

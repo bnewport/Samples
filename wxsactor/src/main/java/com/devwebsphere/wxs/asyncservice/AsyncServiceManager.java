@@ -21,46 +21,51 @@ import com.ibm.websphere.objectgrid.Session;
 
 /**
  * This allows services to be asynchronously called in a durable manner using exactly once semantics.
+ * 
  * @author bnewport
- *
+ * 
  */
-public interface AsyncServiceManager 
-{
+public interface AsyncServiceManager {
 	/**
-	 * This returns a cluster wide unique ID. The ID is unique within the lifecycle of the ObjectGrid so long as data loss does not occur. That is
-	 * a partitions primary and replicas do not fail simultaneously AND sync replication is used.
+	 * This returns a cluster wide unique ID. The ID is unique within the lifecycle of the ObjectGrid so long as data
+	 * loss does not occur. That is a partitions primary and replicas do not fail simultaneously AND sync replication is
+	 * used.
+	 * 
 	 * @return A unique identifier.
 	 * @throws ObjectGridException
 	 */
-	public String getNextClusterUUID()
-		throws ObjectGridRuntimeException;
-	
+	public String getNextClusterUUID() throws ObjectGridRuntimeException;
+
 	/**
-	 * This sends an async service request and returns a future that allows the result to be retrieved. The message
-	 * is sent before the method returns regardless of any active transaction.
-	 * @param message The message and handler
+	 * This sends an async service request and returns a future that allows the result to be retrieved. The message is
+	 * sent before the method returns regardless of any active transaction.
+	 * 
+	 * @param message
+	 *            The message and handler
 	 * @return The Future to retrieve the result later
 	 * @throws ObjectGridException
 	 */
-	public <T> AsyncServiceFuture<T> sendAsyncMessage(Serializable message)
-		throws ObjectGridRuntimeException;
-	
+	public <T> AsyncServiceFuture<T> sendAsyncMessage(Serializable message) throws ObjectGridRuntimeException;
+
 	/**
-	 * This starts a Job within this JVM if the current transaction commits. The job
-	 * will run on the backup JVM if this one fails before it runs so long
-	 * as it was 'replicated' over there.
-	 * @param localSession The transaction to use for scheduling the job
-	 * @param job The job to run
+	 * This starts a Job within this JVM if the current transaction commits. The job will run on the backup JVM if this
+	 * one fails before it runs so long as it was 'replicated' over there.
+	 * 
+	 * @param localSession
+	 *            The transaction to use for scheduling the job
+	 * @param job
+	 *            The job to run
 	 * @throws ObjectGridRuntimeException
 	 */
-	public <R> AsyncServiceFuture<R> scheduleDurableLocalJob(Session localSession, Job<R> job)
-		throws ObjectGridRuntimeException;
+	public <R> AsyncServiceFuture<R> scheduleDurableLocalJob(Session localSession, Job<R> job) throws ObjectGridRuntimeException;
 
-	public <K extends Serializable, D extends KeyOperator<K>> Future<Map<K, KeyOperatorResult<K>>> doChainedTransaction(Session session, String mapName, Map<K, D> operators);
-	
+	public <K extends Serializable, D extends KeyOperator<K>> Future<Map<K, KeyOperatorResult<K>>> doChainedTransaction(Session session,
+			String mapName, Map<K, D> operators);
+
 	/**
-	 * This returns a serializable form of the specific Future. The Future must be one
-	 * returned by one of the send methods of this interface.
+	 * This returns a serializable form of the specific Future. The Future must be one returned by one of the send
+	 * methods of this interface.
+	 * 
 	 * @param f
 	 * @return
 	 */

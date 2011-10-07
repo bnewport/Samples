@@ -16,15 +16,18 @@ import com.ibm.websphere.objectgrid.Session;
 
 /**
  * This listener is called when ever a message arrives on a queue
+ * 
  * @author bnewport
- *
+ * 
  */
-public interface MessageProcessor<T>
-{
+public interface MessageProcessor<T> {
 	/**
 	 * This method is called to process a message on a queue. The session is begun and committed by the caller.
-	 * @param sessionForLocalShard A session which can be used to store extra state resulting from processing this message
-	 * @param m The message itself.
+	 * 
+	 * @param localSession
+	 *            A session which can be used to store extra state resulting from processing this message
+	 * @param m
+	 *            The message itself.
 	 */
-	public T onMessage(Session sessionForLocalShard, Serializable MsgId, Serializable m);
+	public T onMessage(Session localSession, Serializable msgId, Serializable m);
 }

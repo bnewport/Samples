@@ -15,11 +15,8 @@ import java.io.Serializable;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.Session;
 
-public interface KeyOperator <K extends Serializable> extends Serializable
-{
-	public boolean apply(Session localSession, K sku)
-		throws ObjectGridException;
+public interface KeyOperator<K extends Serializable> extends Serializable {
+	public boolean apply(Session localSession, K key) throws ObjectGridException;
 
-	public void unapply(Session localSession, K sku)
-		throws ObjectGridException;
+	public void unapply(Session localSession, K key) throws ObjectGridException;
 }

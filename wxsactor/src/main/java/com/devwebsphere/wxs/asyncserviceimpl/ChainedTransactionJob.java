@@ -25,10 +25,9 @@ import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.Session;
 
-public class ChainedTransactionJob<K extends Serializable, D extends KeyOperator<K>> implements Job<Boolean> 
-{
+public class ChainedTransactionJob<K extends Serializable, D extends KeyOperator<K>> implements Job<Boolean> {
 	static Logger logger = Logger.getLogger(ChainedTransactionJob.class.getName());
-	
+
 	private static final long serialVersionUID = 3079959679138948391L;
 	ArrayList<K> keys;
 	ArrayList<D> operators;
@@ -39,38 +38,36 @@ public class ChainedTransactionJob<K extends Serializable, D extends KeyOperator
 	Map<K, String> applyExceptions;
 	Map<K, String> unApplyExceptions;
 	K badApplyKey;
-	
-	public ChainedTransactionJob() {}
 
-	public ChainedTransactionJob(String mapName, Map<K, D> operators)
-	{
+	public ChainedTransactionJob() {
+	}
+
+	public ChainedTransactionJob(String mapName, Map<K, D> operators) {
 		this.mapName = mapName;
 		originalUUID = null;
 		keys = new ArrayList<K>(operators.size());
-		this.operators = new ArrayList<D>();
+		this.operators = new ArrayList<D>(operators.size());
 		applyExceptions = new HashMap<K, String>();
 		unApplyExceptions = new HashMap<K, String>();
-		for(Map.Entry<K,D> e : operators.entrySet())
-		{
+
+		for (Map.Entry<K, D> e : operators.entrySet()) {
 			keys.add(e.getKey());
 			this.operators.add(e.getValue());
 		}
+
 		nextStep = -1;
 		isCompensating = false;
 		badApplyKey = null;
 	}
 
-	public Boolean process(Session localSession, RoutableKey MsgId, ObjectGrid clientGrid) 
-	{
-		System.out.println("Processing step " + MsgId.getUUID());
-		try
-		{
+	public Boolean process(Session localSession, RoutableKey msgId, ObjectGrid clientGrid) {
+		System.out.println("Processing step " + msgId.getUUID());
+		try {
 			WXSUtils clientUtils = new WXSUtils(clientGrid);
 			AsyncServiceManagerImpl clientAsyncMgr = new AsyncServiceManagerImpl(clientUtils);
-			
-			if(nextStep == -1)
-			{
-				originalUUID = MsgId;
+
+			if (nextStep == -1) {
+				originalUUID = msgId;
 				nextStep = 0;
 				K key = keys.get(0);
 				StringBuilder builder = new StringBuilder(originalUUID.getUUID());
@@ -78,102 +75,74 @@ public class ChainedTransactionJob<K extends Serializable, D extends KeyOperator
 				builder.append(key.toString());
 				String nextID = builder.toString();
 				clientAsyncMgr.sendAsyncRoutedJob(mapName, keys.get(0), this, nextID);
-				if(logger.isLoggable(Level.FINE))
+				if (logger.isLoggable(Level.FINE)) {
 					logger.log(Level.FINE, "Routing job " + originalUUID + " to first partition");
-			}
-			else
-			{
-				if(!isCompensating)
-				{
+				}
+			} else {
+				if (!isCompensating) {
 					boolean goodApply = false;
 					D oper = operators.get(nextStep);
 					K key = keys.get(nextStep);
-					try
-					{
+					try {
 						goodApply = oper.apply(localSession, key);
-					}
-					catch(Throwable e)
-					{
+					} catch (Throwable e) {
 						logger.log(Level.WARNING, "Job " + originalUUID + " Key " + keys.get(nextStep) + " apply has failed with exception", e);
 						goodApply = false;
 						applyExceptions.put(keys.get(nextStep), e.toString());
 					}
-					if(!goodApply)
-					{
+
+					if (!goodApply) {
 						logger.log(Level.FINE, "Job " + originalUUID + " Key " + keys.get(nextStep) + " apply returned false");
 						isCompensating = true;
 						badApplyKey = key;
 					}
-				}
-				else
-				{
-					try
-					{
+				} else {
+					try {
 						operators.get(nextStep).unapply(localSession, keys.get(nextStep));
-					}
-					catch(Throwable e)
-					{
-						logger.log(Level.WARNING, "Job " + originalUUID + " Key " + keys.get(nextStep) + " unapply has failed with exception" + e.toString());
+					} catch (Throwable e) {
+						logger.log(Level.WARNING,
+								"Job " + originalUUID + " Key " + keys.get(nextStep) + " unapply has failed with exception" + e.toString());
 						unApplyExceptions.put(keys.get(nextStep), e.toString());
 					}
 				}
+
 				boolean isFinished = false;
-				if(isCompensating)
-				{
+				if (isCompensating) {
 					nextStep--;
-					if(nextStep >= 0)
-					{
-						
-					}
-					else
-						isFinished = true;
-				}
-				else
-				{
+					isFinished = (nextStep < 0);
+				} else {
 					nextStep++;
-					if(nextStep == keys.size())
-						isFinished = true;
+					isFinished = (nextStep == keys.size());
 				}
-				//
-				if(!isFinished)
-				{
+
+				if (!isFinished) {
 					// do next step
 					K nextKey = keys.get(nextStep);
 					StringBuilder b = new StringBuilder();
 					b.append(originalUUID.getUUID());
 					b.append(nextKey.toString());
-					if(isCompensating)
+					if (isCompensating)
 						b.append(":C");
 					clientAsyncMgr.sendAsyncRoutedJob(mapName, keys.get(nextStep), this, b.toString());
-				}
-				else
-				{
+				} else {
 					// store result
-					clientUtils.getCache(MapNames.CHAINED_RESULTS).put(originalUUID.uuid, this);
+					clientUtils.getCache(MapNames.CHAINED_RESULTS).put(originalUUID.getKey(), this);
 				}
 			}
-		}
-		catch(ObjectGridException e)
-		{
-			logger.log(Level.SEVERE, "Job " + originalUUID + " Key " + keys.get(nextStep) + " unapply has failed with a serious exception" + e.toString());
+		} catch (ObjectGridException e) {
+			logger.log(Level.SEVERE,
+					"Job " + originalUUID + " Key " + keys.get(nextStep) + " unapply has failed with a serious exception" + e.toString());
 		}
 		return Boolean.TRUE;
 	}
-	
-	public Map<K, KeyOperatorResult<K>> getResult()
-	{
+
+	public Map<K, KeyOperatorResult<K>> getResult() {
 		Map<K, KeyOperatorResult<K>> rc = new HashMap<K, KeyOperatorResult<K>>();
-		if(isCompensating)
-		{
-		}
-		else
-		{
-			for(int i = 0; i < keys.size(); ++i)
-			{
+		if (!isCompensating) {
+			for (int i = 0; i < keys.size(); ++i) {
 				K key = keys.get(i);
 				final int j = i;
-				KeyOperatorResult<K> r = new KeyOperatorResult<K>() 
-				{
+				KeyOperatorResult<K> r = new KeyOperatorResult<K>() {
 
 					public String getErrorString() {
 						return null;

@@ -13,16 +13,17 @@ package com.devwebsphere.wxs.asyncservice;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 
 /**
- * This is a serializable form of the Futures returned for exactly once messages. It contains
- * a single method that inflates the Future again.
+ * This is a serializable form of the Futures returned for exactly once messages. It contains a single method that
+ * inflates the Future again.
+ * 
  * @author bnewport
- *
+ * 
  * @param <T>
  */
-public interface SerializedFuture<T> extends java.io.Serializable
-{
+public interface SerializedFuture<T> extends java.io.Serializable {
 	/**
 	 * This inflates the Future encoded by this serializable object.
+	 * 
 	 * @param grid
 	 * @return
 	 */
