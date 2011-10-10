@@ -28,6 +28,34 @@ import com.ibm.websphere.objectgrid.Session;
 public class ChainedTransactionJob<K extends Serializable, D extends KeyOperator<K>> implements Job<Boolean> {
 	static Logger logger = Logger.getLogger(ChainedTransactionJob.class.getName());
 
+	static class Result<K extends Serializable> implements KeyOperatorResult<K>, Serializable {
+		private static final long serialVersionUID = 2852167934398065802L;
+		KeyOperator<K> keyOperator;
+		boolean applied;
+		boolean unapplied;
+		String errorString;
+
+		public Result(KeyOperator<K> oper) {
+			keyOperator = oper;
+		}
+
+		public boolean isApplied() {
+			return applied;
+		}
+
+		public boolean isUnapplied() {
+			return unapplied;
+		}
+
+		public String getErrorString() {
+			return errorString;
+		}
+
+		public KeyOperator<K> getKeyOperator() {
+			return keyOperator;
+		}
+	}
+
 	private static final long serialVersionUID = 3079959679138948391L;
 	ArrayList<K> keys;
 	ArrayList<D> operators;
@@ -35,9 +63,9 @@ public class ChainedTransactionJob<K extends Serializable, D extends KeyOperator
 	RoutableKey originalUUID;
 	boolean isCompensating;
 	String mapName;
-	Map<K, String> applyExceptions;
-	Map<K, String> unApplyExceptions;
 	K badApplyKey;
+
+	Map<K, KeyOperatorResult<K>> results;
 
 	public ChainedTransactionJob() {
 	}
@@ -47,8 +75,6 @@ public class ChainedTransactionJob<K extends Serializable, D extends KeyOperator
 		originalUUID = null;
 		keys = new ArrayList<K>(operators.size());
 		this.operators = new ArrayList<D>(operators.size());
-		applyExceptions = new HashMap<K, String>();
-		unApplyExceptions = new HashMap<K, String>();
 
 		for (Map.Entry<K, D> e : operators.entrySet()) {
 			keys.add(e.getKey());
@@ -58,6 +84,8 @@ public class ChainedTransactionJob<K extends Serializable, D extends KeyOperator
 		nextStep = -1;
 		isCompensating = false;
 		badApplyKey = null;
+
+		results = new HashMap<K, KeyOperatorResult<K>>(keys.size());
 	}
 
 	public Boolean process(Session localSession, RoutableKey msgId, ObjectGrid clientGrid) {
@@ -79,16 +107,19 @@ public class ChainedTransactionJob<K extends Serializable, D extends KeyOperator
 					logger.log(Level.FINE, "Routing job " + originalUUID + " to first partition");
 				}
 			} else {
+				K key = keys.get(nextStep);
+				D oper = operators.get(nextStep);
 				if (!isCompensating) {
 					boolean goodApply = false;
-					D oper = operators.get(nextStep);
-					K key = keys.get(nextStep);
+					Result<K> result = new Result<K>(oper);
+					results.put(key, result);
 					try {
 						goodApply = oper.apply(localSession, key);
+						result.applied = goodApply;
 					} catch (Throwable e) {
 						logger.log(Level.WARNING, "Job " + originalUUID + " Key " + keys.get(nextStep) + " apply has failed with exception", e);
 						goodApply = false;
-						applyExceptions.put(keys.get(nextStep), e.toString());
+						result.errorString = e.toString();
 					}
 
 					if (!goodApply) {
@@ -97,12 +128,14 @@ public class ChainedTransactionJob<K extends Serializable, D extends KeyOperator
 						badApplyKey = key;
 					}
 				} else {
+					Result<K> result = (Result<K>) results.get(key);
 					try {
-						operators.get(nextStep).unapply(localSession, keys.get(nextStep));
+						oper.unapply(localSession, key);
+						result.unapplied = true;
 					} catch (Throwable e) {
 						logger.log(Level.WARNING,
 								"Job " + originalUUID + " Key " + keys.get(nextStep) + " unapply has failed with exception" + e.toString());
-						unApplyExceptions.put(keys.get(nextStep), e.toString());
+						result.errorString = e.toString();
 					}
 				}
 
@@ -137,32 +170,6 @@ public class ChainedTransactionJob<K extends Serializable, D extends KeyOperator
 	}
 
 	public Map<K, KeyOperatorResult<K>> getResult() {
-		Map<K, KeyOperatorResult<K>> rc = new HashMap<K, KeyOperatorResult<K>>();
-		if (!isCompensating) {
-			for (int i = 0; i < keys.size(); ++i) {
-				K key = keys.get(i);
-				final int j = i;
-				KeyOperatorResult<K> r = new KeyOperatorResult<K>() {
-
-					public String getErrorString() {
-						return null;
-					}
-
-					public KeyOperator<K> getKeyOperator() {
-						return operators.get(j);
-					}
-
-					public boolean isApplied() {
-						return true;
-					}
-
-					public boolean isUnApplySuccesful() {
-						return true;
-					}
-				};
-				rc.put(key, r);
-			}
-		}
-		return rc;
+		return results;
 	}
 }

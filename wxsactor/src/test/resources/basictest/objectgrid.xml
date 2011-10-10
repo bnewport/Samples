@@ -18,7 +18,10 @@
 		<objectGrid name="Grid">
 
 			<bean id="ObjectGridEventListener"
-				className="com.devwebsphere.wxs.asyncserviceimpl.ChainedShardEvents" />
+				className="com.devwebsphere.wxs.asyncserviceimpl.AsyncServiceProcessor">
+				<property name="threadPoolSize" type="int" value="3" />
+				<property name="workers" type="int" value="3" />
+			</bean>
 
 			<!-- These two maps hold our exactly once message requests and their result, 
 				we want to remove anything -->

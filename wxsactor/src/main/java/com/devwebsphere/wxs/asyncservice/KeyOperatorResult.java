@@ -15,7 +15,7 @@ import java.io.Serializable;
 public interface KeyOperatorResult<K extends Serializable> {
 	boolean isApplied();
 
-	boolean isUnApplySuccesful();
+	boolean isUnapplied();
 
 	String getErrorString();
 

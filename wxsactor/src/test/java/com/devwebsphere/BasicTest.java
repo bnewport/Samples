@@ -91,6 +91,13 @@ public class BasicTest {
 		while (!rc.isDone()) {
 			Thread.sleep(1000);
 		}
+
+		Map<String, KeyOperatorResult<String>> results = rc.get();
+		Assert.assertEquals(1, results.size());
+		for (KeyOperatorResult<String> r : results.values()) {
+			Assert.assertFalse(r.isUnapplied());
+			Assert.assertTrue(r.isApplied());
+		}
 	}
 
 	@Test
@@ -108,6 +115,13 @@ public class BasicTest {
 		while (!rc.isDone()) {
 			Thread.sleep(1000);
 		}
+
+		Map<String, KeyOperatorResult<String>> results = rc.get();
+		Assert.assertEquals(5, results.size());
+		for (KeyOperatorResult<String> r : results.values()) {
+			Assert.assertFalse(r.isUnapplied());
+			Assert.assertTrue(r.isApplied());
+		}
 	}
 
 	@Test
@@ -124,6 +138,13 @@ public class BasicTest {
 		while (!rc.isDone()) {
 			Thread.sleep(1000);
 		}
+
+		Map<String, KeyOperatorResult<String>> results = rc.get();
+		Assert.assertEquals(1, results.size());
+		KeyOperatorResult<String> r = results.get("0");
+		// apply returned false, unapply not executed
+		Assert.assertFalse(r.isApplied());
+		Assert.assertFalse(r.isUnapplied());
 	}
 
 	@Test
@@ -141,6 +162,21 @@ public class BasicTest {
 		while (!rc.isDone()) {
 			Thread.sleep(1000);
 		}
+
+		Map<String, KeyOperatorResult<String>> results = rc.get();
+		// 1 false/false, size - 1 true/true
+		boolean failedApplied = false;
+		int unapplied = 0;
+		for (KeyOperatorResult<String> r : results.values()) {
+			if (!r.isApplied() && !r.isUnapplied()) {
+				failedApplied = true;
+			} else if (r.isApplied() && r.isUnapplied()) {
+				unapplied++;
+			}
+		}
+
+		Assert.assertTrue(failedApplied);
+		Assert.assertEquals(results.size() - 1, unapplied);
 	}
 
 	public void testPerformanceSingleThread() throws ObjectGridException, InterruptedException {
