@@ -55,14 +55,14 @@ public class AsyncServiceProcessor<T> implements ObjectGridEventListener, Object
 	public void setThreadPoolSize(int tpSize) {
 		synchronized (AsyncServiceProcessor.class) {
 			if (executor == null) {
-				poolSize = tpSize;
+				poolSize = Math.max(1, tpSize);
 				executor = new ScheduledThreadPoolExecutor(tpSize);
 			}
 		}
 	}
 
 	public void setWorkers(int workers) {
-		numAlarms = workers;
+		numAlarms = Math.max(1, workers);
 	}
 
 	/**
