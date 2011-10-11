@@ -586,6 +586,28 @@ public class TestClientAPIs {
 	}
 
 	@Test
+	public void testBulkPushLimit() {
+		WXSMapOfLists<String, String> map = utils.getMapOfLists("BigListLimit");
+		String key = "BULK_LIST";
+
+		Assert.assertEquals(0, map.llen(key));
+		List<String> items = new ArrayList<String>();
+		items.add("0");
+		items.add("1");
+		items.add("2");
+
+		int previousLimit = BigListPushAgent.LIMIT;
+		try {
+			BigListPushAgent.LIMIT = 1;
+			map.lpush(key, items); // list is now 2, 1, 0
+			Assert.fail("Limit not engaged");
+		} catch (ObjectGridRuntimeException e) {
+		} finally {
+			BigListPushAgent.LIMIT = previousLimit;
+		}
+	}
+
+	@Test
 	public void testSetOperations() {
 		WXSMapOfSets<String, String> map = utils.getMapOfSets("Set");
 		Assert.assertNotNull(map);

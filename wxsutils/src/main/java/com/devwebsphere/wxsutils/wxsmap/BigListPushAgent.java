@@ -23,6 +23,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxsutils.ConfigProperties;
 import com.devwebsphere.wxsutils.WXSMapOfLists.BulkPushItem;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
@@ -40,7 +41,18 @@ import com.ibm.websphere.objectgrid.datagrid.ReduceGridAgent;
 public class BigListPushAgent<K extends Serializable, V extends Serializable> implements ReduceGridAgent, Externalizable {
 	static Logger logger = Logger.getLogger(BigListPushAgent.class.getName());
 
-	public static int BUCKET_SIZE = 5;
+	public static int BUCKET_SIZE = ConfigProperties.DEFAULT_BIGLIST_BUCKET_SIZE;
+	public static int LIMIT = ConfigProperties.DEFAULT_BIGLIST_LIMIT;
+	private static final int NO_LIMIT = -1;
+	static {
+		try {
+			ConfigProperties config = new ConfigProperties();
+			BUCKET_SIZE = config.bigListBucketSize;
+			LIMIT = config.bigListLimit;
+		} catch (IOException e) {
+			logger.log(Level.SEVERE, "Unexpected exception", e);
+		}
+	}
 
 	public LR isLeft;
 	// keys MUST be sorted on client
@@ -108,7 +120,7 @@ public class BigListPushAgent<K extends Serializable, V extends Serializable> im
 		return sb.toString();
 	}
 
-	static <K extends Serializable, V extends Serializable> void push(Session sess, ObjectMap map, LR isLeft, List<K> keys,
+	static <K extends Serializable, V extends Serializable> boolean push(Session sess, ObjectMap map, LR isLeft, List<K> keys,
 			List<List<BulkPushItem<V>>> values, K dirtyKey) {
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListPushAgent.class.getName());
 		long startNS = System.nanoTime();
@@ -124,6 +136,15 @@ public class BigListPushAgent<K extends Serializable, V extends Serializable> im
 				K key = keys.get(index);
 				BigListHead<V> head = (BigListHead<V>) map.getForUpdate(key);
 				List<BulkPushItem<V>> vl = values.get(index);
+				if (LIMIT != NO_LIMIT) {
+					int size = (head == null) ? 0 : head.size(sess, dirtyMap, key);
+					if ((size + vl.size()) >= LIMIT) {
+						if (logger.isLoggable(Level.FINE)) {
+							logger.log(Level.FINE, "Limit exceeded for " + key);
+						}
+						return false;
+					}
+				}
 				for (BulkPushItem<V> v : vl) {
 					if (head == null) {
 						// this inserts the head in the map also.
@@ -151,11 +172,12 @@ public class BigListPushAgent<K extends Serializable, V extends Serializable> im
 			mbean.getKeysMetric().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
+		return true;
 	}
 
 	public Object reduce(Session sess, ObjectMap map, Collection arg2) {
-		push(sess, map, isLeft, keys, values, dirtyKey);
-		return Boolean.TRUE;
+		Boolean b = push(sess, map, isLeft, keys, values, dirtyKey);
+		return Boolean.valueOf(b);
 	}
 
 	/**

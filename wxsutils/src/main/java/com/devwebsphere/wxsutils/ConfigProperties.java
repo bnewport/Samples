@@ -69,9 +69,17 @@ public class ConfigProperties {
 	/**
 	 * This is the property name for the time wxsutils waits for agents to complete
 	 */
-	static final String AGENTWAITTIME_PROP = "agenttimeoutsecs";
+	static final String AGENTWAITTIME_PROP = "agent_timeout";
 	static final int DEFAULT_AGENT_WAIT_TIME = 120;
 	int agentWaitTimeMaximumSecs = DEFAULT_AGENT_WAIT_TIME;
+
+	static final String BIGLIST_BUCKET_SIZE = "biglist_bucket_size";
+	public static final int DEFAULT_BIGLIST_BUCKET_SIZE = 5;
+	public int bigListBucketSize = DEFAULT_BIGLIST_BUCKET_SIZE;
+
+	static final String BIGLIST_LIMIT = "biglist_limit";
+	public static final int DEFAULT_BIGLIST_LIMIT = -1;
+	public int bigListLimit = DEFAULT_BIGLIST_LIMIT;
 
 	static private InputStream findWXSPropertyFile(ClassLoader cl, boolean useRootSlash) {
 		String prefix = useRootSlash ? "/" : "";
@@ -139,10 +147,20 @@ public class ConfigProperties {
 		if (intValue != null) {
 			queueLength = Integer.parseInt(intValue);
 		}
-		agentWaitTimeMaximumSecs = 120;
+
 		intValue = props.getProperty(AGENTWAITTIME_PROP);
 		if (intValue != null) {
 			agentWaitTimeMaximumSecs = Integer.parseInt(intValue);
+		}
+
+		intValue = props.getProperty(BIGLIST_BUCKET_SIZE);
+		if (intValue != null) {
+			bigListBucketSize = Integer.parseInt(intValue);
+		}
+
+		intValue = props.getProperty(BIGLIST_LIMIT);
+		if (intValue != null) {
+			bigListLimit = Integer.parseInt(intValue);
 		}
 	}
 
