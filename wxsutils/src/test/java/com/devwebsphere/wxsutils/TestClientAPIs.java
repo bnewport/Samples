@@ -47,8 +47,8 @@ import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
 /**
- * This test connects to a grid running on the same box. Use the gettingstarted example with the xml files in this
- * folder. These xmls just add a third Map which doesn't use client side caching.
+ * This test connects to a grid running on the same box. Use the gettingstarted example with the xml
+ * files in this folder. These xmls just add a third Map which doesn't use client side caching.
  * 
  */
 public class TestClientAPIs {
@@ -766,7 +766,9 @@ public class TestClientAPIs {
 		}
 
 		// get keys with lock for 10 seconds
-		set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease is 10
+		set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease
+																											// is
+																											// 10
 																											// seconds
 		Assert.assertEquals(keys.size(), set.size());
 
@@ -782,7 +784,8 @@ public class TestClientAPIs {
 		Thread.sleep(20000L);
 
 		// fetch again and they should be there
-		set2 = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease is
+		set2 = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease
+																											// is
 																											// 10
 																											// seconds
 		Assert.assertEquals(keys.size(), set2.size());
@@ -793,7 +796,8 @@ public class TestClientAPIs {
 		Assert.assertFalse(listMap.isEmpty(firstKey));
 		Assert.assertEquals(1, numItems);
 		// fetch again and only that key should be there
-		set2 = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease is
+		set2 = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease
+																											// is
 																											// 10
 																											// seconds
 		Assert.assertEquals(1, set2.size());
@@ -1029,5 +1033,50 @@ public class TestClientAPIs {
 		for (AtomicLong a : keyPushCounters.values()) {
 			Assert.assertEquals(0, a.get());
 		}
+	}
+
+	@Test
+	public void testMaxKeysPerTrip() {
+		final String dirtyKey = "DIRTY_MAXKEYS";
+		final String key = "N";
+		final String listName = "BigList";
+		final WXSMapOfLists<String, String> listMap = utils.getMapOfLists(listName);
+		final String listHeadMapName = WXSMapOfBigListsImpl.getListHeadMapName(listName);
+
+		HashSet<String> allKeys = new HashSet<String>();
+		final int totalKeys = 5000;
+		for (int i = 0; i < totalKeys; ++i) {
+			String aKey = key + i;
+			listMap.lpush(aKey, aKey, dirtyKey);
+			allKeys.add(aKey);
+		}
+
+		FetchJobsFromAllDirtyListsJob<String, String> job = new FetchJobsFromAllDirtyListsJob<String, String>(ogclient, listHeadMapName, dirtyKey);
+		job.setLeaseTimeMS(100L /* ms */);
+
+		ArrayList<DirtyKey<String>> r = null;
+		// get the next block of dirty list keys
+		// this array r is sorted in first dirtied order
+		// when r is null then the whole grid has been checked
+		int numDesiredKeys = 2;
+		int keyIdx = 0;
+		int loopCnt = 0;
+		while ((r = job.getNextResult(numDesiredKeys)) != null) {
+			loopCnt++;
+			Assert.assertTrue("Wrong size", r.size() <= numDesiredKeys);
+			for (DirtyKey<String> dk : r) {
+				String aKey = dk.getValue();
+				String aValue = listMap.rpop(aKey, dirtyKey);
+				if (aValue != null) {
+					// value MUST be same as key
+					Assert.assertEquals(aKey, aValue);
+					allKeys.remove(aKey);
+					keyIdx++;
+				}
+			}
+		}
+		//System.out.println("loopCount = " + loopCnt);
+		Assert.assertEquals(totalKeys, keyIdx);
+		Assert.assertEquals(0, allKeys.size());
 	}
 }
