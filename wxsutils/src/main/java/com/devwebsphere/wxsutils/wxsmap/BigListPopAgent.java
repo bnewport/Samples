@@ -24,67 +24,65 @@ import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
-public class BigListPopAgent<K extends Serializable, V extends Serializable> implements MapGridAgent 
-{
+public class BigListPopAgent<K extends Serializable, V extends Serializable>
+		implements MapGridAgent {
 	static Logger logger = Logger.getLogger(BigListPopAgent.class.getName());
-	
-	static public class EmptyMarker implements Serializable
-	{
+
+	static public class EmptyMarker implements Serializable {
 
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = 5608399827890355903L;
-		
+
 	};
-	
+
 	public LR isLeft;
 	public K dirtyKey;
-	
+
 	static EmptyMarker emptyMarker = new EmptyMarker();
-	
-	static public <K extends Serializable, V extends Serializable> Object pop(Session sess, ObjectMap map, Object key, LR isLeft, K dirtyKey)
-	{
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListPopAgent.class.getName());
+
+	static public <K extends Serializable, V extends Serializable> Object pop(
+			Session sess, ObjectMap map, Object key, LR isLeft, K dirtyKey) {
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager()
+				.getBean(sess.getObjectGrid().getName(),
+						BigListPopAgent.class.getName());
 		long startNS = System.nanoTime();
 		Object rc = null;
-		try
-		{
+		try {
 			ObjectMap dirtyMap = null;
 			// lock dirtymap first to avoid dead locks
-			if(dirtyKey != null)
-			{
-				dirtyMap = sess.getMap(BigListPushAgent.getDirtySetMapNameForListMap(map.getName()));
+			if (dirtyKey != null) {
+				dirtyMap = sess.getMap(BigListPushAgent
+						.getDirtySetMapNameForListMap(map.getName()));
 				dirtyMap.getForUpdate(dirtyKey);
 			}
-			
-			BigListHead<V> head = (BigListHead<V>)map.getForUpdate(key);
-			if(head == null)
+
+			BigListHead<V> head = (BigListHead<V>) map.getForUpdate(key);
+			if (head == null)
 				rc = emptyMarker;
-			else
-			{
+			else {
 				// this updates the map head also
 				rc = head.pop(sess, map, key, isLeft, dirtyKey);
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
-		}
-		catch(ObjectGridException e)
-		{
+		} catch (ObjectGridException e) {
 			logger.log(Level.SEVERE, "Exception", e);
 			mbean.getKeysMetric().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
 		return rc;
 	}
+
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 8842082032401137638L;
-	public Object process(Session sess, ObjectMap map, Object key) 
-	{
+
+	public Object process(Session sess, ObjectMap map, Object key) {
 		return pop(sess, map, key, isLeft, dirtyKey);
 	}
-	
+
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {
 		// TODO Auto-generated method stub
 		return null;
