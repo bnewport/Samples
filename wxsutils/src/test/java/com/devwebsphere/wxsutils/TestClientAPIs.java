@@ -1155,10 +1155,19 @@ public class TestClientAPIs {
 
 		listMap.lpop(r1.get(0).getValue(), 1, dirtyKey, true);
 		List<DirtyKey<String>> r3 = getOneKey(job);
+		// lease obtained
 		Assert.assertNotNull(r3);
 		Assert.assertEquals(1, r3.size());
-
 		Assert.assertEquals(r1, r3);
+
+		List<DirtyKey<String>> r4 = getOneKey(job);
+		Assert.assertNull(r4);
+		int blen = listMap.llen(key);
+		listMap.rremove(key, 0, dirtyKey, true);
+		int alen = listMap.llen(key);
+		r4 = getOneKey(job);
+		Assert.assertNotNull(r4);
+		Assert.assertEquals(blen, alen);
 	}
 
 	private List<DirtyKey<String>> getOneKey(
