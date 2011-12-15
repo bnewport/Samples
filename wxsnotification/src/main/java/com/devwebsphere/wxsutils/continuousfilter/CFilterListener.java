@@ -139,6 +139,7 @@ public class CFilterListener implements ObjectGridEventListener, ObjectGridEvent
 	private volatile boolean active = false;
 
 	ObjectGrid objectGrid;
+
 	int partitionId = -1;
 
 	public void destroy() {
@@ -219,7 +220,6 @@ public class CFilterListener implements ObjectGridEventListener, ObjectGridEvent
 	}
 
 	public void shardActivated(ObjectGrid og) {
-		objectGrid = og;
 		List<String> mapNames = og.getListOfMapNames();
 		Session s = SessionPool.getPooledSession(og);
 		partitionId = og.getMap(JobExecutor.routingMapName).getPartitionId();

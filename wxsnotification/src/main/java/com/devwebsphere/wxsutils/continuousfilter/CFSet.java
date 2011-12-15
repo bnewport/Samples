@@ -3,6 +3,7 @@ package com.devwebsphere.wxsutils.continuousfilter;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -18,26 +19,64 @@ public class CFSet<E> extends AbstractSet<E> implements CFCallback {
 		void keysRemoved(Object[] keys);
 	}
 
+	class Itr implements Iterator<E> {
+		Iterator<Set<E>> setsItr = partitionedSet.values().iterator();
+		Iterator<E> curSetItr = null;
+
+		Itr() {
+			advance();
+		}
+
+		private void advance() {
+			Iterator<E> itr;
+			curSetItr = null;
+			while (setsItr.hasNext()) {
+				itr = setsItr.next().iterator();
+				if (itr.hasNext()) {
+					curSetItr = itr;
+					break;
+				}
+			}
+		}
+
+		public boolean hasNext() {
+			if (curSetItr != null) {
+				return curSetItr.hasNext();
+			}
+			return false;
+		}
+
+		public E next() {
+			if (curSetItr == null)
+				throw new NoSuchElementException();
+
+			E val = curSetItr.next();
+			if (!curSetItr.hasNext()) {
+				advance();
+			}
+
+			return val;
+		}
+
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+
+	}
+
 	ConcurrentMap<Integer, Set<E>> partitionedSet = new ConcurrentHashMap<Integer, Set<E>>();
 	Listener listener = null;
 
 	public int size() {
-		return 0;
+		int size = 0;
+		for (Set<?> set : partitionedSet.values()) {
+			size += set.size();
+		}
+		return size;
 	}
 
 	public Iterator<E> iterator() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public Object[] toArray() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public <T> T[] toArray(T[] a) {
-		// TODO Auto-generated method stub
-		return null;
+		return new Itr();
 	}
 
 	public boolean add(E e) {

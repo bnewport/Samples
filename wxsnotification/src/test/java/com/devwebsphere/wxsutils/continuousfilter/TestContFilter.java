@@ -12,6 +12,7 @@ package com.devwebsphere.wxsutils.continuousfilter;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.logging.Logger;
 
@@ -195,4 +196,33 @@ public class TestContFilter {
 			e.printStackTrace();
 		}
 	}
+
+	@Test
+	public void setOperations() throws JMSException, InterruptedException {
+		Connection t = new ActiveMQTransport();
+		WXSMap<Integer, Serializable> fMap = utils.getCache(FILTERED_MAP);
+		fMap.clear();
+		fMap.put(1, 1);
+		fMap.put(2, 1);
+		fMap.put(3, "String");
+		ContinuousFilter<Integer, Serializable> cfInt = new ContinuousFilter<Integer, Serializable>(utils, FILTERED_MAP, t);
+		cfInt.setFilter(new NumberFilter());
+
+		CFSet<Integer> set = cfInt.asSet();
+		Thread.sleep(1000);
+		Assert.assertEquals(2, set.size());
+		Assert.assertTrue(set.contains(1));
+		Assert.assertTrue(set.contains(2));
+
+		fMap.removeAll(Arrays.asList(1, 3));
+		Thread.sleep(1000);
+		Assert.assertEquals(1, set.size());
+		Iterator<Integer> itr = set.iterator();
+		Assert.assertTrue(itr.hasNext());
+		Assert.assertEquals(Integer.valueOf(2), itr.next());
+		Assert.assertFalse(itr.hasNext());
+
+		cfInt.close();
+	}
+
 }
