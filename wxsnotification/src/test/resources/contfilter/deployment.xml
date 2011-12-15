@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This sample program is provided AS IS and may be used, executed, copied 
+	and modified without royalty payment by customer (a) for its own instruction 
+	and study, (b) in order to develop applications designed to run with an IBM 
+	WebSphere product, either for customer's own internal use or for redistribution 
+	by customer, as part of such an application, in customer's own products. 
+	Licensed Materials - Property of IBM 5724-J34 (C) COPYRIGHT International 
+	Business Machines Corp. 2009 -->
+
+<deploymentPolicy xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://ibm.com/ws/objectgrid/deploymentPolicy ../deploymentPolicy.xsd"
+	xmlns="http://ibm.com/ws/objectgrid/deploymentPolicy">
+
+	<objectgridDeployment objectgridName="Grid">
+		<mapSet name="mapSet" numberOfPartitions="3" minSyncReplicas="0"
+			maxSyncReplicas="1">
+			<map ref="FilteredMap" />
+			<map ref="RouterKeyI32" />
+			<map ref="CF_.*" />
+		</mapSet>
+	</objectgridDeployment>
+
+</deploymentPolicy>
