@@ -220,6 +220,7 @@ public class CFilterListener implements ObjectGridEventListener, ObjectGridEvent
 	}
 
 	public void shardActivated(ObjectGrid og) {
+		objectGrid = og;
 		List<String> mapNames = og.getListOfMapNames();
 		Session s = SessionPool.getPooledSession(og);
 		partitionId = og.getMap(JobExecutor.routingMapName).getPartitionId();
