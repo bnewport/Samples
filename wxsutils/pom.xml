@@ -8,7 +8,7 @@
 	<name>wxsutils</name>
 	<url>http://maven.apache.org</url>
 	<properties>
-		<objectgrid.version>7.1.0.3</objectgrid.version>
+		<objectgrid.version>7.1.1</objectgrid.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -115,7 +115,6 @@
 						<Bundle-Name>${project.artifactId}</Bundle-Name>
 						<Bundle-Version>${project.version}</Bundle-Version>
 						<Import-Package>
-							com.ibm.websphere.objectgrid*;version:="[${objectgrid.version},$(version;=+;${objectgrid.version}))",
 							javax.management*;resolution:=optional,
 							javax.persistence;resolution:=optional,
 							javax.servlet*;resolution:=optional,
