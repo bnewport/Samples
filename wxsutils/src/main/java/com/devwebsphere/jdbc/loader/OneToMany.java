@@ -15,9 +15,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(value=ElementType.TYPE)
-@Retention(value=RetentionPolicy.RUNTIME)
-public @interface OneToMany 
-{
-	Class target();
+@Target(value = ElementType.TYPE)
+@Retention(value = RetentionPolicy.RUNTIME)
+public @interface OneToMany {
+	Class<?> target();
 }

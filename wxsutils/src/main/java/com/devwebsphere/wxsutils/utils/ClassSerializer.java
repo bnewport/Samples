@@ -78,8 +78,8 @@ public class ClassSerializer {
 	 * @param list
 	 *            The list of classes to add
 	 */
-	public void storeClass(Class<? extends Externalizable>... list) {
-		for (Class<? extends Externalizable> c : list) {
+	public void storeClass(Class<? extends Externalizable>... clazzes) {
+		for (Class<? extends Externalizable> c : clazzes) {
 			if (class2IdMap.containsKey(c)) {
 				logger.log(Level.SEVERE, "duplicate class registered " + c.toString() + " in Serializer " + this.getClass().getSimpleName());
 				throw new ObjectGridRuntimeException("Duplicate class registered: " + c.toString());
@@ -183,13 +183,13 @@ public class ClassSerializer {
 					String s = in.readUTF();
 					return s;
 				case LIST:
-					List list = readList(in);
+					List<?> list = readList(in);
 					return list;
 				case SET:
-					Set set = readSet(in);
+					Set<?> set = readSet(in);
 					return set;
 				case MAP:
-					Map map = readMap(in);
+					Map<?, ?> map = readMap(in);
 					return map;
 				case BYTE:
 					return in.readByte();
@@ -208,7 +208,7 @@ public class ClassSerializer {
 				case DATE:
 					return new Date(in.readLong());
 				case BULKLISTITEM:
-					BulkPushItem bulk = new BulkPushItem();
+					BulkPushItem<Object> bulk = new BulkPushItem<Object>();
 					bulk.readExternal(in);
 					return bulk;
 				case BYTEL:

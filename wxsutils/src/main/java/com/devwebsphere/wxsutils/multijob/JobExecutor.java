@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxsutils.WXSUtils;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
@@ -42,7 +43,6 @@ public class JobExecutor<V extends Serializable, R> {
 	BackingMap bmap;
 	int currentPartitionID;
 	SinglePartTask<V, R> currTask;
-	public static String routingMapName = "RouterKeyI32";
 
 	/**
 	 * This constructs an instance that will use the specified client grid and MultiPartTask
@@ -90,7 +90,7 @@ public class JobExecutor<V extends Serializable, R> {
 				// currTask needs to be sent to current partition
 				Object key = new Integer(currentPartitionID);
 				Session sess = ogclient.getSession();
-				AgentManager amgr = sess.getMap(routingMapName).getAgentManager();
+				AgentManager amgr = sess.getMap(WXSUtils.routingMapName).getAgentManager();
 				JobAgent<V, R> agent = new JobAgent<V, R>(currTask);
 				// invoke the SingleTaskPart on this specified partition
 				Map<Integer, Object> agent_result = amgr.callMapAgent(agent, Collections.singleton(key));
@@ -106,8 +106,8 @@ public class JobExecutor<V extends Serializable, R> {
 			}
 			return null;
 		} catch (UndefinedMapException e) {
-			logger.log(Level.SEVERE, "The map " + routingMapName + " MUST be defined in the grid");
-			throw new ObjectGridRuntimeException("The map " + routingMapName + " MUST be defined in the grid!");
+			logger.log(Level.SEVERE, "The map " + WXSUtils.routingMapName + " MUST be defined in the grid");
+			throw new ObjectGridRuntimeException("The map " + WXSUtils.routingMapName + " MUST be defined in the grid!");
 		} catch (ObjectGridException e) {
 			logger.log(Level.SEVERE, "Unexpected exception", e);
 			throw new ObjectGridRuntimeException(e);

@@ -19,7 +19,6 @@ import java.util.logging.Logger;
 import com.devwebsphere.wxsutils.Beta;
 import com.devwebsphere.wxsutils.ConfigProperties;
 import com.devwebsphere.wxsutils.WXSUtils;
-import com.devwebsphere.wxsutils.multijob.JobExecutor;
 import com.devwebsphere.wxsutils.wxsmap.ReduceAgentExecutor;
 import com.devwebsphere.wxsutils.wxsmap.ReduceAgentNoKeysExecutor;
 import com.ibm.websphere.objectgrid.BackingMap;
@@ -164,7 +163,7 @@ public class WXSReduceAgent extends WXSAgent {
 			ReduceAgentNoKeysExecutor<A, X> ia = new ReduceAgentNoKeysExecutor<A, X>();
 			ia.agent = reduceAgent;
 			ia.agentTargetMapName = bmap.getName();
-			Future<X> fv = utils.getExecutorService().submit(new CallReduceAgentThread<X>(utils, JobExecutor.routingMapName, key, ia));
+			Future<X> fv = utils.getExecutorService().submit(new CallReduceAgentThread<X>(utils, WXSUtils.routingMapName, key, ia));
 			results.add(fv);
 		}
 

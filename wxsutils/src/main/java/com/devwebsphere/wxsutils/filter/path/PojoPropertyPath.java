@@ -22,62 +22,50 @@ import com.devwebsphere.wxsutils.filter.ValuePath;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
 /**
- * This fetches the named attribute using the appropriately
- * named getter method on the class. The attribute name
- * MUST be capitalized. If the field doesn't exist then
- * null is returned
+ * This fetches the named attribute using the appropriately named getter method on the class. The attribute name MUST be
+ * capitalized. If the field doesn't exist then null is returned
+ * 
  * @author bnewport
- *
+ * 
  */
-public class PojoPropertyPath implements ValuePath, Externalizable
-{
+public class PojoPropertyPath implements ValuePath, Externalizable {
 	static Logger logger = Logger.getLogger(PojoPropertyPath.class.getName());
-	
+
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 5874273314940302023L;
 	String propertyName;
-	
-	public PojoPropertyPath()
-	{}
-	
-	public PojoPropertyPath(String propertyName)
-	{
-		try
-		{
+
+	public PojoPropertyPath() {
+	}
+
+	public PojoPropertyPath(String propertyName) {
+		try {
 			this.propertyName = propertyName;
-		}
-		catch(Exception e)
-		{
+		} catch (Exception e) {
 			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
-	
+
 	public Object get(Object fo) {
-		try
-		{
-			Method getMethod = fo.getClass().getMethod("get" + propertyName, null);
+		try {
+			Method getMethod = fo.getClass().getMethod("get" + propertyName, (Class<?>[]) null);
 			return getMethod.invoke(fo);
-		}
-		catch(NoSuchMethodException e)
-		{
+		} catch (NoSuchMethodException e) {
 			return null;
-		}
-		catch(Exception e)
-		{
+		} catch (Exception e) {
 			logger.log(Level.SEVERE, "Exception", e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
-	public String toString()
-	{
+
+	public String toString() {
 		return ".get" + propertyName + "()";
 	}
 
-	public void readExternal(ObjectInput in) throws IOException,
-			ClassNotFoundException {
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		propertyName = in.readUTF();
 	}
 

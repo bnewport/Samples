@@ -16,15 +16,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This specifies a key class for maps with composite keys. The attributes
- * on the key class need to have @Column to specify the database mapping
+ * This specifies a key class for maps with composite keys. The attributes on the key class need to have @Column to
+ * specify the database mapping
+ * 
  * @author bnewport
- *
+ * 
  */
-@Target(value=ElementType.TYPE)
-@Retention(value=RetentionPolicy.RUNTIME)
-public @interface CompositeKey 
-{
-	Class clazz(); // the primary key composite class
+@Target(value = ElementType.TYPE)
+@Retention(value = RetentionPolicy.RUNTIME)
+public @interface CompositeKey {
+	Class<?> clazz(); // the primary key composite class
+
 	String description(); // a text description
 }

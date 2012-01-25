@@ -58,13 +58,13 @@ public class ConfigProperties {
 	 * This is the property name for the wxsutils client side thread pool
 	 */
 	static final String THREADS_PROP = "threads";
-	int numThreads;
+	int numThreads = -1;
 
 	/**
 	 * This specifies how big to make the thread pool queue
 	 */
 	static final String QUEUE_PROP = "queue";
-	int queueLength;
+	int queueLength = 1;
 
 	/**
 	 * This is the property name for the time wxsutils waits for agents to complete
@@ -137,12 +137,12 @@ public class ConfigProperties {
 			gridName = "Grid";
 			logger.log(Level.INFO, "gridName defaulted to " + gridName);
 		}
-		numThreads = -1;
+
 		String intValue = props.getProperty(THREADS_PROP);
 		if (intValue != null) {
 			numThreads = Integer.parseInt(intValue);
 		}
-		queueLength = 1;
+
 		intValue = props.getProperty(QUEUE_PROP);
 		if (intValue != null) {
 			queueLength = Integer.parseInt(intValue);

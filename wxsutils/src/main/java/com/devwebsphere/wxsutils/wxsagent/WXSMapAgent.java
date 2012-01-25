@@ -11,7 +11,6 @@ import java.util.logging.Logger;
 import com.devwebsphere.wxsutils.Beta;
 import com.devwebsphere.wxsutils.ConfigProperties;
 import com.devwebsphere.wxsutils.WXSUtils;
-import com.devwebsphere.wxsutils.multijob.JobExecutor;
 import com.devwebsphere.wxsutils.wxsmap.MapAgentExecutor;
 import com.devwebsphere.wxsutils.wxsmap.MapAgentNoKeysExecutor;
 import com.ibm.websphere.objectgrid.BackingMap;
@@ -71,7 +70,7 @@ public class WXSMapAgent extends WXSAgent {
 			ia.agent = mapAgent;
 			ia.agentTargetMapName = bmap.getName();
 			Future<Map<K, X>> fv = utils.getExecutorService()
-					.submit(new CallReduceAgentThread<Map<K, X>>(utils, JobExecutor.routingMapName, key, ia));
+					.submit(new CallReduceAgentThread<Map<K, X>>(utils, WXSUtils.routingMapName, key, ia));
 			results.add(fv);
 		}
 

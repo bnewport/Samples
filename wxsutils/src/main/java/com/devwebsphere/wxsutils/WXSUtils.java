@@ -110,6 +110,8 @@ public class WXSUtils {
 
 	ThreadLocalSession tls;
 
+	public static String routingMapName = "RouterKeyI32";
+
 	static ClassSerializer serializer = new ClassSerializer();
 
 	public static ClassSerializer getSerializer() {
@@ -181,6 +183,23 @@ public class WXSUtils {
 		this.grid = grid;
 		threadPool = pool;
 		tls = new ThreadLocalSession(this);
+	}
+
+	/**
+	 * This constructs an instance of this helper class with a built in default
+	 * 
+	 * @param grid
+	 */
+	public WXSUtils(ObjectGrid grid) {
+		this(grid, globalThreadPool.get());
+
+		if (threadPool == null) {
+			ExecutorService p = createClientThreadPool(THREADPOOL_SIZE, 1);
+			if (!globalThreadPool.compareAndSet(null, p)) {
+				p.shutdown();
+			}
+			threadPool = globalThreadPool.get();
+		}
 	}
 
 	/**
@@ -277,23 +296,6 @@ public class WXSUtils {
 			}
 		}
 		return rc;
-	}
-
-	/**
-	 * This constructs an instance of this helper class with a built in default
-	 * 
-	 * @param grid
-	 */
-	public WXSUtils(ObjectGrid grid) {
-		this.grid = grid;
-		if (globalThreadPool.get() == null) {
-			ExecutorService p = createClientThreadPool(THREADPOOL_SIZE, 1);
-			if (!globalThreadPool.compareAndSet(null, p)) {
-				p.shutdown();
-			}
-		}
-		threadPool = globalThreadPool.get();
-		tls = new ThreadLocalSession(this);
 	}
 
 	/**
@@ -763,18 +765,15 @@ public class WXSUtils {
 
 			try {
 				ObjectGrid grid = cprops.connect();
-				if (cprops.numThreads > 0) {
-					ExecutorService p = createClientThreadPool(cprops.numThreads, cprops.queueLength);
-					logger.log(Level.INFO, "WXSUtils thread pool is " + cprops.numThreads + " threads");
-					globalDefaultUtils = new WXSUtils(grid, p);
-				} else {
+				if (cprops.numThreads <= 0) {
 					String aMapName = (String) grid.getListOfMapNames().get(0);
 					BackingMap aMap = grid.getMap(aMapName);
-					int numPartitions = aMap.getPartitionManager().getNumOfPartitions();
-					ExecutorService p = createClientThreadPool(numPartitions, cprops.queueLength);
-					logger.log(Level.INFO, "WXSUtils thread pool is " + numPartitions + " threads");
-					globalDefaultUtils = new WXSUtils(grid);
+					cprops.numThreads = aMap.getPartitionManager().getNumOfPartitions();
 				}
+
+				ExecutorService p = createClientThreadPool(cprops.numThreads, cprops.queueLength);
+				logger.log(Level.INFO, "WXSUtils thread pool is " + cprops.numThreads + " threads");
+				globalDefaultUtils = new WXSUtils(grid, p);
 				globalDefaultUtils.configProps = cprops;
 			} catch (Throwable e) {
 				logger.log(Level.SEVERE, "Cannot connect to grid ", e);

@@ -11,7 +11,6 @@
 package com.devwebsphere.wxsutils.wxsmap;
 
 import java.util.Collection;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,7 +25,6 @@ public class SessionPool {
 
 	static class ObjectGridStuff {
 		public ObjectGrid grid;
-		public ArrayBlockingQueue<Session> pool = new ArrayBlockingQueue<Session>(30);
 		public ThreadLocal<Session> localSession = new ThreadLocal<Session>();
 	}
 
@@ -78,17 +76,12 @@ public class SessionPool {
 	}
 
 	static private Session getPooledSession(ObjectGridStuff stuff) {
-		Session s = stuff.pool.poll();
-		if (s == null) {
-			// create a new session instead
-			try {
-				s = stuff.grid.getSession();
-			} catch (Exception e) {
-				logger.log(Level.SEVERE, "Exception getting Session from grid", e);
-				throw new ObjectGridRuntimeException("Exception getting session from grid", e);
-			}
+		try {
+			return stuff.grid.getSession();
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "Exception getting Session from grid", e);
+			throw new ObjectGridRuntimeException("Exception getting session from grid", e);
 		}
-		return s;
 	}
 
 	static ObjectGridStuff getObjectGridStuff(ObjectGrid grid) {
@@ -120,9 +113,9 @@ public class SessionPool {
 
 			if (s.isTransactionActive()) {
 				logger.log(Level.WARNING, "Session has an active transaction.");
-			} else {
-				stuff.pool.offer(s);
 			}
+
+			s.close();
 		} else {
 			logger.log(Level.WARNING, "Returning a session for an unknown grid.");
 		}

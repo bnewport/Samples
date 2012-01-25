@@ -16,16 +16,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This specifies a simple key for a Map. The key needs to be a
- * column type in a single table column
+ * This specifies a simple key for a Map. The key needs to be a column type in a single table column
+ * 
  * @author bnewport
- *
+ * 
  */
-@Target(value=ElementType.TYPE)
-@Retention(value=RetentionPolicy.RUNTIME)
-public @interface SimpleKey 
-{
-	Class clazz(); // the column type
+@Target(value = ElementType.TYPE)
+@Retention(value = RetentionPolicy.RUNTIME)
+public @interface SimpleKey {
+	Class<?> clazz(); // the column type
+
 	String description(); // a text description
+
 	String name(); // database column name for primary key attribute
 }

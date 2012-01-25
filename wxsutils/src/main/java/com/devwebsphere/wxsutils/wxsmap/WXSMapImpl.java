@@ -322,7 +322,7 @@ public class WXSMapImpl<K extends Serializable, V extends Serializable> extends 
 		lockPrim(false, k, null, 0);
 	}
 
-	public GridFilteredIndex btwn(String indexName, Serializable low, Serializable high, Filter f) {
+	public GridFilteredIndex<K,V> btwn(String indexName, Serializable low, Serializable high, Filter f) {
 		GridFilteredIndex<K, V> g = new GridFilteredIndex<K, V>(tls.getObjectGrid(), mapName, indexName, f, low, high);
 		return g;
 	}
