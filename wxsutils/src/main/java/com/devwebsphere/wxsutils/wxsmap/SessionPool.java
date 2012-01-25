@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.Session;
+import com.ibm.websphere.objectgrid.plugins.EventListener;
 import com.ibm.websphere.objectgrid.plugins.ObjectGridEventListener;
 
 public class SessionPool {
@@ -95,7 +96,7 @@ public class SessionPool {
 			}
 			if (previous == null) {
 				// register grid listener to clean up
-				grid.addEventListener(new OGListener());
+				grid.addEventListener((EventListener)new OGListener());
 			} else {
 				// someone beat us
 				stuff = previous;
