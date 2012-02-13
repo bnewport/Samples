@@ -17,7 +17,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSUtils;
-import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
@@ -40,8 +39,8 @@ public class JobExecutor<V extends Serializable, R> {
 	static Logger logger = Logger.getLogger(JobExecutor.class.getName());
 	MultipartTask<V, R> mtask;
 	ObjectGrid ogclient;
-	BackingMap bmap;
-	int currentPartitionID;
+	PartitionIterator partitionItr;
+	int currentPartition = -1;
 	SinglePartTask<V, R> currTask;
 
 	/**
@@ -51,11 +50,13 @@ public class JobExecutor<V extends Serializable, R> {
 	 * @param m
 	 */
 	public JobExecutor(ObjectGrid ogclient, MultipartTask<V, R> m) {
+		this(ogclient, m, PartitionIterators.descending(ogclient));
+	}
+
+	public JobExecutor(ObjectGrid ogclient, MultipartTask<V, R> m, PartitionIterator partitionItr) {
 		this.mtask = m;
 		this.ogclient = ogclient;
-		String aMapName = (String) ogclient.getListOfMapNames().get(0);
-		bmap = ogclient.getMap(aMapName);
-		currentPartitionID = bmap.getPartitionManager().getNumOfPartitions() - 1;
+		this.partitionItr = partitionItr;
 		currTask = null;
 	}
 
@@ -68,43 +69,42 @@ public class JobExecutor<V extends Serializable, R> {
 	 */
 	public R getNextResult() {
 		try {
-			// this counts down from max partition to 0.
-			// while there are partitions left to 'process'
-			if (currentPartitionID >= 0) {
-				// create the next task for this partition
-				currTask = mtask.createTaskForPartition(currTask);
-				// all blocks for current partition are retrieved
-				if (currTask == null) {
-					// time to move to next partition
-					--currentPartitionID;
-					// if partition == -1 then we're done
-					if (currentPartitionID >= 0) {
-						currTask = mtask.createTaskForPartition(null);
-					} else {
-						// reset executor
-						currentPartitionID = bmap.getPartitionManager().getNumOfPartitions() - 1;
-						currTask = null;
-						return null;
-					}
-				}
-				// currTask needs to be sent to current partition
-				Object key = new Integer(currentPartitionID);
-				Session sess = ogclient.getSession();
-				AgentManager amgr = sess.getMap(WXSUtils.routingMapName).getAgentManager();
-				JobAgent<V, R> agent = new JobAgent<V, R>(currTask);
-				// invoke the SingleTaskPart on this specified partition
-				Map<Integer, Object> agent_result = amgr.callMapAgent(agent, Collections.singleton(key));
-				Object value = agent_result.get(key);
-				if (value != null && value instanceof EntryErrorValue) {
-					logger.log(Level.SEVERE, "Grid side exception occurred: " + value.toString());
-					throw new ObjectGridRuntimeException("Grid side exception occurred for key: " + key + ": " + value.toString());
-				}
 
-				// extract the user exposed object from the return value
-				R r = mtask.extractResult((V) value);
-				return r;
+			// check if there is another task for the current partition
+			if (currTask != null) {
+				currTask = mtask.createTaskForPartition(currTask);
 			}
-			return null;
+
+			// finished the current partition
+			if (currTask == null) {
+				// time to move to next partition
+				if (partitionItr.hasNext()) {
+					currentPartition = partitionItr.next();
+					currTask = mtask.createTaskForPartition(null);
+				} else {
+					// reset executor
+					partitionItr.reset();
+					currentPartition = -1;
+					currTask = null;
+					return null;
+				}
+			}
+			// currTask needs to be sent to current partition
+			Object key = Integer.valueOf(currentPartition);
+			Session sess = ogclient.getSession();
+			AgentManager amgr = sess.getMap(WXSUtils.routingMapName).getAgentManager();
+			JobAgent<V, R> agent = new JobAgent<V, R>(currTask);
+			// invoke the SingleTaskPart on this specified partition
+			Map<Integer, Object> agent_result = amgr.callMapAgent(agent, Collections.singleton(key));
+			Object value = agent_result.get(key);
+			if (value != null && value instanceof EntryErrorValue) {
+				logger.log(Level.SEVERE, "Grid side exception occurred: " + value.toString());
+				throw new ObjectGridRuntimeException("Grid side exception occurred for key: " + key + ": " + value.toString());
+			}
+
+			// extract the user exposed object from the return value
+			R r = mtask.extractResult((V) value);
+			return r;
 		} catch (UndefinedMapException e) {
 			logger.log(Level.SEVERE, "The map " + WXSUtils.routingMapName + " MUST be defined in the grid");
 			throw new ObjectGridRuntimeException("The map " + WXSUtils.routingMapName + " MUST be defined in the grid!");
