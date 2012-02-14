@@ -10,6 +10,8 @@
 //
 package com.devwebsphere.wxsutils.multijob;
 
+import java.util.NoSuchElementException;
+
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 
@@ -21,6 +23,18 @@ public class PartitionIterators {
 		int current;
 
 		Itr(int start, int end, int countBy) {
+			if (countBy == 0) {
+				throw new IllegalArgumentException("countBy == 0");
+			}
+
+			if (start < end && countBy < 0) {
+				throw new IllegalArgumentException("Decrementing with start < end");
+			}
+
+			if (start > end && countBy > 0) {
+				throw new IllegalArgumentException("Incrementing with start > end");
+			}
+
 			this.start = start;
 			this.end = end;
 			this.countBy = countBy;
@@ -37,6 +51,9 @@ public class PartitionIterators {
 
 		@Override
 		public int next() {
+			if (!hasNext())
+				throw new NoSuchElementException();
+			
 			int val = current;
 			current += countBy;
 			return val;
@@ -53,7 +70,9 @@ public class PartitionIterators {
 	}
 
 	public static PartitionIterator ascending(ObjectGrid og, int start) {
-		return new Itr(start, getPartitionSize(og) - 1, 1);
+		int size = getPartitionSize(og);
+		check("start", start, size);
+		return new Itr(start, size - 1, 1);
 	}
 
 	public static PartitionIterator descending(ObjectGrid og) {
@@ -61,12 +80,28 @@ public class PartitionIterators {
 	}
 
 	public static PartitionIterator descending(ObjectGrid og, int end) {
-		return new Itr(getPartitionSize(og) - 1, end, -1);
+		int size = getPartitionSize(og);
+		check("end", end, size);
+		return new Itr(size - 1, end, -1);
 	}
 
-	static int getPartitionSize(ObjectGrid og) {
+	public static PartitionIterator range(ObjectGrid og, int start, int end) {
+		int size = getPartitionSize(og);
+		check("start", start, size);
+		check("end", end, size);
+		int countBy = (start < end) ? 1 : -1;
+		return new Itr(start, end, countBy);
+	}
+
+	public static int getPartitionSize(ObjectGrid og) {
 		String aMapName = (String) og.getListOfMapNames().get(0);
 		BackingMap bmap = og.getMap(aMapName);
 		return bmap.getPartitionManager().getNumOfPartitions();
+	}
+
+	static void check(String idxMsg, int val, int partitionSize) {
+		if (val < 0 || val >= partitionSize) {
+			throw new IllegalArgumentException(val + " (" + idxMsg + ") is not between [0.." + partitionSize + ")");
+		}
 	}
 }

@@ -81,4 +81,59 @@ public class TestPartitionIterators {
 		Assert.assertEquals("Reset failed", 12, itr.next());
 	}
 
+	@Test
+	public void testOnePartition() {
+		PartitionIterator itr = PartitionIterators.range(ogclient, 1, 1);
+		Assert.assertTrue("hasNext", itr.hasNext());
+		Assert.assertEquals("next", 1, itr.next());
+		Assert.assertFalse("hasNext", itr.hasNext());
+	}
+
+	@Test
+	public void testRangePartition() {
+		PartitionIterator itr = PartitionIterators.range(ogclient, 1, 3);
+		for (int i = 1; i < 4; ++i) {
+			Assert.assertTrue("hasNext", itr.hasNext());
+			Assert.assertEquals("Wrong partition", i, itr.next());
+		}
+
+		itr = PartitionIterators.range(ogclient, 3, 1);
+		for (int i = 3; i > 0; --i) {
+			Assert.assertTrue("hasNext", itr.hasNext());
+			Assert.assertEquals("Wrong partition", i, itr.next());
+		}
+
+	}
+
+	@Test
+	public void testInvalidPartitions() {
+		try {
+			PartitionIterators.ascending(ogclient, 13);
+			Assert.fail();
+		} catch (IllegalArgumentException iae) {
+
+		}
+
+		try {
+			PartitionIterators.descending(ogclient, -1);
+			Assert.fail();
+		} catch (IllegalArgumentException iae) {
+
+		}
+
+		try {
+			PartitionIterators.range(ogclient, -1, 1);
+			Assert.fail();
+		} catch (IllegalArgumentException iae) {
+
+		}
+
+		try {
+			PartitionIterators.range(ogclient, 0, 13);
+			Assert.fail();
+		} catch (IllegalArgumentException iae) {
+
+		}
+
+	}
 }
