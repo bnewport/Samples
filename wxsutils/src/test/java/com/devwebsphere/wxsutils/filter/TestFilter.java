@@ -18,50 +18,57 @@ import org.junit.Test;
 import com.devwebsphere.wxs.jdbcloader.Customer;
 import com.devwebsphere.wxsutils.filter.path.PojoFieldPath;
 import com.devwebsphere.wxsutils.filter.path.PojoPropertyPath;
+import com.devwebsphere.wxsutils.filter.path.SerializedValuePath;
 
-
-public class TestFilter 
-{
+public class TestFilter {
 	static Customer c;
-	
+
 	@BeforeClass
-	static public void setup()
-	{
+	static public void setup() {
 		c = new Customer();
-		c.setFirstName("Billy"); c.setSurname("Newport");
+		c.setFirstName("Billy");
+		c.setSurname("Newport");
 		c.setId("1234");
 	}
-	
+
 	@Test
-	public void testValueExtractor()
-	{
+	public void testValueExtractor() {
 		PojoPropertyPath v = new PojoPropertyPath("FirstName");
 		Assert.assertEquals(c.getFirstName(), v.get(c));
 	}
-	
+
 	@Test
-	public void testEquals()
-	{
+	public void testEquals() {
 		PojoPropertyPath v = new PojoPropertyPath("FirstName");
-		
+
 		EQFilter ef = new EQFilter(v, "Billy");
 		Assert.assertTrue(ef.filter(c));
 		NotFilter nf = new NotFilter(ef);
 		Assert.assertFalse(nf.filter(c));
-		
+
 		NEQFilter nef = new NEQFilter(v, "Bobby");
 		Assert.assertTrue(nef.filter(c));
 	}
-	
+
 	@Test
-	public void testQB()
-	{
+	public void testQB() {
 		ValuePath fn = new PojoPropertyPath("FirstName");
 		ValuePath sn = new PojoFieldPath("surname");
-		
-		FilterBuilder fb = new FilterBuilder();
-		Filter f = fb.and(fb.eq(fn, "Billy"), fb.eq(sn, "Newport"));
-		
+
+		Filter f = FilterBuilder.and(FilterBuilder.eq(fn, "Billy"), FilterBuilder.eq(sn, "Newport"));
+
 		Assert.assertEquals(f.filter(c), true);
 	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void mixValuePaths() {
+		FilterBuilder.and(FilterBuilder.eq(new PojoPropertyPath("A"), null), FilterBuilder.eq(new SerializedValuePath("A"), null));
+	}
+
+	@Test
+	public void oneValuePath() {
+		FilterBuilder.and(new TrueFilter(), FilterBuilder.eq(new SerializedValuePath("A"), null));
+		FilterBuilder.and(new FalseFilter(), FilterBuilder.eq(new PojoPropertyPath("A"), null));
+	}
+
 }

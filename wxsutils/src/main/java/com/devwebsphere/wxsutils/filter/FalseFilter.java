@@ -12,8 +12,9 @@ package com.devwebsphere.wxsutils.filter;
 
 /**
  * This is a helper Filter that always returns FALSE
+ * 
  * @author bnewport
- *
+ * 
  */
 public class FalseFilter extends Filter {
 
@@ -22,19 +23,16 @@ public class FalseFilter extends Filter {
 	 */
 	private static final long serialVersionUID = -615695134298860153L;
 
-	public FalseFilter()
-	{
-		
+	public FalseFilter() {
+
 	}
-	
+
 	@Override
 	public boolean filter(Object fo) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		return "FALSE";
 	}
 }

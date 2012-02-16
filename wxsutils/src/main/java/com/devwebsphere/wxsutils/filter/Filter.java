@@ -19,49 +19,51 @@ import java.util.logging.Logger;
 import com.devwebsphere.wxsutils.utils.ClassSerializer;
 
 /**
- * This is an abstract filter. It defines a filter for testing
- * if a specified object passed the filter.
+ * This is an abstract filter. It defines a filter for testing if a specified object passed the filter.
+ * 
  * @author bnewport
- *
+ * 
  */
-public abstract class Filter implements Externalizable
-{
+public abstract class Filter implements Externalizable {
 	static Logger logger = Logger.getLogger(Filter.class.getName());
+
 	/**
 	 * This checks if the supplied object passes the filter
+	 * 
 	 * @param o
 	 * @return
 	 */
 	public abstract boolean filter(Object o);
 
-	public void readExternal(ObjectInput arg0) throws IOException,
-			ClassNotFoundException 
-	{
+	public void readExternal(ObjectInput arg0) throws IOException, ClassNotFoundException {
 	}
 
-	public void writeExternal(ObjectOutput arg0) throws IOException 
-	{
+	public void writeExternal(ObjectOutput arg0) throws IOException {
 	}
-	
+
 	/**
 	 * Register all the Filter classes on the serializer in the custom serializer.
 	 */
 	static ClassSerializer serializer = new FilterClassSerializer();
 
-	static public ClassSerializer getSerializer()
-	{
+	static public ClassSerializer getSerializer() {
 		return serializer;
 	}
-	
-	static public void writeFilter(ObjectOutput out, Filter f)
-		throws IOException
-	{
+
+	static public void writeFilter(ObjectOutput out, Filter f) throws IOException {
 		serializer.writeObject(out, f);
 	}
-	
-	static public Filter readFilter(ObjectInput in)
-		throws IOException, ClassNotFoundException
-	{
-		return (Filter)serializer.readObject(in);
+
+	static public Filter readFilter(ObjectInput in) throws IOException, ClassNotFoundException {
+		return (Filter) serializer.readObject(in);
+	}
+
+	/**
+	 * The filter either requires, does not require or does not care about a DataObjectContext
+	 * 
+	 * @return true, if the filter requires a DataObjectContext, false if it doesn't and null if it doesn't matter
+	 */
+	public Boolean requiresDataObjectContext() {
+		return null;
 	}
 }

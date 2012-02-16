@@ -12,72 +12,57 @@ package com.devwebsphere.wxsutils.filter;
 
 /**
  * This is an easy way to build filter graphs using the common dot notation
+ * 
  * @author bnewport
- *
+ * 
  */
-public class FilterBuilder 
-{
-	public FilterBuilder()
-	{
-	}
-	
-	public Filter lt(ValuePath v, Object o)
-	{
+public class FilterBuilder {
+	static public Filter lt(ValuePath v, Object o) {
 		LTFilter f = new LTFilter(v, o);
 		return f;
 	}
-	
-	public Filter lte(ValuePath v, Object o)
-	{
+
+	static public Filter lte(ValuePath v, Object o) {
 		LTEFilter f = new LTEFilter(v, o);
 		return f;
 	}
-	
-	public Filter gt(ValuePath v, Object o)
-	{
+
+	static public Filter gt(ValuePath v, Object o) {
 		GTFilter f = new GTFilter(v, o);
 		return f;
 	}
-	
-	public Filter gte(ValuePath v, Object o)
-	{
+
+	static public Filter gte(ValuePath v, Object o) {
 		GTEQFilter f = new GTEQFilter(v, o);
 		return f;
 	}
-	
-	public Filter eq(ValuePath v, Object o)
-	{
+
+	static public Filter eq(ValuePath v, Object o) {
 		EQFilter f = new EQFilter(v, o);
 		return f;
 	}
-	
-	public Filter ne(ValuePath v, Object o)
-	{
+
+	static public Filter ne(ValuePath v, Object o) {
 		NEQFilter f = new NEQFilter(v, o);
 		return f;
 	}
-	
-	public Filter isNull(ValuePath v)
-	{
+
+	static public Filter isNull(ValuePath v) {
 		IsNullFilter f = new IsNullFilter(v);
 		return f;
 	}
-	
-	public Filter and(Filter... conjList)
-	{
+
+	static public Filter and(Filter... conjList) {
 		Filter a = new AndFilter(conjList);
 		return a;
 	}
-	
-	public Filter or(Filter... orList)
-	{
+
+	static public Filter or(Filter... orList) {
 		Filter a = new OrFilter(orList);
 		return a;
 	}
-	
-	public Filter not(Filter qb)
-	{
+
+	static public Filter not(Filter qb) {
 		return new NotFilter(qb);
 	}
-	
 }

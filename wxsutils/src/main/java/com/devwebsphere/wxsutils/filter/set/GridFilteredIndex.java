@@ -23,6 +23,7 @@ import com.devwebsphere.wxsutils.multijob.JobExecutor;
 import com.devwebsphere.wxsutils.multijob.MultipartTask;
 import com.devwebsphere.wxsutils.multijob.SinglePartTask;
 import com.devwebsphere.wxsutils.wxsmap.SessionPool;
+import com.ibm.websphere.objectgrid.CopyMode;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
@@ -124,6 +125,9 @@ public class GridFilteredIndex<K extends Serializable, V extends Serializable> i
 				sess.setTransactionIsolation(Session.TRANSACTION_READ_COMMITTED);
 				WXSMap<K, V> wMap = utils.getCache(mapName);
 				ObjectMap map = sess.getMap(mapName);
+				if (filter.requiresDataObjectContext()) {
+					map.setCopyMode(CopyMode.COPY_TO_BYTES_RAW, null);
+				}
 				MapIndex index = (MapIndex) map.getIndex(indexName);
 				MapRangeIndex rindex = null;
 				// could be a range index (supports relational ops)

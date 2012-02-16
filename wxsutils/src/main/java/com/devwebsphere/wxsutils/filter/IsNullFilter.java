@@ -5,55 +5,36 @@
 //WebSphere product, either for customer's own internal use or for redistribution
 //by customer, as part of such an application, in customer's own products. "
 //
-//5724-J34 (C) COPYRIGHT International Business Machines Corp. 2009
+//5724-J34 (C) COPYRIGHT International Business Machines Corp. 2009, 2012
 //All Rights Reserved * Licensed Materials - Property of IBM
 //
 package com.devwebsphere.wxsutils.filter;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 /**
  * This checks if an attribute is null
+ * 
  * @author bnewport
- *
+ * 
  */
-public class IsNullFilter extends Filter 
-{
+public class IsNullFilter extends CompareFilter {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -8864323686268364722L;
-	ValuePath v;
 
-	public IsNullFilter() {}
-	
-	public IsNullFilter(ValuePath value)
-	{
-		v = value;
+	public IsNullFilter() {
 	}
-	
+
+	public IsNullFilter(ValuePath v) {
+		super(v, null);
+	}
+
 	@Override
 	public boolean filter(Object fo) {
 		return v.get(fo) == null;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		return v.toString() + " ISNULL ";
-	}
-
-	public void readExternal(ObjectInput in) throws IOException,
-	ClassNotFoundException 
-	{
-		super.readExternal(in);
-		v = (ValuePath)in.readObject();
-	}
-	
-	public void writeExternal(ObjectOutput out) throws IOException 
-	{
-		super.writeExternal(out);
-		out.writeObject(v);
 	}
 }

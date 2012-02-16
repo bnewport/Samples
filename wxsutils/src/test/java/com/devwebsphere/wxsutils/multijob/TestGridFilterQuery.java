@@ -92,10 +92,9 @@ public class TestGridFilterQuery
 		}
 
 		// keep only people with credit limit under a million;
-		FilterBuilder fb = new FilterBuilder();
 		ValuePath creditLimitPath = new PojoPropertyPath("CreditLimit");
 		Double desiredMaxCreditLimit = 1000000.0;
-		Filter f = fb.lt(creditLimitPath, desiredMaxCreditLimit);
+		Filter f = FilterBuilder.lt(creditLimitPath, desiredMaxCreditLimit);
 
 		// find all surnames < "M" with credit limit < 1000000
 		String value = "M";
