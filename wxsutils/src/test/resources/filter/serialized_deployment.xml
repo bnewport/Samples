@@ -17,6 +17,7 @@ Licensed Materials - Property of IBM
     <objectgridDeployment objectgridName="Grid">
         <mapSet name="mapSet" numberOfPartitions="13" minSyncReplicas="0" maxSyncReplicas="1" >
             <map ref="Person"/>
+            <map ref="Person2"/>
             <map ref="RouterKeyI32"/>
         </mapSet>
     </objectgridDeployment>

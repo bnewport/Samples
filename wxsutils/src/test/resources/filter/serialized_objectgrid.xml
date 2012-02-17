@@ -16,6 +16,9 @@
 			<backingMap name="Person" lockStrategy="PESSIMISTIC"
 				copyMode="COPY_TO_BYTES" pluginCollectionRef="personMapPlugins" />
 
+			<backingMap name="Person2" lockStrategy="PESSIMISTIC"
+				copyMode="COPY_TO_BYTES" pluginCollectionRef="person2MapPlugins" />
+
 			<!-- This map is used by the JobQuery framework, no data is stored in 
 				it -->
 			<backingMap name="RouterKeyI32" lockStrategy="PESSIMISTIC" />
@@ -25,7 +28,8 @@
 
 	<backingMapPluginCollections>
 		<backingMapPluginCollection id="personMapPlugins">
-			<bean id="MapSerializerPlugin" className="com.devwebsphere.wxsutils.filter.PersonMapSerializer">
+			<bean id="MapSerializerPlugin"
+				className="com.devwebsphere.wxsutils.filter.PersonMapValueSerializer">
 			</bean>
 			<bean id="MapIndexPlugin" className="com.ibm.websphere.objectgrid.plugins.index.HashIndex">
 				<property name="Name" type="java.lang.String" value="lastName"
@@ -34,6 +38,12 @@
 					description="true for MapRangeIndex" />
 				<property name="AttributeName" type="java.lang.String"
 					value="lastName" description="attribute name" />
+			</bean>
+		</backingMapPluginCollection>
+
+		<backingMapPluginCollection id="person2MapPlugins">
+			<bean id="MapSerializerPlugin"
+				className="com.devwebsphere.wxsutils.filter.PersonMapKeyValueSerializer">
 			</bean>
 		</backingMapPluginCollection>
 	</backingMapPluginCollections>

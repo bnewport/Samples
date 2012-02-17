@@ -113,4 +113,9 @@ public class JobExecutor<V extends Serializable, R> {
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
+
+	public ObjectGrid getObjectGrid() {
+		return ogclient;
+	}
+
 }

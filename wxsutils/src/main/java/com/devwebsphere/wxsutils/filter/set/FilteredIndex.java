@@ -19,7 +19,6 @@ import com.devwebsphere.wxsutils.WXSMap;
 import com.devwebsphere.wxsutils.filter.Filter;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.plugins.index.MapIndex;
-import com.ibm.websphere.objectgrid.plugins.io.dataobject.SerializedValue;
 
 /**
  * This is a helper class to layer Filters on top of hash and range indexes. Its really designed to work on a local
@@ -81,19 +80,12 @@ public class FilteredIndex<K extends Serializable, V extends Serializable> {
 	 * @return
 	 */
 	static public <K, V> Map<K, V> filterMap(Map<K, V> input, Filter f) {
-		boolean convert = f.requiresDataObjectContext();
-
 		try {
 			Map<K, V> rc = new HashMap<K, V>();
 			for (Map.Entry<K, V> e : input.entrySet()) {
-				K key = e.getKey();
-				Object value = e.getValue();
+				V value = e.getValue();
 				if (f.filter(value)) {
-					if (convert) {
-						value = ((SerializedValue) value).getObject();
-					}
-
-					rc.put(key, (V) value);
+					rc.put(e.getKey(), (V) value);
 				}
 			}
 			return rc;
@@ -103,17 +95,12 @@ public class FilteredIndex<K extends Serializable, V extends Serializable> {
 	}
 
 	protected Map<K, V> filterIterator(Iterator<K> iter, Filter f) {
-		boolean convert = f.requiresDataObjectContext();
-
 		Map<K, V> rc = new HashMap<K, V>();
 		while (iter.hasNext()) {
 			K key = iter.next();
-			Object value = map.get(key);
+			V value = map.get(key);
 			if (f.filter(value)) {
-				if (convert) {
-					value = ((SerializedValue) value).getObject();
-				}
-				rc.put(key, (V) value);
+				rc.put(key, value);
 			}
 		}
 

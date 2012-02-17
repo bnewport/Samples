@@ -23,12 +23,13 @@ import com.ibm.websphere.objectgrid.plugins.io.ValueSerializerPlugin;
 import com.ibm.websphere.objectgrid.plugins.io.datadescriptor.Association;
 import com.ibm.websphere.objectgrid.plugins.io.datadescriptor.Attribute;
 import com.ibm.websphere.objectgrid.plugins.io.datadescriptor.AttributeType;
+import com.ibm.websphere.objectgrid.plugins.io.datadescriptor.DataDescriptor;
 import com.ibm.websphere.objectgrid.plugins.io.datadescriptor.DataDescriptorFactory;
 import com.ibm.websphere.objectgrid.plugins.io.datadescriptor.MapDataDescriptor;
 import com.ibm.websphere.objectgrid.plugins.io.datadescriptor.ValueDataDescriptor;
 import com.ibm.websphere.objectgrid.plugins.io.dataobject.DataObjectContext;
 
-public class PersonMapSerializer implements MapSerializerPlugin {
+public class PersonMapValueSerializer implements MapSerializerPlugin {
 
 	static class PersonMapDataDescriptor implements MapDataDescriptor {
 
@@ -94,40 +95,12 @@ public class PersonMapSerializer implements MapSerializerPlugin {
 
 		@Override
 		public Object getAttributeContexts(String... arg0) {
-			Map<String, Attribute> attrs = getValueDataDescriptor().getAttributes();
-			Attribute[] ctxs = new Attribute[arg0.length];
-			for (int i = 0; i < arg0.length; ++i) {
-				ctxs[i] = attrs.get(arg0[i]);
-			}
-			return ctxs;
+			return PersonMapValueSerializer.getAttributeContexts(getValueDataDescriptor(), arg0);
 		}
 
 		@Override
 		public Object[] inflateDataObjectAttributes(DataObjectContext arg0, XsDataInputStream arg1, Object arg2) throws IOException {
-			Attribute[] attrs = (Attribute[]) arg2;
-			Object[] vals = new Object[attrs.length];
-
-			InputSource is = new InputSource(new ByteArrayInputStream(arg1.toByteArray()));
-
-			for (int i = 0; i < attrs.length; ++i) {
-				Attribute attr = attrs[i];
-				QName resultType = XPathConstants.STRING;
-				if (attr.getAttributeType() == AttributeType.DOUBLE) {
-					resultType = XPathConstants.NUMBER;
-				}
-				Object o = null;
-				try {
-					o = XPathFactory.newInstance().newXPath().evaluate("/person/" + attr.getAttributeName() + "/text()", is, resultType);
-				} catch (XPathExpressionException e) {
-					e.printStackTrace();
-				}
-				if (o == null) {
-					o = DataSerializer.SpecialValue.NOT_FOUND;
-				}
-				vals[i] = o;
-			}
-
-			return vals;
+			return PersonMapValueSerializer.inflateDataObjectAttributes(arg0, arg1, (Attribute[]) arg2);
 		}
 
 		@Override
@@ -209,6 +182,41 @@ public class PersonMapSerializer implements MapSerializerPlugin {
 	@Override
 	public ValueSerializerPlugin getValueSerializerPlugin() {
 		return new PersonValueSerializer();
+	}
+
+	static protected Object getAttributeContexts(DataDescriptor dd, String[] attributes) {
+		Map<String, Attribute> attrs = dd.getAttributes();
+		Attribute[] ctxs = new Attribute[attributes.length];
+		for (int i = 0; i < attributes.length; ++i) {
+			ctxs[i] = attrs.get(attributes[i]);
+		}
+		return ctxs;
+	}
+
+	static protected Object[] inflateDataObjectAttributes(DataObjectContext ctx, XsDataInputStream xsDI, Attribute[] attrs) throws IOException {
+		Object[] vals = new Object[attrs.length];
+
+		InputSource is = new InputSource(new ByteArrayInputStream(xsDI.toByteArray()));
+
+		for (int i = 0; i < attrs.length; ++i) {
+			Attribute attr = attrs[i];
+			QName resultType = XPathConstants.STRING;
+			if (attr.getAttributeType() == AttributeType.DOUBLE) {
+				resultType = XPathConstants.NUMBER;
+			}
+			Object o = null;
+			try {
+				o = XPathFactory.newInstance().newXPath().evaluate("/person/" + attr.getAttributeName() + "/text()", is, resultType);
+			} catch (XPathExpressionException e) {
+				e.printStackTrace();
+			}
+			if (o == null) {
+				o = DataSerializer.SpecialValue.NOT_FOUND;
+			}
+			vals[i] = o;
+		}
+
+		return vals;
 	}
 
 }

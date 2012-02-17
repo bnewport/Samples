@@ -10,6 +10,8 @@
 //
 package com.devwebsphere.wxsutils.filter.set;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +32,12 @@ import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.plugins.index.MapIndex;
+import com.ibm.websphere.objectgrid.plugins.index.MapIndexPlugin;
 import com.ibm.websphere.objectgrid.plugins.index.MapRangeIndex;
+import com.ibm.websphere.objectgrid.plugins.io.MapSerializerPlugin;
+import com.ibm.websphere.objectgrid.plugins.io.SerializerAccessor;
+import com.ibm.websphere.objectgrid.plugins.io.dataobject.DataObjectContext;
+import com.ibm.websphere.objectgrid.plugins.io.dataobject.SerializedEntry;
 
 /**
  * This executes a filtered single index search across all partitions, one partition at a time serially. The filter is
@@ -42,7 +49,8 @@ import com.ibm.websphere.objectgrid.plugins.index.MapRangeIndex;
  * @param <K>
  * @param <V>
  */
-public class GridFilteredIndex<K extends Serializable, V extends Serializable> implements MultipartTask<HashMap<K, V>, HashMap<K, V>> {
+public class GridFilteredIndex<K extends Serializable, V extends Serializable> implements
+		MultipartTask<HashMap<Serializable, Serializable>, HashMap<K, V>> {
 	static Logger logger = Logger.getLogger(GridFilteredIndex.class.getName());
 
 	public enum Operation {
@@ -52,8 +60,33 @@ public class GridFilteredIndex<K extends Serializable, V extends Serializable> i
 	/**
 	 * This is called to convert from the network form to the client form. Its the same in this case.
 	 */
-	public HashMap<K, V> extractResult(HashMap<K, V> rawRC) {
-		return rawRC;
+	public HashMap<K, V> extractResult(HashMap<Serializable, Serializable> rawRC) {
+		SerializerAccessor sa = je.getObjectGrid().getMap(mapName).getSerializerAccessor();
+		MapSerializerPlugin msp = sa.getMapSerializerPlugin();
+		boolean convertKeys = msp != null && msp.getKeySerializerPlugin() != null;
+		boolean convertVals = filter.requiresDataObjectContext();
+		if (convertKeys || convertVals) {
+			DataObjectContext ctx = sa.getDefaultContext();
+			HashMap<K, V> result = new HashMap<K, V>(rawRC.size());
+			for (Map.Entry<Serializable, Serializable> e : rawRC.entrySet()) {
+				K key = getObject(ctx, e.getKey(), convertKeys);
+				V val = getObject(ctx, e.getValue(), convertVals);
+				result.put(key, val);
+			}
+			return result;
+		} else {
+			return (HashMap<K, V>) rawRC;
+		}
+	}
+
+	private <T> T getObject(DataObjectContext ctx, Object o, boolean convert) {
+		if (convert) {
+			SerializedEntry se = (SerializedEntry) o;
+			se.applyContext(ctx);
+			return se.getObject();
+		} else {
+			return (T) o;
+		}
 	}
 
 	/**
@@ -66,7 +99,7 @@ public class GridFilteredIndex<K extends Serializable, V extends Serializable> i
 	 * @param <V>
 	 */
 	static public class GridFilteredIndexSingleTask<K extends Serializable, V extends Serializable> implements
-			SinglePartTask<HashMap<K, V>, HashMap<K, V>> {
+			SinglePartTask<HashMap<Serializable, Serializable>, HashMap<K, V>> {
 		static Logger logger = Logger.getLogger(GridFilteredIndexSingleTask.class.getName());
 		/**
 		 * 
@@ -117,13 +150,13 @@ public class GridFilteredIndex<K extends Serializable, V extends Serializable> i
 		 * This is called to search the index for all entries matching the index criteria and then filter those results
 		 * with the filter.
 		 */
-		public HashMap<K, V> process(Session sess) {
+		public HashMap<Serializable, Serializable> process(Session sess) {
 			try {
 				// wrap session with a WXSUtils
 				WXSUtils utils = new WXSUtils(sess.getObjectGrid());
 				sess = utils.getSessionForThread();
 				sess.setTransactionIsolation(Session.TRANSACTION_READ_COMMITTED);
-				WXSMap<K, V> wMap = utils.getCache(mapName);
+				WXSMap<Serializable, Serializable> wMap = utils.getCache(mapName);
 				ObjectMap map = sess.getMap(mapName);
 				if (filter.requiresDataObjectContext()) {
 					map.setCopyMode(CopyMode.COPY_TO_BYTES_RAW, null);
@@ -137,36 +170,35 @@ public class GridFilteredIndex<K extends Serializable, V extends Serializable> i
 
 				sess.beginNoWriteThrough();
 
-				HashMap<K, V> rc = null;
-				FilteredIndex<K, V> fi = null;
-				FilteredRangeIndex<K, V> fir = null;
-				switch (opCode) {
-				case eq:
-					fi = new FilteredIndex<K, V>(wMap, index);
-					rc = new HashMap<K, V>(fi.eq(value1, filter));
-					break;
-				case lt:
-					fir = new FilteredRangeIndex<K, V>(wMap, rindex);
-					rc = new HashMap<K, V>(fir.lt(value1, filter));
-					break;
-				case lte:
-					fir = new FilteredRangeIndex<K, V>(wMap, rindex);
-					rc = new HashMap<K, V>(fir.lte(value1, filter));
-					break;
-				case gt:
-					fir = new FilteredRangeIndex<K, V>(wMap, rindex);
-					rc = new HashMap<K, V>(fir.gt(value1, filter));
-					break;
-				case gte:
-					fir = new FilteredRangeIndex<K, V>(wMap, rindex);
-					rc = new HashMap<K, V>(fir.gte(value1, filter));
-					break;
-				case btwn:
-					fir = new FilteredRangeIndex<K, V>(wMap, rindex);
-					rc = new HashMap<K, V>(fir.btwn(value1, value2, filter));
-					break;
+				Map<Serializable, Serializable> rc = null;
+				if (opCode == Operation.eq) {
+					FilteredIndex<Serializable, Serializable> fi = new FilteredIndex<Serializable, Serializable>(wMap, index);
+					rc = (indexName.equals(MapIndexPlugin.SYSTEM_KEY_INDEX_NAME)) ? fi.filterAll(filter) : fi.eq(value1, filter);
+				} else {
+					FilteredRangeIndex<Serializable, Serializable> fir = new FilteredRangeIndex<Serializable, Serializable>(wMap, rindex);
+					switch (opCode) {
+					case lt:
+						rc = fir.lt(value1, filter);
+						break;
+					case lte:
+						rc = fir.lte(value1, filter);
+						break;
+					case gt:
+						rc = fir.gt(value1, filter);
+						break;
+					case gte:
+						rc = fir.gte(value1, filter);
+						break;
+					case btwn:
+						rc = fir.btwn(value1, value2, filter);
+						break;
+					}
 				}
-				return rc;
+
+				if (rc instanceof HashMap) {
+					return (HashMap<Serializable, Serializable>) rc;
+				}
+				return new HashMap<Serializable, Serializable>(rc);
 			} catch (Exception e) {
 				logger.log(Level.SEVERE, "Exception", e);
 				throw new ObjectGridRuntimeException(e);
@@ -184,6 +216,13 @@ public class GridFilteredIndex<K extends Serializable, V extends Serializable> i
 			}
 		}
 
+		private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+			ois.defaultReadObject();
+			if (indexName.equals(MapIndexPlugin.SYSTEM_KEY_INDEX_NAME)) {
+				indexName = MapIndexPlugin.SYSTEM_KEY_INDEX_NAME;
+			}
+		}
+
 	}
 
 	String mapName;
@@ -191,7 +230,7 @@ public class GridFilteredIndex<K extends Serializable, V extends Serializable> i
 	Filter filter;
 	Serializable value1, value2;
 	Operation op;
-	JobExecutor<HashMap<K, V>, HashMap<K, V>> je;
+	JobExecutor<HashMap<Serializable, Serializable>, HashMap<K, V>> je;
 
 	/**
 	 * This allows a relational operation against the index and then a filter. Operations allowed are eq/lt/lte/gt/gte.
@@ -211,7 +250,7 @@ public class GridFilteredIndex<K extends Serializable, V extends Serializable> i
 		if (op == Operation.btwn)
 			throw new ObjectGridRuntimeException("Between needs two values");
 		this.value1 = v;
-		je = new JobExecutor<HashMap<K, V>, HashMap<K, V>>(ogclient, this);
+		je = new JobExecutor<HashMap<Serializable, Serializable>, HashMap<K, V>>(ogclient, this);
 	}
 
 	/**
@@ -231,10 +270,11 @@ public class GridFilteredIndex<K extends Serializable, V extends Serializable> i
 		this.op = Operation.btwn;
 		this.value1 = v1;
 		this.value2 = v2;
-		je = new JobExecutor<HashMap<K, V>, HashMap<K, V>>(ogclient, this);
+		je = new JobExecutor<HashMap<Serializable, Serializable>, HashMap<K, V>>(ogclient, this);
 	}
 
-	public SinglePartTask<HashMap<K, V>, HashMap<K, V>> createTaskForPartition(SinglePartTask<HashMap<K, V>, HashMap<K, V>> previousTask) {
+	public SinglePartTask<HashMap<Serializable, Serializable>, HashMap<K, V>> createTaskForPartition(
+			SinglePartTask<HashMap<Serializable, Serializable>, HashMap<K, V>> previousTask) {
 		// prevtask is null when called for first time for a partition
 		if (previousTask == null) {
 			GridFilteredIndexSingleTask<K, V> t = new GridFilteredIndexSingleTask<K, V>(mapName, indexName, filter, op, value1, value2);
@@ -256,7 +296,7 @@ public class GridFilteredIndex<K extends Serializable, V extends Serializable> i
 		return je.getNextResult();
 	}
 
-	public JobExecutor<HashMap<K, V>, HashMap<K, V>> getJE() {
+	public JobExecutor<HashMap<Serializable, Serializable>, HashMap<K, V>> getJE() {
 		return je;
 	}
 }
