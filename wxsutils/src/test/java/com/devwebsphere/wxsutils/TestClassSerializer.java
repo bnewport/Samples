@@ -76,4 +76,23 @@ public class TestClassSerializer {
 		Assert.assertEquals(null, o);
 	}
 
+	static class MyMap<K, V> extends HashMap<K, V> {
+		private static final long serialVersionUID = 1L;
+
+	}
+
+	@Test
+	public void testUserMap() throws IOException {
+		ClassSerializer serializer = new ClassSerializer();
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ObjectOutputStream dos = new ObjectOutputStream(bos);
+		serializer.writeObject(dos, new MyMap<Object, Object>());
+		dos.close();
+		byte[] rawBytes = bos.toByteArray();
+		ByteArrayInputStream bis = new ByteArrayInputStream(rawBytes);
+		ObjectInputStream ois = new ObjectInputStream(bis);
+		Object o = serializer.readObject(ois);
+		Assert.assertNotNull(o);
+		Assert.assertEquals(MyMap.class, o.getClass());
+	}
 }

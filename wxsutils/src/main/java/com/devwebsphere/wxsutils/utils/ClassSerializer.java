@@ -106,43 +106,48 @@ public class ClassSerializer {
 	public void writeObject(ObjectOutput out, Object f) throws IOException {
 		if (f == null) {
 			out.writeByte(NULL);
-		} else if (f instanceof String) {
+			return;
+		}
+
+		Class<?> clazz = f.getClass();
+
+		if (clazz == String.class) {
 			out.writeByte(STRING);
 			out.writeUTF((String) f);
-		} else if (f instanceof ArrayList) {
+		} else if (clazz == ArrayList.class) {
 			out.writeByte(LIST);
-			writeList(out, (List) f);
-		} else if (f instanceof HashMap) {
+			writeList(out, (List<?>) f);
+		} else if (clazz == HashMap.class) {
 			out.writeByte(MAP);
-			writeMap(out, (Map) f);
-		} else if (f instanceof HashSet) {
+			writeMap(out, (Map<?,?>) f);
+		} else if (clazz == HashSet.class) {
 			out.writeByte(SET);
-			writeSet(out, (Set) f);
-		} else if (f instanceof BulkPushItem) {
+			writeSet(out, (Set<?>) f);
+		} else if (clazz == BulkPushItem.class) {
 			out.writeByte(BULKLISTITEM);
-			BulkPushItem b = (BulkPushItem) f;
+			BulkPushItem<?> b = (BulkPushItem<?>) f;
 			b.writeExternal(out);
-		} else if (f instanceof Byte) {
+		} else if (clazz == Byte.class) {
 			out.writeByte(BYTE);
 			out.writeByte(((Byte) f).byteValue());
-		} else if (f instanceof Integer) {
+		} else if (clazz == Integer.class) {
 			out.writeByte(INTEGER);
 			out.writeInt(((Integer) f).intValue());
-		} else if (f instanceof Long) {
+		} else if (clazz == Long.class) {
 			out.writeByte(LONG);
 			out.writeLong(((Long) f).longValue());
-		} else if (f instanceof Float) {
+		} else if (clazz == Float.class) {
 			out.writeByte(FLOAT);
 			out.writeFloat(((Float) f).floatValue());
-		} else if (f instanceof Double) {
+		} else if (clazz == Double.class) {
 			out.writeByte(DOUBLE);
 			out.writeDouble(((Double) f).doubleValue());
-		} else if (f instanceof Timestamp) {
+		} else if (clazz == Timestamp.class) {
 			out.writeByte(TIMESTAMP);
 			Timestamp ts = (Timestamp) f;
 			out.writeLong(ts.getTime());
 			out.writeInt(ts.getNanos());
-		} else if (f instanceof Date) {
+		} else if (clazz == Date.class) {
 			out.writeByte(DATE);
 			out.writeLong(((Date) f).getTime());
 		} else if (f instanceof byte[]) {

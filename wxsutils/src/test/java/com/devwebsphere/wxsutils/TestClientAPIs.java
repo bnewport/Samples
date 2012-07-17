@@ -48,9 +48,8 @@ import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 
 /**
- * This test connects to a grid running on the same box. Use the gettingstarted
- * example with the xml files in this folder. These xmls just add a third Map
- * which doesn't use client side caching.
+ * This test connects to a grid running on the same box. Use the gettingstarted example with the xml files in this
+ * folder. These xmls just add a third Map which doesn't use client side caching.
  * 
  */
 public class TestClientAPIs {
@@ -120,8 +119,7 @@ public class TestClientAPIs {
 
 		TestMapGridAgent agent = new TestMapGridAgent();
 
-		Map<String, Object> rc = WXSMapAgent.callMapAgentAll(utils, agent,
-				bmFarMap3);
+		Map<String, Object> rc = WXSMapAgent.callMapAgentAll(utils, agent, bmFarMap3);
 		Assert.assertEquals(numKeys, rc.size());
 		HashSet<String> keysFound = new HashSet<String>();
 		for (Map.Entry<String, Object> e : rc.entrySet()) {
@@ -191,6 +189,30 @@ public class TestClientAPIs {
 	}
 
 	@Test
+	public void testPutAllSingleItem() {
+		clearMap();
+		Map<String, String> batch = new HashMap<String, String>();
+		batch.put("1", "V1");
+		utils.putAll_noLoader(batch, bmFarMap3);
+
+		ArrayList<String> keys = new ArrayList<String>();
+
+		keys.add("1");
+		Map<String, String> rc = utils.getAll(keys, bmFarMap3);
+
+		for (Map.Entry<String, String> e : rc.entrySet()) {
+			Assert.assertEquals("V" + e.getKey(), e.getValue());
+		}
+
+		utils.removeAll(keys, bmFarMap3);
+		rc = utils.getAll(keys, bmFarMap3);
+
+		for (Map.Entry<String, String> e : rc.entrySet()) {
+			Assert.assertNull(e.getValue());
+		}
+	}
+
+	@Test
 	public void testCond_PutAll() {
 		clearMap();
 		Map<String, String> original = new HashMap<String, String>();
@@ -216,8 +238,7 @@ public class TestClientAPIs {
 		// now make maps same size
 		original.put("10", null); // 10 doesn't exist so only update 10 if 10
 									// doesn't already exist
-		Map<String, Boolean> rc = utils.cond_putAll(original, newValues,
-				bmFarMap3);
+		Map<String, Boolean> rc = utils.cond_putAll(original, newValues, bmFarMap3);
 		Assert.assertNotNull(rc);
 		for (Map.Entry<String, Boolean> e : rc.entrySet()) {
 			Boolean b = rc.get(e.getKey());
@@ -425,8 +446,7 @@ public class TestClientAPIs {
 
 		FilterBuilder fb = new FilterBuilder();
 		Filter falseFilter = new FalseFilter();
-		Filter isBillyFilter = fb.and(fb.eq(firstName, "Billy"),
-				fb.eq(surname, "Newport"));
+		Filter isBillyFilter = fb.and(fb.eq(firstName, "Billy"), fb.eq(surname, "Newport"));
 
 		Person billy = new Person();
 		billy.setFirstName("Billy");
@@ -565,14 +585,12 @@ public class TestClientAPIs {
 			for (int i = 0; i < numListsToTest; ++i) {
 				ArrayList<BulkPushItem<String>> itemsToPush = new ArrayList<BulkPushItem<String>>();
 				for (int j = 0; j < numItemsToPush; ++j)
-					itemsToPush.add(new BulkPushItem<String>("ITEM #" + j
-							+ " for " + i, null));
+					itemsToPush.add(new BulkPushItem<String>("ITEM #" + j + " for " + i, null));
 				bulkItems.put(Integer.toString(i), itemsToPush);
 			}
 			map.rpush(bulkItems, "BULK_DIRTY");
 
-			List<String> dirtySet = FetchJobsFromAllDirtyListsJob
-					.getAllDirtyKeysInGrid(ogclient, "BigList", "BULK_DIRTY");
+			List<String> dirtySet = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", "BULK_DIRTY");
 			Assert.assertEquals(numListsToTest, dirtySet.size());
 
 			for (String dirtyKey : dirtySet) {
@@ -582,8 +600,7 @@ public class TestClientAPIs {
 				Set<String> vset = new HashSet<String>();
 				vset.addAll(v);
 				for (int j = 0; j < numItemsToPush; ++j) {
-					Assert.assertTrue(vset.contains("ITEM #" + j + " for "
-							+ dirtyKey));
+					Assert.assertTrue(vset.contains("ITEM #" + j + " for " + dirtyKey));
 				}
 			}
 		}
@@ -660,17 +677,14 @@ public class TestClientAPIs {
 	}
 
 	public boolean isDirty(String mapName, String dirtyKey, String listKey) {
-		List<String> set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(
-				ogclient, mapName, dirtyKey);
+		List<String> set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, mapName, dirtyKey);
 		return (set.contains(listKey));
 	}
 
 	@Test
 	public void testDirtySet() {
 		String dirtyKey = "DIRTY";
-		WXSMapOfSets<String, String> dirtySetMap = utils
-				.getMapOfSets(WXSMapOfBigListsImpl
-						.getListDirtySetMapName("BigList"));
+		WXSMapOfSets<String, String> dirtySetMap = utils.getMapOfSets(WXSMapOfBigListsImpl.getListDirtySetMapName("BigList"));
 		WXSMapOfLists<String, String> listMap = utils.getMapOfLists("BigList");
 
 		// check set is empty
@@ -723,8 +737,7 @@ public class TestClientAPIs {
 		String dirtyKey = "DIRTY2";
 		WXSMapOfLists<String, String> listMap = utils.getMapOfLists("BigList");
 
-		List<String> set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(
-				ogclient, "BigList", dirtyKey);
+		List<String> set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
 		Assert.assertEquals(0, set.size());
 
 		int numKeys = 10;
@@ -735,14 +748,12 @@ public class TestClientAPIs {
 			listMap.lpush(key, "HELLO" + i, dirtyKey);
 		}
 
-		set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient,
-				"BigList", dirtyKey);
+		set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
 		Assert.assertEquals(keys.size(), set.size());
 
 		int jobCounter = numKeys;
 		while (true) {
-			set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient,
-					"BigList", dirtyKey);
+			set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
 
 			if (set != null) {
 				if (set.size() == 0)
@@ -770,8 +781,7 @@ public class TestClientAPIs {
 		String dirtyKey = "DIRTY3";
 		WXSMapOfLists<String, String> listMap = utils.getMapOfLists("BigList");
 
-		List<String> set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(
-				ogclient, "BigList", dirtyKey);
+		List<String> set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey);
 		Assert.assertEquals(0, set.size());
 
 		int numKeys = 10;
@@ -785,32 +795,28 @@ public class TestClientAPIs {
 		}
 
 		// get keys with lock for 10 seconds
-		set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient,
-				"BigList", dirtyKey, 10000L); // lease
-												// is
-												// 10
-												// seconds
+		set = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease
+																											// is
+																											// 10
+																											// seconds
 		Assert.assertEquals(keys.size(), set.size());
 
 		// get them again during lock period, should get none
-		List<String> set2 = FetchJobsFromAllDirtyListsJob
-				.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease
-																				// is
-																				// 10
-																				// seconds
+		List<String> set2 = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease
+																														// is
+																														// 10
+																														// seconds
 		Assert.assertEquals(0, set2.size());
 
-		System.out
-				.println("Waiting 20 seconds for lock to expire, don't panic...");
+		System.out.println("Waiting 20 seconds for lock to expire, don't panic...");
 		// wait for lock to expire
 		Thread.sleep(20000L);
 
 		// fetch again and they should be there
-		set2 = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient,
-				"BigList", dirtyKey, 10000L); // lease
-												// is
-												// 10
-												// seconds
+		set2 = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease
+																											// is
+																											// 10
+																											// seconds
 		Assert.assertEquals(keys.size(), set2.size());
 		// unlock first key
 		String firstKey = set2.get(0);
@@ -819,11 +825,10 @@ public class TestClientAPIs {
 		Assert.assertFalse(listMap.isEmpty(firstKey));
 		Assert.assertEquals(1, numItems);
 		// fetch again and only that key should be there
-		set2 = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient,
-				"BigList", dirtyKey, 10000L); // lease
-												// is
-												// 10
-												// seconds
+		set2 = FetchJobsFromAllDirtyListsJob.getAllDirtyKeysInGrid(ogclient, "BigList", dirtyKey, 10000L); // lease
+																											// is
+																											// 10
+																											// seconds
 		Assert.assertEquals(1, set2.size());
 		Assert.assertEquals(firstKey, set2.get(0));
 	}
@@ -831,14 +836,12 @@ public class TestClientAPIs {
 	@Test
 	public void testPingAllPartitions() {
 		int partitionCount = PingAllPartitionsJob.visitAllPartitions(ogclient);
-		Assert.assertEquals(ogclient.getMap("Set").getPartitionManager()
-				.getNumOfPartitions(), partitionCount);
+		Assert.assertEquals(ogclient.getMap("Set").getPartitionManager().getNumOfPartitions(), partitionCount);
 	}
 
 	@Test
 	public void testListEviction() {
-		WXSMapOfLists<String, String> list = utils
-				.getMapOfLists("EvictionList");
+		WXSMapOfLists<String, String> list = utils.getMapOfLists("EvictionList");
 
 		list.lpush("1", "12");
 		list.evict("1", EvictionType.FIXED, 30);
@@ -849,15 +852,12 @@ public class TestClientAPIs {
 		final String dirtyKey = "DIRTY_MULTI_THREAD";
 		final String key = "M";
 		final String listName = "BigList";
-		final WXSMapOfLists<String, String> listMap = utils
-				.getMapOfLists(listName);
-		final String listHeadMapName = WXSMapOfBigListsImpl
-				.getListHeadMapName(listName);
+		final WXSMapOfLists<String, String> listMap = utils.getMapOfLists(listName);
+		final String listHeadMapName = WXSMapOfBigListsImpl.getListHeadMapName(listName);
 		int numPushers = 200;
 		final int numKeys = 1000;
 		final int numPushesPerPusher = 500;
-		final CountDownLatch counter = new CountDownLatch(numPushers
-				* numPushesPerPusher);
+		final CountDownLatch counter = new CountDownLatch(numPushers * numPushesPerPusher);
 
 		final Map<String, AtomicLong> keyPushCounters = new HashMap<String, AtomicLong>();
 		for (int i = 0; i < numKeys; ++i) {
@@ -869,8 +869,8 @@ public class TestClientAPIs {
 				try {
 					while (counter.getCount() > 0) {
 						// make a FetchJob to scan grid for dirty keys
-						FetchJobsFromAllDirtyListsJob<String, String> job = new FetchJobsFromAllDirtyListsJob<String, String>(
-								ogclient, listHeadMapName, dirtyKey);
+						FetchJobsFromAllDirtyListsJob<String, String> job = new FetchJobsFromAllDirtyListsJob<String, String>(ogclient,
+								listHeadMapName, dirtyKey);
 
 						ArrayList<DirtyKey<String>> r = null;
 						// get the next block of dirty list keys
@@ -879,21 +879,16 @@ public class TestClientAPIs {
 						while ((r = job.getNextResult()) != null) {
 							for (DirtyKey<String> dk : r) {
 								String aKey = dk.getValue();
-								ArrayList<String> pList = listMap.popAll(aKey,
-										dirtyKey);
+								ArrayList<String> pList = listMap.popAll(aKey, dirtyKey);
 								if (pList != null && pList.size() > 0) {
-									System.out.println("Pulled " + pList.size()
-											+ " from " + aKey
-											+ ": Remaining = "
-											+ counter.getCount());
+									System.out.println("Pulled " + pList.size() + " from " + aKey + ": Remaining = " + counter.getCount());
 									// count down for each job retrieved
 									for (String s : pList) {
 										// value MUST be same as key
 										Assert.assertEquals(aKey, s);
 										// one less value for this list and
 										// sanity check
-										Assert.assertTrue(keyPushCounters.get(
-												aKey).decrementAndGet() >= 0);
+										Assert.assertTrue(keyPushCounters.get(aKey).decrementAndGet() >= 0);
 										counter.countDown();
 									}
 								}
@@ -967,15 +962,12 @@ public class TestClientAPIs {
 		final String dirtyKey = "DIRTY4";
 		final String key = "N";
 		final String listName = "BigList";
-		final WXSMapOfLists<String, String> listMap = utils
-				.getMapOfLists(listName);
+		final WXSMapOfLists<String, String> listMap = utils.getMapOfLists(listName);
 		int numPushers = 50;
 		final int numKeys = 20;
 		final int numPushesPerPusher = 100;
-		final CountDownLatch counter = new CountDownLatch(numPushers
-				* numPushesPerPusher);
-		final String listHeadMapName = WXSMapOfBigListsImpl
-				.getListHeadMapName(listName);
+		final CountDownLatch counter = new CountDownLatch(numPushers * numPushesPerPusher);
+		final String listHeadMapName = WXSMapOfBigListsImpl.getListHeadMapName(listName);
 
 		final Map<String, AtomicLong> keyPushCounters = new HashMap<String, AtomicLong>();
 		for (int i = 0; i < numKeys; ++i) {
@@ -988,8 +980,8 @@ public class TestClientAPIs {
 					// while there are list elements remaining
 					while (counter.getCount() > 0) {
 						// make a FetchJob to scan grid for dirty keys
-						FetchJobsFromAllDirtyListsJob<String, String> job = new FetchJobsFromAllDirtyListsJob<String, String>(
-								ogclient, listHeadMapName, dirtyKey);
+						FetchJobsFromAllDirtyListsJob<String, String> job = new FetchJobsFromAllDirtyListsJob<String, String>(ogclient,
+								listHeadMapName, dirtyKey);
 						job.setLeaseTimeMS(100L /* ms */);
 
 						ArrayList<DirtyKey<String>> r = null;
@@ -1001,15 +993,12 @@ public class TestClientAPIs {
 								String aKey = dk.getValue();
 								String aValue = listMap.rpop(aKey, dirtyKey);
 								if (aValue != null) {
-									System.out.println("Pulled from " + aKey
-											+ ": Remaining = "
-											+ counter.getCount());
+									System.out.println("Pulled from " + aKey + ": Remaining = " + counter.getCount());
 									// value MUST be same as key
 									Assert.assertEquals(aKey, aValue);
 									// one less value for this list and sanity
 									// check
-									Assert.assertTrue(keyPushCounters.get(aKey)
-											.decrementAndGet() >= 0);
+									Assert.assertTrue(keyPushCounters.get(aKey).decrementAndGet() >= 0);
 									counter.countDown();
 								}
 							}
@@ -1082,10 +1071,8 @@ public class TestClientAPIs {
 		final String dirtyKey = "DIRTY_MAXKEYS";
 		final String key = "N";
 		final String listName = "BigList";
-		final WXSMapOfLists<String, String> listMap = utils
-				.getMapOfLists(listName);
-		final String listHeadMapName = WXSMapOfBigListsImpl
-				.getListHeadMapName(listName);
+		final WXSMapOfLists<String, String> listMap = utils.getMapOfLists(listName);
+		final String listHeadMapName = WXSMapOfBigListsImpl.getListHeadMapName(listName);
 
 		HashSet<String> allKeys = new HashSet<String>();
 		final int totalKeys = 5000;
@@ -1095,8 +1082,7 @@ public class TestClientAPIs {
 			allKeys.add(aKey);
 		}
 
-		FetchJobsFromAllDirtyListsJob<String, String> job = new FetchJobsFromAllDirtyListsJob<String, String>(
-				ogclient, listHeadMapName, dirtyKey);
+		FetchJobsFromAllDirtyListsJob<String, String> job = new FetchJobsFromAllDirtyListsJob<String, String>(ogclient, listHeadMapName, dirtyKey);
 		job.setLeaseTimeMS(100L /* ms */);
 
 		ArrayList<DirtyKey<String>> r = null;
@@ -1130,10 +1116,8 @@ public class TestClientAPIs {
 		final String dirtyKey = "DIRTY_LEASEDKEYS";
 		final String key = "N";
 		final String listName = "BigList";
-		final WXSMapOfLists<String, String> listMap = utils
-				.getMapOfLists(listName);
-		final String listHeadMapName = WXSMapOfBigListsImpl
-				.getListHeadMapName(listName);
+		final WXSMapOfLists<String, String> listMap = utils.getMapOfLists(listName);
+		final String listHeadMapName = WXSMapOfBigListsImpl.getListHeadMapName(listName);
 
 		HashSet<String> allKeys = new HashSet<String>();
 		final int totalKeys = 5;
@@ -1144,8 +1128,7 @@ public class TestClientAPIs {
 			allKeys.add(aKey);
 		}
 
-		FetchJobsFromAllDirtyListsJob<String, String> job = new FetchJobsFromAllDirtyListsJob<String, String>(
-				ogclient, listHeadMapName, dirtyKey);
+		FetchJobsFromAllDirtyListsJob<String, String> job = new FetchJobsFromAllDirtyListsJob<String, String>(ogclient, listHeadMapName, dirtyKey);
 		job.setLeaseTimeMS(5000L /* ms */);
 		List<DirtyKey<String>> r1 = getOneKey(job);
 		Assert.assertNotNull(r1);
@@ -1170,8 +1153,7 @@ public class TestClientAPIs {
 		Assert.assertEquals(blen, alen);
 	}
 
-	private List<DirtyKey<String>> getOneKey(
-			FetchJobsFromAllDirtyListsJob<String, String> job) {
+	private List<DirtyKey<String>> getOneKey(FetchJobsFromAllDirtyListsJob<String, String> job) {
 		List<DirtyKey<String>> r = Collections.emptyList();
 		while (r != null) {
 			r = job.getNextResult(1);
