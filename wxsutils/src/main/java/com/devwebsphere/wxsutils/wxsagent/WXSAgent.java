@@ -85,7 +85,7 @@ public class WXSAgent {
 			Integer partitionId = baseMap.getPartitionManager().getPartition(e.getKey());
 			SortedMap<K1, V1> listEntries = entriesForPartition.get(partitionId);
 			if (listEntries == null) {
-				listEntries = new TreeMap<K1, V1>();
+				listEntries = new TreeMap<K1, V1>(comparator);
 				entriesForPartition.put(partitionId, listEntries);
 			}
 			listEntries.put(e.getKey(), e.getValue());

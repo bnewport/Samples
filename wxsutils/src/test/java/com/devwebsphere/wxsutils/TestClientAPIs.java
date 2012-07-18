@@ -17,6 +17,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
@@ -212,6 +214,40 @@ public class TestClientAPIs {
 		}
 	}
 
+	@Test
+	public void testPutAllNotComparable() {
+		clearMap();
+		for (int k = 0; k < 10; ++k) {
+			int base = k * 1000;
+			Map<SerializedKey, String> batch = new TreeMap<SerializedKey, String>(SerializedKey.COMPARATOR);
+			for (int i = base; i < base + 1000; ++i) {
+				batch.put(new SerializedKey("" + i), "V" + i);
+			}
+			utils.putAll(batch, bmFarMap3);
+		}
+
+		for (int k = 0; k < 10; ++k) {
+			int base = k * 1000;
+			TreeSet<SerializedKey> keys = new TreeSet<SerializedKey>(SerializedKey.COMPARATOR);
+			for (int i = base; i < base + 1000; ++i) {
+				keys.add(new SerializedKey("" + i));
+			}
+			Map<SerializedKey, String> rc = utils.getAll(keys, bmFarMap3);
+
+			for (Map.Entry<SerializedKey, String> e : rc.entrySet()) {
+				Assert.assertEquals("V" + e.getKey().id, e.getValue());
+			}
+
+			utils.removeAll(keys, bmFarMap3);
+			rc = utils.getAll(keys, bmFarMap3);
+
+			for (Map.Entry<SerializedKey, String> e : rc.entrySet()) {
+				Assert.assertNull(e.getValue());
+			}
+		}
+	}
+
+	
 	@Test
 	public void testCond_PutAll() {
 		clearMap();
