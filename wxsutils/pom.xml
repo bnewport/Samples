@@ -4,11 +4,11 @@
 	<groupId>com.billynewport.wxsutils</groupId>
 	<artifactId>wxsutils</artifactId>
 	<packaging>jar</packaging>
-	<version>2.6.1-SNAPSHOT</version>
+	<version>2.7.0-SNAPSHOT</version>
 	<name>wxsutils</name>
 	<url>http://maven.apache.org</url>
 	<properties>
-		<objectgrid.version>7.1.1</objectgrid.version>
+		<objectgrid.version>8.5.0.1</objectgrid.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -55,7 +55,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.0.2</version>
+				<version>2.5.1</version>
 				<configuration>
 					<source>1.6</source>
 					<target>1.6</target>
@@ -64,14 +64,14 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.9</version>
+				<version>2.12</version>
 				<configuration>
 					<forkMode>always</forkMode>
 				</configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.3.1</version>
+				<version>2.4</version>
 				<configuration>
 					<archive>
 						<manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF
@@ -119,7 +119,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.6.1</version>
+				<version>2.8.1</version>
 				<configuration>
 					<show>public</show>
 					<nohelp>true</nohelp>
@@ -135,7 +135,7 @@
 					<plugin>
 						<groupId>org.codehaus.mojo</groupId>
 						<artifactId>exec-maven-plugin</artifactId>
-						<version>1.1.1</version>
+						<version>1.2.1</version>
 						<executions>
 							<execution>
 								<phase>test</phase>
