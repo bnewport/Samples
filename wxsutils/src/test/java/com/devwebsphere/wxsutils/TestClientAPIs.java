@@ -247,7 +247,6 @@ public class TestClientAPIs {
 		}
 	}
 
-	
 	@Test
 	public void testCond_PutAll() {
 		clearMap();
@@ -291,6 +290,26 @@ public class TestClientAPIs {
 			} else {
 				Assert.assertEquals("DIFFERENT", v);
 			}
+		}
+	}
+
+	@Test
+	public void testFailedInsertAll() {
+		clearMap();
+		Map<String, String> batch = new HashMap<String, String>();
+		for (int k = 0; k < 10; ++k) {
+			batch.put("" + k, "V" + k);
+		}
+		utils.insertAll(batch, bmFarMap3);
+		try {
+			utils.insertAll(batch, bmFarMap3);
+			Assert.fail("Should have thrown exception");
+		} catch (ObjectGridRuntimeException e) {
+			Throwable cause = e.getCause();
+			Assert.assertSame("Wrong nested exception", FailedKeysException.class, cause.getClass());
+			FailedKeysException fke = (FailedKeysException) cause;
+			Set<String> keys = fke.getKeys();
+			Assert.assertEquals("Wrong size", batch.size(), keys.size());
 		}
 	}
 

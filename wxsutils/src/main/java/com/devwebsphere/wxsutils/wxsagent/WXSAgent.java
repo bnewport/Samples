@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxsutils.FailedKeysException;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
@@ -173,11 +174,20 @@ public class WXSAgent {
 	 * @return true if all Agents returned true
 	 */
 	static public <V> boolean areAllFutures(V expected, Collection<Future<V>> results, long timeout) {
+		FailedKeysException failedKeys = null;
 		try {
 			for (Future<V> f : results) {
 				long start = System.nanoTime();
-				if (!checkReturnValue(expected, f.get(timeout, TimeUnit.NANOSECONDS))) {
-					return false;
+				try {
+					if (!checkReturnValue(expected, f.get(timeout, TimeUnit.NANOSECONDS))) {
+						return false;
+					}
+				} catch (FailedKeysException fe) {
+					if (failedKeys == null) {
+						failedKeys = fe;
+					} else {
+						failedKeys.combine(fe);
+					}
 				}
 				long end = System.nanoTime();
 				timeout -= (end - start);
@@ -187,14 +197,24 @@ public class WXSAgent {
 			throw new ObjectGridRuntimeException(e);
 		}
 
+		if (failedKeys != null) {
+			logger.log(Level.SEVERE, "Remote exception: " + failedKeys);
+			throw new ObjectGridRuntimeException("Multiple agent failures", failedKeys);
+		}
+
 		return true;
 	}
 
-	static public <V> boolean checkReturnValue(V expected, Object rc) {
-		if (rc != null && rc instanceof EntryErrorValue) {
-			EntryErrorValue ev = (EntryErrorValue) rc;
-			logger.log(Level.SEVERE, "Remote exception: " + ev.toString());
-			throw new ObjectGridRuntimeException(ev.toString());
+	static public <V> boolean checkReturnValue(V expected, Object rc) throws FailedKeysException {
+		if (rc != null) {
+			if (rc instanceof EntryErrorValue) {
+				EntryErrorValue ev = (EntryErrorValue) rc;
+				logger.log(Level.SEVERE, "Remote exception: " + ev.toString());
+				throw new ObjectGridRuntimeException(ev.toString());
+			}
+			if (rc instanceof FailedKeysException) {
+				throw (FailedKeysException) rc;
+			}
 		}
 
 		return expected.equals(rc);

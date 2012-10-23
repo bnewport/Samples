@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxsutils.FailedKeysException;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.utils.ClassSerializer;
@@ -153,7 +154,7 @@ public class InsertAgent<K extends Serializable, V extends Serializable> impleme
 		boolean rc = true;
 		for (Object o : arg0) {
 			if (o instanceof EntryErrorValue) {
-				return o;
+				return new FailedKeysException((EntryErrorValue) o, batch.keySet());
 			}
 			if (o instanceof Boolean) {
 				Boolean b = (Boolean) o;
