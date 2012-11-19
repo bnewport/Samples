@@ -13,6 +13,7 @@ package com.devwebsphere.wxsutils.wxsmap;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -101,7 +102,7 @@ public class WXSMapImpl<K extends Serializable, V extends Serializable> extends 
 		try {
 			InsertAgent<K, V> a = new InsertAgent<K, V>();
 			a.doGet = true;
-			a.batch = new TreeMap<K, V>();
+			a.batch = new HashMap<K, V>();
 			a.batch.put(k, v);
 			a.isWriteThrough = true;
 			Object o = tls.getMap(mapName).getAgentManager().callReduceAgent(a, Collections.singletonList(k));

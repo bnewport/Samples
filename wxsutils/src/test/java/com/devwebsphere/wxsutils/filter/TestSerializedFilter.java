@@ -12,6 +12,7 @@ package com.devwebsphere.wxsutils.filter;
 //
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,7 +29,6 @@ import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.plugins.index.MapIndexPlugin;
-import com.ibm.ws.xs.jdk5.java.util.Arrays;
 
 /**
  * This test connects to a grid running on the same box. Use the gettingstarted example with the xml files in this

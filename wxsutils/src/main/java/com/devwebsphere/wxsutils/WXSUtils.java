@@ -59,12 +59,12 @@ import com.ibm.websphere.objectgrid.ObjectGridManagerFactory;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
+import com.ibm.websphere.objectgrid.TargetNotAvailableException;
 import com.ibm.websphere.objectgrid.TransactionException;
 import com.ibm.websphere.objectgrid.deployment.DeploymentPolicy;
 import com.ibm.websphere.objectgrid.deployment.DeploymentPolicyFactory;
 import com.ibm.websphere.objectgrid.server.Container;
 import com.ibm.websphere.objectgrid.server.ServerFactory;
-import com.ibm.ws.objectgrid.cluster.ServiceUnavailableException;
 
 /**
  * This is a utility class. Each instance is associated with a thread pool and a specific client ObjectGrid connection.
@@ -670,7 +670,7 @@ public class WXSUtils {
 			logger.fine("is Exeption Retryable: " + e);
 			if ((e instanceof ObjectGridException)
 					&& (e instanceof ClientServerLoaderException || e instanceof TransactionException
-							|| e instanceof com.ibm.websphere.objectgrid.ReplicationVotedToRollbackTransactionException || e instanceof ServiceUnavailableException)) {
+							|| e instanceof com.ibm.websphere.objectgrid.ReplicationVotedToRollbackTransactionException || e instanceof TargetNotAvailableException)) {
 				rc = true;
 			}
 		}
