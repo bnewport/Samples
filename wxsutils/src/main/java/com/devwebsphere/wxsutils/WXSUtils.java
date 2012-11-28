@@ -63,8 +63,10 @@ import com.ibm.websphere.objectgrid.TargetNotAvailableException;
 import com.ibm.websphere.objectgrid.TransactionException;
 import com.ibm.websphere.objectgrid.deployment.DeploymentPolicy;
 import com.ibm.websphere.objectgrid.deployment.DeploymentPolicyFactory;
+import com.ibm.websphere.objectgrid.server.CatalogServerProperties;
 import com.ibm.websphere.objectgrid.server.Container;
 import com.ibm.websphere.objectgrid.server.ServerFactory;
+import com.ibm.websphere.objectgrid.server.ServerProperties;
 
 /**
  * This is a utility class. Each instance is associated with a thread pool and a specific client ObjectGrid connection.
@@ -462,13 +464,17 @@ public class WXSUtils {
 		try {
 			// start a collocated catalog server which makes developing
 			// in an IDE much easier.
-			ServerFactory.getCatalogProperties().setCatalogClusterEndpoints(cep);
-			ServerFactory.getCatalogProperties().setCatalogServer(true);
-			ServerFactory.getCatalogProperties().setQuorum(false);
-			ServerFactory.getServerProperties().setServerName(catName);
-			ServerFactory.getServerProperties().setSystemStreamsToFileEnabled(false); // output goes to console, not a
-																						// file
-			ServerFactory.getServerProperties().setMinimumThreadPoolSize(50);
+			CatalogServerProperties catalogProps = ServerFactory.getCatalogProperties();
+			catalogProps.setCatalogClusterEndpoints(cep);
+			catalogProps.setCatalogServer(true);
+			catalogProps.setQuorum(false);
+			catalogProps.setTransport(CatalogServerProperties.XIO_TRANSPORT);
+
+			ServerProperties serverProps = ServerFactory.getServerProperties();
+			serverProps.setServerName(catName);
+			serverProps.setSystemStreamsToFileEnabled(false); // output goes to console, not a
+																// file
+			serverProps.setMinimumThreadPoolSize(50);
 
 			// this starts the server
 			com.ibm.websphere.objectgrid.server.Server server = ServerFactory.getInstance();
