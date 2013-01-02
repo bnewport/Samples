@@ -67,6 +67,7 @@
 				<version>2.12</version>
 				<configuration>
 					<forkMode>always</forkMode>
+					<enableAssertions>false</enableAssertions>
 				</configuration>
 			</plugin>
 			<plugin>

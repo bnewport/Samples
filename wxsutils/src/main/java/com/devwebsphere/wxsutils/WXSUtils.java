@@ -461,6 +461,10 @@ public class WXSUtils {
 	 * @see WXSUtils#startTestServer(String, String, String)
 	 */
 	public static void startCatalogServer(String cep, String catName) {
+		startCatalogServer(cep, catName, CatalogServerProperties.XIO_TRANSPORT);
+	}
+	
+	public static void startCatalogServer(String cep, String catName, String transport) {
 		try {
 			// start a collocated catalog server which makes developing
 			// in an IDE much easier.
@@ -468,14 +472,15 @@ public class WXSUtils {
 			catalogProps.setCatalogClusterEndpoints(cep);
 			catalogProps.setCatalogServer(true);
 			catalogProps.setQuorum(false);
-			catalogProps.setTransport(CatalogServerProperties.XIO_TRANSPORT);
+			catalogProps.setTransport(transport);
 
 			ServerProperties serverProps = ServerFactory.getServerProperties();
 			serverProps.setServerName(catName);
 			serverProps.setSystemStreamsToFileEnabled(false); // output goes to console, not a
 																// file
 			serverProps.setMinimumThreadPoolSize(50);
-
+			//serverProps.setTraceFileName("/tmp/orb.trace");
+			//serverProps.setTraceSpecification("ObjectGridDataGrid=all:ObjectGridXIO=all");
 			// this starts the server
 			com.ibm.websphere.objectgrid.server.Server server = ServerFactory.getInstance();
 		} catch (Exception e) {

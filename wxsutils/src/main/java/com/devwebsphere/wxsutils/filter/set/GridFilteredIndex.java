@@ -25,11 +25,13 @@ import com.devwebsphere.wxsutils.multijob.JobExecutor;
 import com.devwebsphere.wxsutils.multijob.MultipartTask;
 import com.devwebsphere.wxsutils.multijob.SinglePartTask;
 import com.devwebsphere.wxsutils.wxsmap.SessionPool;
+import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.CopyMode;
 import com.ibm.websphere.objectgrid.ObjectGrid;
 import com.ibm.websphere.objectgrid.ObjectGridException;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.ObjectMap;
+import com.ibm.websphere.objectgrid.OutputFormat;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.plugins.index.MapIndex;
 import com.ibm.websphere.objectgrid.plugins.index.MapIndexPlugin;
@@ -61,7 +63,9 @@ public class GridFilteredIndex<K extends Serializable, V extends Serializable> i
 	 * This is called to convert from the network form to the client form. Its the same in this case.
 	 */
 	public HashMap<K, V> extractResult(HashMap<Serializable, Serializable> rawRC) {
-		SerializerAccessor sa = je.getObjectGrid().getMap(mapName).getSerializerAccessor();
+		BackingMap bmap = je.getObjectGrid().getMap(mapName);
+		SerializerAccessor sa = bmap.getSerializerAccessor();
+
 		MapSerializerPlugin msp = sa.getMapSerializerPlugin();
 		boolean convertKeys = msp != null && msp.getKeySerializerPlugin() != null;
 		boolean convertVals = filter.requiresDataObjectContext();
@@ -158,6 +162,14 @@ public class GridFilteredIndex<K extends Serializable, V extends Serializable> i
 				sess.setTransactionIsolation(Session.TRANSACTION_READ_COMMITTED);
 				WXSMap<Serializable, Serializable> wMap = utils.getCache(mapName);
 				ObjectMap map = sess.getMap(mapName);
+
+				// set the key output -- if we have a key serializer
+				SerializerAccessor sa = utils.getObjectGrid().getMap(mapName).getSerializerAccessor();
+				if (sa != null && sa.getMapSerializerPlugin().getKeySerializerPlugin() != null) {
+					map.setKeyOutputFormat(OutputFormat.RAW);
+				}
+
+				// set the value output
 				if (filter.requiresDataObjectContext()) {
 					map.setCopyMode(CopyMode.COPY_TO_BYTES_RAW, null);
 				}

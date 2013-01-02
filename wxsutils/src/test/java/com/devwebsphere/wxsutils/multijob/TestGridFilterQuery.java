@@ -25,6 +25,7 @@ import com.devwebsphere.wxsutils.filter.Filter;
 import com.devwebsphere.wxsutils.filter.FilterBuilder;
 import com.devwebsphere.wxsutils.filter.ValuePath;
 import com.devwebsphere.wxsutils.filter.path.PojoPropertyPath;
+import com.devwebsphere.wxsutils.filter.path.SerializedValuePath;
 import com.devwebsphere.wxsutils.filter.set.GridFilteredIndex;
 import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGrid;
@@ -92,7 +93,8 @@ public class TestGridFilterQuery
 		}
 
 		// keep only people with credit limit under a million;
-		ValuePath creditLimitPath = new PojoPropertyPath("CreditLimit");
+		//ValuePath creditLimitPath = new PojoPropertyPath("CreditLimit");
+		ValuePath creditLimitPath = new SerializedValuePath("CreditLimit");
 		Double desiredMaxCreditLimit = 1000000.0;
 		Filter f = FilterBuilder.lt(creditLimitPath, desiredMaxCreditLimit);
 
