@@ -13,10 +13,8 @@ package com.devwebsphere.wxsutils.wxsmap;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -100,19 +98,7 @@ public class WXSMapImpl<K extends Serializable, V extends Serializable> extends 
 		WXSMapMBeanImpl mbean = WXSUtils.getWXSMapMBeanManager().getBean(grid.getName(), mapName);
 		long start = System.nanoTime();
 		try {
-			InsertAgent<K, V> a = new InsertAgent<K, V>();
-			a.doGet = true;
-			a.batch = new HashMap<K, V>();
-			a.batch.put(k, v);
-			a.isWriteThrough = true;
-			Object o = tls.getMap(mapName).getAgentManager().callReduceAgent(a, Collections.singletonList(k));
-			if (o instanceof Boolean) {
-				Boolean b = (Boolean) o;
-				if (!b) {
-					logger.log(Level.SEVERE, "put(K,V) failed");
-					throw new ObjectGridRuntimeException("put failed");
-				}
-			}
+			tls.getMap(mapName).upsert(k, v);
 			mbean.getPutMetrics().logTime(System.nanoTime() - start);
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "Exception", e);

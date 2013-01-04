@@ -79,6 +79,7 @@ public class TestClientAPIs {
 		try {
 			ogclient.getSession().getMap("FarMap3").clear();
 		} catch (ObjectGridException e) {
+			e.printStackTrace();
 			Assert.fail("Exception during clear");
 		}
 	}

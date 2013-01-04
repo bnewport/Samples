@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -36,6 +37,7 @@ import com.devwebsphere.wxsutils.jmx.loader.LoaderMBeanManager;
 import com.devwebsphere.wxsutils.jmx.wxsmap.WXSMapMBeanManager;
 import com.devwebsphere.wxsutils.utils.ClassSerializer;
 import com.devwebsphere.wxsutils.wxsagent.WXSAgent;
+import com.devwebsphere.wxsutils.wxsagent.WXSLocalReduceAgent;
 import com.devwebsphere.wxsutils.wxsagent.WXSReduceAgent;
 import com.devwebsphere.wxsutils.wxsmap.ConditionalPutAgent;
 import com.devwebsphere.wxsutils.wxsmap.ContainsAllAgent;
@@ -45,6 +47,7 @@ import com.devwebsphere.wxsutils.wxsmap.InvalidateAgent;
 import com.devwebsphere.wxsutils.wxsmap.LazyMBeanManagerAtomicReference;
 import com.devwebsphere.wxsutils.wxsmap.RemoveAgent;
 import com.devwebsphere.wxsutils.wxsmap.ThreadLocalSession;
+import com.devwebsphere.wxsutils.wxsmap.UpsertAgent;
 import com.devwebsphere.wxsutils.wxsmap.WXSBaseMap;
 import com.devwebsphere.wxsutils.wxsmap.WXSMapImpl;
 import com.devwebsphere.wxsutils.wxsmap.WXSMapOfBigListsImpl;
@@ -351,7 +354,8 @@ public class WXSUtils {
 	 *            The map to store them in.
 	 */
 	public <K extends Serializable, V extends Serializable> void putAll(Map<K, V> batch, BackingMap bmap) {
-		internalPutAll(batch, bmap, true, true);
+		UpsertAgent.Factory<K, V> f = new UpsertAgent.Factory<K, V>(true);
+		WXSLocalReduceAgent.callReduceAgentAll(this, f, batch, bmap, Boolean.TRUE);
 	}
 
 	/**
@@ -463,7 +467,7 @@ public class WXSUtils {
 	public static void startCatalogServer(String cep, String catName) {
 		startCatalogServer(cep, catName, CatalogServerProperties.XIO_TRANSPORT);
 	}
-	
+
 	public static void startCatalogServer(String cep, String catName, String transport) {
 		try {
 			// start a collocated catalog server which makes developing
@@ -479,8 +483,8 @@ public class WXSUtils {
 			serverProps.setSystemStreamsToFileEnabled(false); // output goes to console, not a
 																// file
 			serverProps.setMinimumThreadPoolSize(50);
-			//serverProps.setTraceFileName("/tmp/orb.trace");
-			//serverProps.setTraceSpecification("ObjectGridDataGrid=all:ObjectGridXIO=all");
+			// serverProps.setTraceFileName("/tmp/orb.trace");
+			// serverProps.setTraceSpecification("ObjectGridDataGrid=all:ObjectGridXIO=all");
 			// this starts the server
 			com.ibm.websphere.objectgrid.server.Server server = ServerFactory.getInstance();
 		} catch (Exception e) {
@@ -853,5 +857,4 @@ public class WXSUtils {
 	public ConfigProperties getConfigProperties() {
 		return configProps;
 	}
-
 }
