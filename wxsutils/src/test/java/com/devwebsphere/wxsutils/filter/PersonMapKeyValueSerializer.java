@@ -1,6 +1,7 @@
 package com.devwebsphere.wxsutils.filter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import com.ibm.websphere.objectgrid.BackingMap;
@@ -12,7 +13,6 @@ import com.ibm.websphere.objectgrid.plugins.io.datadescriptor.AttributeType;
 import com.ibm.websphere.objectgrid.plugins.io.datadescriptor.DataDescriptorFactory;
 import com.ibm.websphere.objectgrid.plugins.io.datadescriptor.KeyDataDescriptor;
 import com.ibm.websphere.objectgrid.plugins.io.dataobject.DataObjectContext;
-import com.ibm.ws.xs.jdk5.java.util.Arrays;
 
 public class PersonMapKeyValueSerializer extends PersonMapValueSerializer {
 

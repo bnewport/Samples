@@ -1146,9 +1146,7 @@ public class TestClientAPIs {
 		// when r is null then the whole grid has been checked
 		int numDesiredKeys = 2;
 		int keyIdx = 0;
-		int loopCnt = 0;
 		while ((r = job.getNextResult(numDesiredKeys)) != null) {
-			loopCnt++;
 			Assert.assertTrue("Wrong size", r.size() <= numDesiredKeys);
 			for (DirtyKey<String> dk : r) {
 				String aKey = dk.getValue();

@@ -5,10 +5,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +40,12 @@ public class WXSReduceAgent extends WXSAgent {
 
 		Map<Integer, List<K>> pmap = convertToPartitionEntryMap(bmap, keys);
 
-		Map<K, A> agents = new HashMap<K, A>(pmap.size());
+		Comparator<? super K> comparator = null;
+		if (keys instanceof SortedSet) {
+			comparator = ((SortedSet<K>) keys).comparator();
+		}
+		Map<K, A> agents = new TreeMap<K, A>(comparator);
+		
 		for (Map.Entry<Integer, List<K>> e : pmap.entrySet()) {
 			A a = factory.newAgent(e.getValue());
 			agents.put(factory.getKey(a), a);
