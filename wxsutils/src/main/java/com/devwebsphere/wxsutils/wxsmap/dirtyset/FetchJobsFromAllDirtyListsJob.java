@@ -19,6 +19,8 @@ import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.multijob.JobExecutor;
 import com.devwebsphere.wxsutils.multijob.MultipartTask;
+import com.devwebsphere.wxsutils.multijob.PartitionIterator;
+import com.devwebsphere.wxsutils.multijob.PartitionIterators;
 import com.devwebsphere.wxsutils.multijob.SinglePartTask;
 import com.devwebsphere.wxsutils.wxsmap.BigListPushAgent;
 import com.devwebsphere.wxsutils.wxsmap.SetAddRemoveAgent;
@@ -75,9 +77,13 @@ public class FetchJobsFromAllDirtyListsJob<K extends Serializable, V extends Ser
 	}
 
 	public FetchJobsFromAllDirtyListsJob(ObjectGrid ogclient, String listMapName, K setKey) {
+		this(ogclient, listMapName, setKey, PartitionIterators.descending(ogclient));
+	}
+	
+	public FetchJobsFromAllDirtyListsJob(ObjectGrid ogclient, String listMapName, K setKey, PartitionIterator partitionIter) {
 		this.setKey = setKey;
 		this.listMapName = listMapName;
-		je = new JobExecutor<PartitionResult<V>, ArrayList<DirtyKey<V>>>(ogclient, this);
+		je = new JobExecutor<PartitionResult<V>, ArrayList<DirtyKey<V>>>(ogclient, this, partitionIter);
 	}
 
 	public SinglePartTask<PartitionResult<V>, ArrayList<DirtyKey<V>>> createTaskForPartition(
