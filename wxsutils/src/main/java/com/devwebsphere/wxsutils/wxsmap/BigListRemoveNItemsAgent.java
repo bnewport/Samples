@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxsutils.WXSMapOfLists.RELEASE;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.wxsmap.BigListHead.LR;
@@ -25,15 +26,15 @@ import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
 /**
- * This agent is used to pop N items at most from a specified list. If less than N items
- * are on the list then we return as many as possible.
+ * This agent is used to pop N items at most from a specified list. If less than N items are on the list then we return
+ * as many as possible.
+ * 
  * @author ibm
- *
+ * 
  * @param <K>
  * @param <V>
  */
-public class BigListRemoveNItemsAgent<K extends Serializable, V extends Serializable> implements MapGridAgent 
-{
+public class BigListRemoveNItemsAgent<K extends Serializable, V extends Serializable> implements MapGridAgent {
 	static Logger logger = Logger.getLogger(BigListRemoveNItemsAgent.class.getName());
 	/**
 	 * 
@@ -43,41 +44,36 @@ public class BigListRemoveNItemsAgent<K extends Serializable, V extends Serializ
 	public K dirtyKey;
 	public LR isLeft;
 	public int numItems;
-	public boolean releaseLease;
-	
-	
-	static public <K extends Serializable, V extends Serializable> int removeNItems(Session sess, ObjectMap map, Object key, LR isLeft, int numItems, K dirtyKey, boolean releaseLease)
-	{
+	public RELEASE releaseLease;
+
+	static public <K extends Serializable, V extends Serializable> int removeNItems(Session sess, ObjectMap map, Object key, LR isLeft, int numItems,
+			K dirtyKey, RELEASE releaseLease) {
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListRemoveNItemsAgent.class.getName());
 		long startNS = System.nanoTime();
-		try
-		{
+		try {
 			ObjectMap dirtyMap = null;
 			// lock dirtymap first to avoid dead locks
-			if(dirtyKey != null)
-			{
+			if (dirtyKey != null) {
 				dirtyMap = sess.getMap(BigListPushAgent.getDirtySetMapNameForListMap(map.getName()));
 				dirtyMap.getForUpdate(dirtyKey);
 			}
 			int numRemoved = 0;
-			BigListHead<V> head = (BigListHead<V>)map.getForUpdate(key);
-			if(head != null)
+			BigListHead<V> head = (BigListHead<V>) map.getForUpdate(key);
+			if (head != null)
 				numRemoved = head.removeNItems(sess, map, key, isLeft, numItems, dirtyKey, releaseLease);
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 			return numRemoved;
-		}
-		catch(ObjectGridException e)
-		{
+		} catch (ObjectGridException e) {
 			logger.log(Level.SEVERE, "Exception", e);
 			mbean.getKeysMetric().logException(e);
 			throw new ObjectGridRuntimeException(e);
 		}
 	}
+
 	/**
 	 * 
 	 */
-	public Object process(Session sess, ObjectMap map, Object key) 
-	{
+	public Object process(Session sess, ObjectMap map, Object key) {
 		return new Integer(removeNItems(sess, map, key, isLeft, numItems, dirtyKey, releaseLease));
 	}
 

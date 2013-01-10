@@ -26,21 +26,18 @@ import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.UndefinedMapException;
 
 /**
- * This is a WXSMapOfLists implementation for use on the server side typically
- * in an Agent. This takes the local session provided to the agent and the name
- * of the list and then allows the various list operations on that list. This
- * all happens using the transaction of the 'agent' or the session provided to
- * this class. This is a slightly different behavior than on the client where
- * each method call is its own transaction. This is NOT the case on the server
- * side. The provided sessions transaction scopes all method calls.
+ * This is a WXSMapOfLists implementation for use on the server side typically in an Agent. This takes the local session
+ * provided to the agent and the name of the list and then allows the various list operations on that list. This all
+ * happens using the transaction of the 'agent' or the session provided to this class. This is a slightly different
+ * behavior than on the client where each method call is its own transaction. This is NOT the case on the server side.
+ * The provided sessions transaction scopes all method calls.
  * 
  * @author bnewport
  * 
  * @param <K>
  * @param <V>
  */
-public class ServerSideWXSListMap<K extends Serializable, V extends Serializable>
-		implements WXSMapOfLists<K, V> {
+public class ServerSideWXSListMap<K extends Serializable, V extends Serializable> implements WXSMapOfLists<K, V> {
 	Session sess;
 	ObjectMap map;
 
@@ -67,69 +64,52 @@ public class ServerSideWXSListMap<K extends Serializable, V extends Serializable
 	public void lpush(K key, V value) {
 		List<BulkPushItem<V>> list = new ArrayList<BulkPushItem<V>>(1);
 		list.add(new BulkPushItem<V>(value, null));
-		BigListPushAgent.push(sess, map, LR.LEFT,
-				Collections.singletonList(key),
-				Collections.singletonList(list), null);
+		BigListPushAgent.push(sess, map, LR.LEFT, Collections.singletonList(key), Collections.singletonList(list), null);
 	}
 
 	public void lcpush(K key, V value, Filter condition) {
 		List<BulkPushItem<V>> list = new ArrayList<BulkPushItem<V>>(1);
 		list.add(new BulkPushItem<V>(value, condition));
-		BigListPushAgent.push(sess, map, LR.LEFT,
-				Collections.singletonList(key),
-				Collections.singletonList(list), null);
+		BigListPushAgent.push(sess, map, LR.LEFT, Collections.singletonList(key), Collections.singletonList(list), null);
 	}
 
 	public void lcpush(K key, V value, Filter condition, K dirtyKey) {
 		List<BulkPushItem<V>> list = new ArrayList<BulkPushItem<V>>(1);
 		list.add(new BulkPushItem<V>(value, condition));
-		BigListPushAgent.push(sess, map, LR.LEFT,
-				Collections.singletonList(key),
-				Collections.singletonList(list), dirtyKey);
+		BigListPushAgent.push(sess, map, LR.LEFT, Collections.singletonList(key), Collections.singletonList(list), dirtyKey);
 	}
 
 	public void rcpush(K key, V value, Filter condition) {
 		List<BulkPushItem<V>> list = new ArrayList<BulkPushItem<V>>(1);
 		list.add(new BulkPushItem<V>(value, condition));
-		BigListPushAgent.push(sess, map, LR.RIGHT,
-				Collections.singletonList(key),
-				Collections.singletonList(list), null);
+		BigListPushAgent.push(sess, map, LR.RIGHT, Collections.singletonList(key), Collections.singletonList(list), null);
 	}
 
 	public void rcpush(K key, V value, Filter condition, K dirtyKey) {
 		List<BulkPushItem<V>> list = new ArrayList<BulkPushItem<V>>(1);
 		list.add(new BulkPushItem<V>(value, condition));
-		BigListPushAgent.push(sess, map, LR.RIGHT,
-				Collections.singletonList(key),
-				Collections.singletonList(list), dirtyKey);
+		BigListPushAgent.push(sess, map, LR.RIGHT, Collections.singletonList(key), Collections.singletonList(list), dirtyKey);
 	}
 
 	public void lpush(K key, V value, K dirtySet) {
 		List<BulkPushItem<V>> list = new ArrayList<BulkPushItem<V>>(1);
 		list.add(new BulkPushItem<V>(value, null));
-		BigListPushAgent.push(sess, map, LR.LEFT,
-				Collections.singletonList(key),
-				Collections.singletonList(list), dirtySet);
+		BigListPushAgent.push(sess, map, LR.LEFT, Collections.singletonList(key), Collections.singletonList(list), dirtySet);
 	}
 
 	public void lpush(K key, List<V> values) {
-		BigListPushAgent.push(sess, map, LR.LEFT, Collections
-				.singletonList(key), Collections
-				.singletonList(WXSMapOfBigListsImpl.convertToBulkList(values)),
-				null);
+		BigListPushAgent.push(sess, map, LR.LEFT, Collections.singletonList(key),
+				Collections.singletonList(WXSMapOfBigListsImpl.convertToBulkList(values)), null);
 	}
 
 	public void lpush(K key, List<V> values, K dirtySet) {
-		BigListPushAgent.push(sess, map, LR.LEFT, Collections
-				.singletonList(key), Collections
-				.singletonList(WXSMapOfBigListsImpl.convertToBulkList(values)),
-				dirtySet);
+		BigListPushAgent.push(sess, map, LR.LEFT, Collections.singletonList(key),
+				Collections.singletonList(WXSMapOfBigListsImpl.convertToBulkList(values)), dirtySet);
 	}
 
 	public void lpush(Map<K, List<BulkPushItem<V>>> items) {
 		ArrayList<K> keys = new ArrayList<K>(items.keySet());
-		ArrayList<List<BulkPushItem<V>>> values = new ArrayList<List<BulkPushItem<V>>>(
-				keys.size());
+		ArrayList<List<BulkPushItem<V>>> values = new ArrayList<List<BulkPushItem<V>>>(keys.size());
 		for (K k : keys) {
 			values.add(items.get(k));
 		}
@@ -139,8 +119,7 @@ public class ServerSideWXSListMap<K extends Serializable, V extends Serializable
 
 	public void lpush(Map<K, List<BulkPushItem<V>>> items, K dirtySet) {
 		ArrayList<K> keys = new ArrayList<K>(items.keySet());
-		ArrayList<List<BulkPushItem<V>>> values = new ArrayList<List<BulkPushItem<V>>>(
-				keys.size());
+		ArrayList<List<BulkPushItem<V>>> values = new ArrayList<List<BulkPushItem<V>>>(keys.size());
 		for (K k : keys) {
 			values.add(items.get(k));
 		}
@@ -150,8 +129,7 @@ public class ServerSideWXSListMap<K extends Serializable, V extends Serializable
 
 	public void rpush(Map<K, List<BulkPushItem<V>>> items) {
 		ArrayList<K> keys = new ArrayList<K>(items.keySet());
-		ArrayList<List<BulkPushItem<V>>> values = new ArrayList<List<BulkPushItem<V>>>(
-				keys.size());
+		ArrayList<List<BulkPushItem<V>>> values = new ArrayList<List<BulkPushItem<V>>>(keys.size());
 		for (K k : keys) {
 			values.add(items.get(k));
 		}
@@ -161,8 +139,7 @@ public class ServerSideWXSListMap<K extends Serializable, V extends Serializable
 
 	public void rpush(Map<K, List<BulkPushItem<V>>> items, K dirtySet) {
 		ArrayList<K> keys = new ArrayList<K>(items.keySet());
-		ArrayList<List<BulkPushItem<V>>> values = new ArrayList<List<BulkPushItem<V>>>(
-				keys.size());
+		ArrayList<List<BulkPushItem<V>>> values = new ArrayList<List<BulkPushItem<V>>>(keys.size());
 		for (K k : keys) {
 			values.add(items.get(k));
 		}
@@ -198,82 +175,66 @@ public class ServerSideWXSListMap<K extends Serializable, V extends Serializable
 		return (V) BigListPopAgent.pop(sess, map, key, LR.RIGHT, dirtyKey);
 	}
 
-	public List<V> lpop(K key, int numItems, K dirtyKey, boolean releaseLease) {
-		return BigListPopNItemsAgent.popNItems(sess, map, key, LR.LEFT,
-				numItems, dirtyKey, releaseLease);
+	public List<V> lpop(K key, int numItems, K dirtyKey, RELEASE releaseLease) {
+		return BigListPopNItemsAgent.popNItems(sess, map, key, LR.LEFT, numItems, dirtyKey, releaseLease);
 	}
 
 	public List<V> lpop(K key, int numItems, K dirtyKey) {
-		return lpop(key, numItems, dirtyKey, false);
+		return lpop(key, numItems, dirtyKey, RELEASE.WHEN_EMPTY);
 	}
 
 	public List<V> lpop(K key, int numItems) {
-		return BigListPopNItemsAgent.popNItems(sess, map, key, LR.LEFT,
-				numItems, null, false);
+		return BigListPopNItemsAgent.popNItems(sess, map, key, LR.LEFT, numItems, null, RELEASE.WHEN_EMPTY);
 	}
 
-	public List<V> rpop(K key, int numItems, K dirtyKey, boolean releaseLease) {
-		return BigListPopNItemsAgent.popNItems(sess, map, key, LR.RIGHT,
-				numItems, dirtyKey, releaseLease);
+	public List<V> rpop(K key, int numItems, K dirtyKey, RELEASE releaseLease) {
+		return BigListPopNItemsAgent.popNItems(sess, map, key, LR.RIGHT, numItems, dirtyKey, releaseLease);
 	}
 
 	public List<V> rpop(K key, int numItems, K dirtyKey) {
-		return rpop(key, numItems, dirtyKey, false);
+		return rpop(key, numItems, dirtyKey, RELEASE.WHEN_EMPTY);
 	}
 
 	public List<V> rpop(K key, int numItems) {
-		return BigListPopNItemsAgent.popNItems(sess, map, key, LR.RIGHT,
-				numItems, null, false);
+		return BigListPopNItemsAgent.popNItems(sess, map, key, LR.RIGHT, numItems, null, RELEASE.WHEN_EMPTY);
 	}
 
 	public int rremove(K key, int numItems) {
-		return BigListRemoveNItemsAgent.removeNItems(sess, map, key, LR.RIGHT,
-				numItems, null, false);
+		return BigListRemoveNItemsAgent.removeNItems(sess, map, key, LR.RIGHT, numItems, null, RELEASE.WHEN_EMPTY);
 	}
 
-	public int rremove(K key, int numItems, K dirtyKey, boolean releaseLease) {
-		return BigListRemoveNItemsAgent.removeNItems(sess, map, key, LR.RIGHT,
-				numItems, null, releaseLease);
+	public int rremove(K key, int numItems, K dirtyKey, RELEASE releaseLease) {
+		return BigListRemoveNItemsAgent.removeNItems(sess, map, key, LR.RIGHT, numItems, null, releaseLease);
 	}
 
 	public int lremove(K key, int numItems) {
-		return BigListRemoveNItemsAgent.removeNItems(sess, map, key, LR.LEFT,
-				numItems, null, false);
+		return BigListRemoveNItemsAgent.removeNItems(sess, map, key, LR.LEFT, numItems, null, RELEASE.WHEN_EMPTY);
 	}
 
-	public int lremove(K key, int numItems, K dirtyKey, boolean releaseLease) {
-		return BigListRemoveNItemsAgent.removeNItems(sess, map, key, LR.LEFT,
-				numItems, null, releaseLease);
+	public int lremove(K key, int numItems, K dirtyKey, RELEASE releaseLease) {
+		return BigListRemoveNItemsAgent.removeNItems(sess, map, key, LR.LEFT, numItems, null, releaseLease);
 	}
 
 	public void rpush(K key, V value) {
 		List<BulkPushItem<V>> list = new ArrayList<BulkPushItem<V>>(1);
 		list.add(new BulkPushItem<V>(value, null));
-		BigListPushAgent.push(sess, map, LR.RIGHT,
-				Collections.singletonList(key),
-				Collections.singletonList(list), null);
+		BigListPushAgent.push(sess, map, LR.RIGHT, Collections.singletonList(key), Collections.singletonList(list), null);
 	}
 
 	public void rpush(K key, V value, K dirtySet) {
 		List<BulkPushItem<V>> list = new ArrayList<BulkPushItem<V>>(1);
 		list.add(new BulkPushItem<V>(value, null));
-		BigListPushAgent.push(sess, map, LR.RIGHT,
-				Collections.singletonList(key),
-				Collections.singletonList(list), dirtySet);
+		BigListPushAgent.push(sess, map, LR.RIGHT, Collections.singletonList(key), Collections.singletonList(list), dirtySet);
 	}
 
 	public void rpush(K key, List<V> values) {
-		BigListPushAgent.push(sess, map, LR.RIGHT, Collections
-				.singletonList(key), Collections
-				.singletonList(WXSMapOfBigListsImpl.convertToBulkList(values)),
-				null);
+		BigListPushAgent.push(sess, map, LR.RIGHT, Collections.singletonList(key),
+				Collections.singletonList(WXSMapOfBigListsImpl.convertToBulkList(values)), null);
 	}
 
 	public void rpush(K key, List<V> values, K dirtySet) {
-		BigListPushAgent.push(sess, map, LR.RIGHT, Collections
-				.singletonList(key), Collections
-				.singletonList(WXSMapOfBigListsImpl.convertToBulkList(values)),
-				dirtySet);
+		BigListPushAgent.push(sess, map, LR.RIGHT, Collections.singletonList(key),
+				Collections.singletonList(WXSMapOfBigListsImpl.convertToBulkList(values)), dirtySet);
 	}
 
 	public ArrayList<V> lrange(K key, int low, int high) {

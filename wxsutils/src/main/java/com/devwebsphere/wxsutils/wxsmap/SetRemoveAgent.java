@@ -41,8 +41,7 @@ public class SetRemoveAgent<V extends Serializable> implements MapGridAgent
 			for(int  b = 0; b < SetAddRemoveAgent.NUM_BUCKETS; ++b)
 			{
 				Object bkey = SetAddRemoveAgent.getBucketKeyForBucket(key, b);
-				if(map.containsKey(bkey))
-					map.remove(bkey);
+				map.remove(bkey);
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		}

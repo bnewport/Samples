@@ -30,10 +30,8 @@ import com.ibm.websphere.objectgrid.BackingMap;
 import com.ibm.websphere.objectgrid.ObjectGridRuntimeException;
 import com.ibm.websphere.objectgrid.datagrid.EntryErrorValue;
 
-public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable>
-		extends WXSBaseMap implements WXSMapOfLists<K, V> {
-	static Logger logger = Logger.getLogger(WXSMapOfBigListsImpl.class
-			.getName());
+public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable> extends WXSBaseMap implements WXSMapOfLists<K, V> {
+	static Logger logger = Logger.getLogger(WXSMapOfBigListsImpl.class.getName());
 	static LazyMBeanManagerAtomicReference<WXSMapOfListsMBeanManager> wxsMapOfListsMBeanManager = new LazyMBeanManagerAtomicReference<WXSMapOfListsMBeanManager>(
 			WXSMapOfListsMBeanManager.class);
 
@@ -81,13 +79,11 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 	}
 
 	public int llen(K key) {
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef()
-				.getBean(grid.getName(), listName);
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try {
 			BigListLenAgent<V> a = new BigListLenAgent<V>();
-			Map<K, Object> rc = tls.getMap(mapName).getAgentManager()
-					.callMapAgent(a, Collections.singletonList(key));
+			Map<K, Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if (rcV != null && rcV instanceof EntryErrorValue) {
 				logger.log(Level.SEVERE, "llen failed");
@@ -104,13 +100,11 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 	}
 
 	public boolean isEmpty(K key) {
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef()
-				.getBean(grid.getName(), listName);
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try {
 			BigListIsEmptyAgent<V> a = new BigListIsEmptyAgent<V>();
-			Map<K, Object> rc = tls.getMap(mapName).getAgentManager()
-					.callMapAgent(a, Collections.singletonList(key));
+			Map<K, Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if (rcV != null && rcV instanceof EntryErrorValue) {
 				logger.log(Level.SEVERE, "llen failed");
@@ -135,15 +129,13 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 	}
 
 	V pop(K key, LR isLeft, K dirtyKey) {
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef()
-				.getBean(grid.getName(), listName);
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try {
 			BigListPopAgent<K, V> a = new BigListPopAgent<K, V>();
 			a.isLeft = isLeft;
 			a.dirtyKey = dirtyKey;
-			Map<K, Object> rc = tls.getMap(mapName).getAgentManager()
-					.callMapAgent(a, Collections.singletonList(key));
+			Map<K, Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if (rcV != null && rcV instanceof EntryErrorValue) {
 				logger.log(Level.SEVERE, "pop failed");
@@ -175,10 +167,8 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 		push(key, convertToBulkList(values), LR.LEFT, null);
 	}
 
-	static public <V extends Serializable> List<BulkPushItem<V>> convertToBulkList(
-			List<V> values) {
-		ArrayList<BulkPushItem<V>> list = new ArrayList<WXSMapOfLists.BulkPushItem<V>>(
-				values.size());
+	static public <V extends Serializable> List<BulkPushItem<V>> convertToBulkList(List<V> values) {
+		ArrayList<BulkPushItem<V>> list = new ArrayList<WXSMapOfLists.BulkPushItem<V>>(values.size());
 		for (V v : values) {
 			list.add(new BulkPushItem<V>(v, null));
 		}
@@ -190,8 +180,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 	}
 
 	void push(K key, List<BulkPushItem<V>> values, LR isLeft, K dirtyKey) {
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef()
-				.getBean(grid.getName(), listName);
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try {
 			BigListPushAgent<K, V> pushAgent = new BigListPushAgent<K, V>();
@@ -199,8 +188,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 			pushAgent.keys = Collections.singletonList(key);
 			pushAgent.values = Collections.singletonList(values);
 			pushAgent.dirtyKey = dirtyKey;
-			Object rc = tls.getMap(mapName).getAgentManager()
-					.callReduceAgent(pushAgent, Collections.singletonList(key));
+			Object rc = tls.getMap(mapName).getAgentManager().callReduceAgent(pushAgent, Collections.singletonList(key));
 			if (rc != null && !(rc instanceof Boolean)) {
 				logger.log(Level.SEVERE, "push failed: " + rc.toString());
 				throw new ObjectGridRuntimeException(rc.toString());
@@ -222,16 +210,14 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 	}
 
 	public ArrayList<V> lrange(K key, int low, int high, Filter filter) {
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef()
-				.getBean(grid.getName(), listName);
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try {
 			BigListRangeAgent<V> a = new BigListRangeAgent<V>();
 			a.low = low;
 			a.high = high;
 			a.filter = filter;
-			Map<K, Object> rc = tls.getMap(mapName).getAgentManager()
-					.callMapAgent(a, Collections.singletonList(key));
+			Map<K, Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if (rcV != null && rcV instanceof EntryErrorValue) {
 				logger.log(Level.SEVERE, "range failed");
@@ -251,14 +237,12 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 	}
 
 	public ArrayList<V> popAll(K key, K dirtyKey) {
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef()
-				.getBean(grid.getName(), listName);
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try {
 			BigListPopAllAgent<K, V> a = new BigListPopAllAgent<K, V>();
 			a.dirtyKey = dirtyKey;
-			Map<K, Object> rc = tls.getMap(mapName).getAgentManager()
-					.callMapAgent(a, Collections.singletonList(key));
+			Map<K, Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if (rcV != null && rcV instanceof EntryErrorValue) {
 				logger.log(Level.SEVERE, "popAll failed");
@@ -274,49 +258,47 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 	}
 
 	public List<V> lpop(K key, int numItems) {
-		return popNItems(LR.LEFT, key, numItems, null, false);
+		return popNItems(LR.LEFT, key, numItems, null, RELEASE.WHEN_EMPTY);
 	}
 
-	public List<V> lpop(K key, int numItems, K dirtyKey, boolean releaseLease) {
+	public List<V> lpop(K key, int numItems, K dirtyKey, RELEASE releaseLease) {
 		return popNItems(LR.LEFT, key, numItems, dirtyKey, releaseLease);
 	}
 
 	public List<V> lpop(K key, int numItems, K dirtyKey) {
-		return lpop(key, numItems, dirtyKey, false);
+		return lpop(key, numItems, dirtyKey, RELEASE.WHEN_EMPTY);
 	}
 
 	public List<V> rpop(K key, int numItems) {
-		return popNItems(LR.RIGHT, key, numItems, null, false);
+		return popNItems(LR.RIGHT, key, numItems, null, RELEASE.WHEN_EMPTY);
 	}
 
-	public List<V> rpop(K key, int numItems, K dirtyKey, boolean releaseLease) {
+	public List<V> rpop(K key, int numItems, K dirtyKey, RELEASE releaseLease) {
 		return popNItems(LR.RIGHT, key, numItems, dirtyKey, releaseLease);
 	}
 
 	public List<V> rpop(K key, int numItems, K dirtyKey) {
-		return rpop(key, numItems, dirtyKey, false);
+		return rpop(key, numItems, dirtyKey, RELEASE.WHEN_EMPTY);
 	}
 
 	public int rremove(K key, int numItems) {
-		return rremove(key, numItems, null, false);
+		return rremove(key, numItems, null, RELEASE.WHEN_EMPTY);
 	}
 
 	public int lremove(K key, int numItems) {
-		return lremove(key, numItems, null, false);
+		return lremove(key, numItems, null, RELEASE.WHEN_EMPTY);
 	}
 
-	public int rremove(K key, int numItems, K dirtyKey, boolean releaseLease) {
+	public int rremove(K key, int numItems, K dirtyKey, RELEASE releaseLease) {
 		return removeNItems(LR.RIGHT, key, numItems, dirtyKey, releaseLease);
 	}
 
-	public int lremove(K key, int numItems, K dirtyKey, boolean releaseLease) {
+	public int lremove(K key, int numItems, K dirtyKey, RELEASE releaseLease) {
 		return removeNItems(LR.LEFT, key, numItems, dirtyKey, releaseLease);
 	}
 
-	private ArrayList<V> popNItems(LR isLeft, K key, int numItems, K dirtyKey,
-			boolean releaseLease) {
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef()
-				.getBean(grid.getName(), listName);
+	private ArrayList<V> popNItems(LR isLeft, K key, int numItems, K dirtyKey, RELEASE releaseLease) {
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try {
 			BigListPopNItemsAgent<K, V> a = new BigListPopNItemsAgent<K, V>();
@@ -324,8 +306,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 			a.isLeft = isLeft;
 			a.numItems = numItems;
 			a.releaseLease = releaseLease;
-			Map<K, Object> rc = tls.getMap(mapName).getAgentManager()
-					.callMapAgent(a, Collections.singletonList(key));
+			Map<K, Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if (rcV != null && rcV instanceof EntryErrorValue) {
 				logger.log(Level.SEVERE, "popNItems failed");
@@ -340,10 +321,8 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 		}
 	}
 
-	private int removeNItems(LR isLeft, K key, int numItems, K dirtyKey,
-			boolean releaseLease) {
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef()
-				.getBean(grid.getName(), listName);
+	private int removeNItems(LR isLeft, K key, int numItems, K dirtyKey, RELEASE releaseLease) {
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try {
 			BigListRemoveNItemsAgent<K, V> a = new BigListRemoveNItemsAgent<K, V>();
@@ -351,8 +330,7 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 			a.isLeft = isLeft;
 			a.numItems = numItems;
 			a.releaseLease = releaseLease;
-			Map<K, Object> rc = tls.getMap(mapName).getAgentManager()
-					.callMapAgent(a, Collections.singletonList(key));
+			Map<K, Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if (rcV != null && rcV instanceof EntryErrorValue) {
 				logger.log(Level.SEVERE, "popNItems failed");
@@ -368,14 +346,12 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 	}
 
 	public void rtrim(K key, int size) {
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef()
-				.getBean(grid.getName(), listName);
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try {
 			BigListTrimAgent<V> a = new BigListTrimAgent<V>();
 			a.size = size;
-			Map<K, Object> rc = tls.getMap(mapName).getAgentManager()
-					.callMapAgent(a, Collections.singletonList(key));
+			Map<K, Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if (rcV != null && rcV instanceof EntryErrorValue) {
 				logger.log(Level.SEVERE, "rtrim failed");
@@ -432,13 +408,11 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 	}
 
 	public void remove(K key) {
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef()
-				.getBean(grid.getName(), listName);
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try {
 			BigListRemoveAgent<V> a = new BigListRemoveAgent<V>();
-			Map<K, Object> rc = tls.getMap(mapName).getAgentManager()
-					.callMapAgent(a, Collections.singletonList(key));
+			Map<K, Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if (rcV != null && rcV instanceof EntryErrorValue) {
 				logger.log(Level.SEVERE, "remove(K) failed");
@@ -452,16 +426,12 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 		}
 	}
 
-	void bulkPushAll(BackingMap bmap, Map<K, List<BulkPushItem<V>>> batch,
-			LR side, K dirtyKey) {
-		BigListPushAgent.Factory<K, V> factory = new BigListPushAgent.Factory<K, V>(
-				dirtyKey, side);
-		WXSReduceAgent.callReduceAgentAll(utils, factory, batch, bmap,
-				Boolean.TRUE);
+	void bulkPushAll(BackingMap bmap, Map<K, List<BulkPushItem<V>>> batch, LR side, K dirtyKey) {
+		BigListPushAgent.Factory<K, V> factory = new BigListPushAgent.Factory<K, V>(dirtyKey, side);
+		WXSReduceAgent.callReduceAgentAll(utils, factory, batch, bmap, Boolean.TRUE);
 	}
 
-	public void setEvictionPolicyFor(K key, EvictionType type,
-			int evictionTimeInMinutes) {
+	public void setEvictionPolicyFor(K key, EvictionType type, int evictionTimeInMinutes) {
 	}
 
 	public void lcpush(K key, V value, Filter condition) {
@@ -485,15 +455,13 @@ public class WXSMapOfBigListsImpl<K extends Serializable, V extends Serializable
 	}
 
 	public void evict(K key, EvictionType type, int intervalSeconds) {
-		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef()
-				.getBean(grid.getName(), listName);
+		WXSMapOfListsMBeanImpl mbean = wxsMapOfListsMBeanManager.getLazyRef().getBean(grid.getName(), listName);
 		long start = System.nanoTime();
 		try {
 			BigListSetEvictionAgent<V> a = new BigListSetEvictionAgent<V>();
 			a.eType = type;
 			a.intervalSeconds = intervalSeconds;
-			Map<K, Object> rc = tls.getMap(mapName).getAgentManager()
-					.callMapAgent(a, Collections.singletonList(key));
+			Map<K, Object> rc = tls.getMap(mapName).getAgentManager().callMapAgent(a, Collections.singletonList(key));
 			Object rcV = rc.get(key);
 			if (rcV != null && rcV instanceof EntryErrorValue) {
 				logger.log(Level.SEVERE, "evict(K) failed");

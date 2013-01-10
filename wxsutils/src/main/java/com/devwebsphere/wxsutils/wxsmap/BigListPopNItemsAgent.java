@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.devwebsphere.wxsutils.WXSMapOfLists;
 import com.devwebsphere.wxsutils.WXSUtils;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.wxsmap.BigListHead.LR;
@@ -47,11 +48,11 @@ public class BigListPopNItemsAgent<K extends Serializable, V extends Serializabl
 	public K dirtyKey;
 	public LR isLeft;
 	public int numItems;
-	public boolean releaseLease;
+	public WXSMapOfLists.RELEASE releaseLease;
 
 	static public <K extends Serializable, V extends Serializable> List<V> popNItems(
 			Session sess, ObjectMap map, Object key, LR isLeft, int numItems,
-			K dirtyKey, boolean releaseLease) {
+			K dirtyKey, WXSMapOfLists.RELEASE releaseLease) {
 		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(
 				sess.getObjectGrid().getName(),
 				BigListPopNItemsAgent.class.getName());

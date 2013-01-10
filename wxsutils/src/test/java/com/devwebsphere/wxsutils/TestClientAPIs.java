@@ -31,6 +31,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.devwebsphere.wxsutils.WXSMapOfLists.BulkPushItem;
+import com.devwebsphere.wxsutils.WXSMapOfLists.RELEASE;
 import com.devwebsphere.wxsutils.WXSMapOfSets.Contains;
 import com.devwebsphere.wxsutils.filter.FalseFilter;
 import com.devwebsphere.wxsutils.filter.Filter;
@@ -876,7 +877,7 @@ public class TestClientAPIs {
 		Assert.assertEquals(keys.size(), set2.size());
 		// unlock first key
 		String firstKey = set2.get(0);
-		int numItems = listMap.lremove(firstKey, 1, dirtyKey, true);
+		int numItems = listMap.lremove(firstKey, 1, dirtyKey, RELEASE.ALWAYS);
 		// cannot be zero as this removes lease breaking what we're testing for.
 		Assert.assertFalse(listMap.isEmpty(firstKey));
 		Assert.assertEquals(1, numItems);
@@ -1182,32 +1183,84 @@ public class TestClientAPIs {
 			allKeys.add(aKey);
 		}
 
-		FetchJobsFromAllDirtyListsJob<String, String> job = new FetchJobsFromAllDirtyListsJob<String, String>(ogclient, listHeadMapName, dirtyKey);
-		job.setLeaseTimeMS(5000L /* ms */);
-		List<DirtyKey<String>> r1 = getOneKey(job);
+		// Test ALWAYS
+		List<DirtyKey<String>> r1 = getOneKey(listHeadMapName, dirtyKey);
 		Assert.assertNotNull(r1);
 		Assert.assertEquals(1, r1.size());
-		List<DirtyKey<String>> r2 = getOneKey(job);
+		List<DirtyKey<String>> r2 = getOneKey(listHeadMapName, dirtyKey);
 		Assert.assertNull(r2);
+		listMap.lpop(r1.get(0).getValue(), 1, dirtyKey, RELEASE.ALWAYS);
 
-		listMap.lpop(r1.get(0).getValue(), 1, dirtyKey, true);
-		List<DirtyKey<String>> r3 = getOneKey(job);
+		// Test forced lease removal
+		List<DirtyKey<String>> r3 = getOneKey(listHeadMapName, dirtyKey);
 		// lease obtained
 		Assert.assertNotNull(r3);
 		Assert.assertEquals(1, r3.size());
 		Assert.assertEquals(r1, r3);
-
-		List<DirtyKey<String>> r4 = getOneKey(job);
+		List<DirtyKey<String>> r4 = getOneKey(listHeadMapName, dirtyKey);
 		Assert.assertNull(r4);
 		int blen = listMap.llen(key);
-		listMap.rremove(key, 0, dirtyKey, true);
+		listMap.rremove(key, 0, dirtyKey, RELEASE.ALWAYS);
+		// release lease
 		int alen = listMap.llen(key);
-		r4 = getOneKey(job);
-		Assert.assertNotNull(r4);
 		Assert.assertEquals(blen, alen);
+
+		// Test NEVER release
+		r3 = getOneKey(listHeadMapName, dirtyKey);
+		// lease obtained
+		Assert.assertNotNull(r3);
+		Assert.assertEquals(1, r3.size());
+		Assert.assertEquals(r1, r3);
+		listMap.lpop(r1.get(0).getValue(), 1, dirtyKey, RELEASE.NEVER);
+		r4 = getOneKey(listHeadMapName, dirtyKey);
+		Assert.assertNull(r4);
+		listMap.rremove(key, 0, dirtyKey, RELEASE.ALWAYS);
+
+		// reset
+		listMap.popAll(key);
+
+		// Test NEVER on last item
+		listMap.lpush(key, "1", dirtyKey);
+		r3 = getOneKey(listHeadMapName, dirtyKey);
+		List<String> vals = listMap.lpop(key, 1, dirtyKey, RELEASE.NEVER);
+		Assert.assertEquals(1, vals.size());
+		alen = listMap.llen(key);
+		Assert.assertEquals(0, alen);
+		listMap.lpush(key, "2", dirtyKey);
+		r3 = getOneKey(listHeadMapName, dirtyKey);
+		// lease should be on even though we were empty then added one
+		Assert.assertNull(r3);
+		listMap.rremove(key, 0, dirtyKey, RELEASE.ALWAYS);
+
+		listMap.popAll(key);
+		
+		// Test WHEN_EMPTY
+		listMap.lpush(key, "3", dirtyKey);
+		listMap.lpush(key, "4", dirtyKey);
+		r3 = getOneKey(listHeadMapName, dirtyKey);
+		// obtained lease
+		vals = listMap.lpop(key, 1, dirtyKey, RELEASE.WHEN_EMPTY);
+		Assert.assertEquals(1, vals.size());
+		r3 = getOneKey(listHeadMapName, dirtyKey);
+		// not empty so lease still obtained
+		Assert.assertNull(r3);
+		vals = listMap.lpop(key, 1, dirtyKey, RELEASE.WHEN_EMPTY);
+		Assert.assertEquals(1, vals.size());
+		alen = listMap.llen(key);
+		Assert.assertEquals(0, alen);
+		
+		// use a new job to start the scan from the top
+		listMap.lpush(key, "5", dirtyKey);
+		r3 = getOneKey(listHeadMapName, dirtyKey);
+		Assert.assertNotNull(r3);
+
+		listMap.popAll(key);
 	}
 
-	private List<DirtyKey<String>> getOneKey(FetchJobsFromAllDirtyListsJob<String, String> job) {
+	private List<DirtyKey<String>> getOneKey(String mapName, String dirtyKey) {
+		FetchJobsFromAllDirtyListsJob<String, String> job = new FetchJobsFromAllDirtyListsJob<String, String>(ogclient, mapName, dirtyKey);
+		job.setLeaseTimeMS(50000L /* ms */);
+
 		List<DirtyKey<String>> r = Collections.emptyList();
 		while (r != null) {
 			r = job.getNextResult(1);

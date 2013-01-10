@@ -24,8 +24,7 @@ import com.ibm.websphere.objectgrid.ObjectMap;
 import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
-public class BigListPopAgent<K extends Serializable, V extends Serializable>
-		implements MapGridAgent {
+public class BigListPopAgent<K extends Serializable, V extends Serializable> implements MapGridAgent {
 	static Logger logger = Logger.getLogger(BigListPopAgent.class.getName());
 
 	static public class EmptyMarker implements Serializable {
@@ -42,19 +41,15 @@ public class BigListPopAgent<K extends Serializable, V extends Serializable>
 
 	static EmptyMarker emptyMarker = new EmptyMarker();
 
-	static public <K extends Serializable, V extends Serializable> Object pop(
-			Session sess, ObjectMap map, Object key, LR isLeft, K dirtyKey) {
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager()
-				.getBean(sess.getObjectGrid().getName(),
-						BigListPopAgent.class.getName());
+	static public <K extends Serializable, V extends Serializable> Object pop(Session sess, ObjectMap map, Object key, LR isLeft, K dirtyKey) {
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListPopAgent.class.getName());
 		long startNS = System.nanoTime();
 		Object rc = null;
 		try {
 			ObjectMap dirtyMap = null;
 			// lock dirtymap first to avoid dead locks
 			if (dirtyKey != null) {
-				dirtyMap = sess.getMap(BigListPushAgent
-						.getDirtySetMapNameForListMap(map.getName()));
+				dirtyMap = sess.getMap(BigListPushAgent.getDirtySetMapNameForListMap(map.getName()));
 				dirtyMap.getForUpdate(dirtyKey);
 			}
 
@@ -63,7 +58,7 @@ public class BigListPopAgent<K extends Serializable, V extends Serializable>
 				rc = emptyMarker;
 			else {
 				// this updates the map head also
-				rc = head.pop(sess, map, key, isLeft, dirtyKey);
+				rc = head.pop(sess, map, key, isLeft, dirtyKey, true);
 			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 		} catch (ObjectGridException e) {
