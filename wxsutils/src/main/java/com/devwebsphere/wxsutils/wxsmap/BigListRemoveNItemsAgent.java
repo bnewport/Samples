@@ -59,8 +59,12 @@ public class BigListRemoveNItemsAgent<K extends Serializable, V extends Serializ
 			}
 			int numRemoved = 0;
 			BigListHead<V> head = (BigListHead<V>) map.getForUpdate(key);
-			if (head != null)
+			if (head != null) {
 				numRemoved = head.removeNItems(sess, map, key, isLeft, numItems, dirtyKey, releaseLease);
+			} else if (releaseLease != RELEASE.NEVER) {
+				// handle when we have no items but we are releasing the lease (ALWAYS, WHEN_EMPTY)
+				new BigListHead<V>().removeNItems(sess, map, key, isLeft, 0, dirtyKey, RELEASE.ALWAYS);
+			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 			return numRemoved;
 		} catch (ObjectGridException e) {

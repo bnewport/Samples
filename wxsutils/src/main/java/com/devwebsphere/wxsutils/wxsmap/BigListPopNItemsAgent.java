@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 
 import com.devwebsphere.wxsutils.WXSMapOfLists;
 import com.devwebsphere.wxsutils.WXSUtils;
+import com.devwebsphere.wxsutils.WXSMapOfLists.RELEASE;
 import com.devwebsphere.wxsutils.jmx.agent.AgentMBeanImpl;
 import com.devwebsphere.wxsutils.wxsmap.BigListHead.LR;
 import com.ibm.websphere.objectgrid.ObjectGridException;
@@ -28,18 +29,16 @@ import com.ibm.websphere.objectgrid.Session;
 import com.ibm.websphere.objectgrid.datagrid.MapGridAgent;
 
 /**
- * This agent is used to pop N items at most from a specified list. If less than
- * N items are on the list then we return as many as possible.
+ * This agent is used to pop N items at most from a specified list. If less than N items are on the list then we return
+ * as many as possible.
  * 
  * @author ibm
  * 
  * @param <K>
  * @param <V>
  */
-public class BigListPopNItemsAgent<K extends Serializable, V extends Serializable>
-		implements MapGridAgent {
-	static Logger logger = Logger.getLogger(BigListPopNItemsAgent.class
-			.getName());
+public class BigListPopNItemsAgent<K extends Serializable, V extends Serializable> implements MapGridAgent {
+	static Logger logger = Logger.getLogger(BigListPopNItemsAgent.class.getName());
 	/**
 	 * 
 	 */
@@ -50,28 +49,26 @@ public class BigListPopNItemsAgent<K extends Serializable, V extends Serializabl
 	public int numItems;
 	public WXSMapOfLists.RELEASE releaseLease;
 
-	static public <K extends Serializable, V extends Serializable> List<V> popNItems(
-			Session sess, ObjectMap map, Object key, LR isLeft, int numItems,
-			K dirtyKey, WXSMapOfLists.RELEASE releaseLease) {
-		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(
-				sess.getObjectGrid().getName(),
-				BigListPopNItemsAgent.class.getName());
+	static public <K extends Serializable, V extends Serializable> List<V> popNItems(Session sess, ObjectMap map, Object key, LR isLeft,
+			int numItems, K dirtyKey, WXSMapOfLists.RELEASE releaseLease) {
+		AgentMBeanImpl mbean = WXSUtils.getAgentMBeanManager().getBean(sess.getObjectGrid().getName(), BigListPopNItemsAgent.class.getName());
 		long startNS = System.nanoTime();
 		try {
 			ObjectMap dirtyMap = null;
 			// lock dirtymap first to avoid dead locks
 			if (dirtyKey != null) {
-				dirtyMap = sess.getMap(BigListPushAgent
-						.getDirtySetMapNameForListMap(map.getName()));
+				dirtyMap = sess.getMap(BigListPushAgent.getDirtySetMapNameForListMap(map.getName()));
 				dirtyMap.getForUpdate(dirtyKey);
 			}
 			List<V> rc = null;
 			BigListHead<V> head = (BigListHead<V>) map.getForUpdate(key);
-			if (head != null)
-				rc = head.popNItems(sess, map, key, isLeft, numItems, dirtyKey,
-						releaseLease);
-			else
+			if (head != null) {
+				rc = head.popNItems(sess, map, key, isLeft, numItems, dirtyKey, releaseLease);
+			} else {
+				// handle when we have no items but we are releasing the lease (ALWAYS, WHEN_EMPTY)
+				new BigListHead<V>().popNItems(sess, map, key, isLeft, 0, dirtyKey, RELEASE.ALWAYS);
 				rc = new ArrayList<V>();
+			}
 			mbean.getKeysMetric().logTime(System.nanoTime() - startNS);
 			return rc;
 		} catch (ObjectGridException e) {
@@ -85,8 +82,7 @@ public class BigListPopNItemsAgent<K extends Serializable, V extends Serializabl
 	 * 
 	 */
 	public Object process(Session sess, ObjectMap map, Object key) {
-		return popNItems(sess, map, key, isLeft, numItems, dirtyKey,
-				releaseLease);
+		return popNItems(sess, map, key, isLeft, numItems, dirtyKey, releaseLease);
 	}
 
 	public Map processAllEntries(Session arg0, ObjectMap arg1) {
