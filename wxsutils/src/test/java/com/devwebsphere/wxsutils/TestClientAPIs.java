@@ -1226,14 +1226,18 @@ public class TestClientAPIs {
 		Assert.assertEquals(1, vals.size());
 		alen = listMap.llen(key);
 		Assert.assertEquals(0, alen);
-		listMap.lpush(key, "2", dirtyKey);
 		r3 = getOneKey(listHeadMapName, dirtyKey);
 		// lease should be on even though we were empty then added one
 		Assert.assertNull(r3);
 		listMap.rremove(key, 0, dirtyKey, RELEASE.ALWAYS);
 
+		listMap.lpush(key, "2", dirtyKey);
+		r3 = getOneKey(listHeadMapName, dirtyKey);
+		// lease should be freed
+		Assert.assertNotNull(r3);
+
 		listMap.popAll(key);
-		
+
 		// Test WHEN_EMPTY
 		listMap.lpush(key, "3", dirtyKey);
 		listMap.lpush(key, "4", dirtyKey);
@@ -1248,7 +1252,7 @@ public class TestClientAPIs {
 		Assert.assertEquals(1, vals.size());
 		alen = listMap.llen(key);
 		Assert.assertEquals(0, alen);
-		
+
 		// use a new job to start the scan from the top
 		listMap.lpush(key, "5", dirtyKey);
 		r3 = getOneKey(listHeadMapName, dirtyKey);
