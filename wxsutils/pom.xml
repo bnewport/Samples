@@ -8,7 +8,7 @@
 	<name>wxsutils</name>
 	<url>http://maven.apache.org</url>
 	<properties>
-		<objectgrid.version>8.6</objectgrid.version>
+		<objectgrid.version>8.6.0.1</objectgrid.version>
 	</properties>
 	<dependencies>
 		<dependency>
