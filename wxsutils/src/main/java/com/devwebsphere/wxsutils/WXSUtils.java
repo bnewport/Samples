@@ -44,6 +44,7 @@ import com.devwebsphere.wxsutils.wxsmap.GetAllAgent;
 import com.devwebsphere.wxsutils.wxsmap.InsertAgent;
 import com.devwebsphere.wxsutils.wxsmap.InvalidateAgent;
 import com.devwebsphere.wxsutils.wxsmap.LazyMBeanManagerAtomicReference;
+import com.devwebsphere.wxsutils.wxsmap.LoadAllAgent;
 import com.devwebsphere.wxsutils.wxsmap.RemoveAgent;
 import com.devwebsphere.wxsutils.wxsmap.ThreadLocalSession;
 import com.devwebsphere.wxsutils.wxsmap.UpsertAgent;
@@ -317,6 +318,23 @@ public class WXSUtils {
 	 */
 	public <K extends Serializable, V extends Serializable> Map<K, V> getAll(Collection<K> keys, BackingMap bmap) {
 		GetAllAgent.Factory<K, V> factory = new GetAllAgent.Factory<K, V>();
+		return WXSReduceAgent.callReduceAgentAll(this, factory, keys, bmap);
+	}
+
+	/**
+	 * 
+	 * Load all the values for keys in parallel from a map.
+	 * @param <K>
+	 *            The key of the Map
+	 * @param keys
+	 *            The keys to fetch in parallel
+	 * @param bmap
+	 *            The map from which to fetch the keys
+	 * @return A Set of the key that was failed
+	 */
+
+	public <K extends Serializable> Set<K> loadAll(Collection<K> keys, BackingMap bmap) {
+		LoadAllAgent.Factory<K> factory = new LoadAllAgent.Factory<K>();
 		return WXSReduceAgent.callReduceAgentAll(this, factory, keys, bmap);
 	}
 
