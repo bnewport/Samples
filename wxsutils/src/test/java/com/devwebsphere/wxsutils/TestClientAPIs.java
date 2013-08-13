@@ -25,8 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -82,6 +81,44 @@ public class TestClientAPIs {
 		} catch (ObjectGridException e) {
 			Assert.fail("Exception during clear");
 		}
+	}
+
+	@Test
+	public void testLoadAll() {
+		clearMap();
+		for (int k = 0; k < 10; ++k) {
+			int base = k * 1000;
+			Map<String, String> batch = new HashMap<String, String>();
+			for (int i = base; i < base + 1000; ++i) {
+				batch.put("" + i, "V" + i);
+			}
+			utils.putAll(batch, bmFarMap3);
+		}
+		Set<String> keys = new HashSet<String>();
+		for (int k = 0; k < 10; ++k) {
+			int base = k * 1000;
+			for (int i = base; i < base + 1000; ++i) {
+				keys.add("" + i);
+			}
+		}
+		
+		Set<String> rc = utils.loadAll(keys, bmFarMap3);
+		Assert.assertEquals(0, rc.size());
+
+		Set<String> first10 = new HashSet<String>();
+		for (int i = 0; i < 10; i++) {
+			first10.add("" + i);
+		}
+		utils.removeAll(first10, bmFarMap3);
+
+		rc = utils.loadAll(keys, bmFarMap3);
+		Assert.assertEquals(first10, rc);
+
+		utils.removeAll(keys, bmFarMap3);
+		rc = utils.loadAll(keys, bmFarMap3);
+
+		Assert.assertEquals(keys, rc);
+
 	}
 
 	@Test
